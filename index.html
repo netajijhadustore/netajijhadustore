@@ -610,9 +610,12 @@
                 </div>
 
                 <!-- BUTTON KO BHI CHANGE KAR DIYA HAI -->
-                <button type="button" onclick="processCheckout()" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-4 rounded-lg mt-2 transition text-sm">
-                    Confirm Order
-                </button>
+             <button type="button" id="place-order-btn" onclick="processCheckout()" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-4 rounded-lg mt-2 transition text-sm">
+    Place Order
+</button>
+
+
+
             </div>
 
 
@@ -697,12 +700,15 @@
             
             <h3 class="text-xl font-bold text-white mb-6"><i class="fas fa-box-open text-brand-green mr-2"></i> My Orders</h3>
             
-            <div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800">
-                <i class="fas fa-receipt text-4xl text-gray-700 mb-3"></i>
-                <p class="text-gray-400 text-sm font-semibold">No recent orders found.</p>
-                <p class="text-xs text-gray-500 mt-2 px-4">Orders placed via WhatsApp will be tracked here in future updates.</p>
-            </div>
-        </div>
+         <div id="my-orders-list-container" class="max-h-[60vh] overflow-y-auto custom-scrollbar pr-1 mt-4 text-white"></div>
+
+    <!-- Live orders yahan JS ke through aayenge -->
+    <div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800">
+        <i class="fas fa-spinner fa-spin text-4xl text-brand-green mb-3"></i>
+        <p class="text-gray-400 text-sm font-semibold">Loading your orders...</p>
+    </div>
+</div>
+
     </div>
 
     <!-- SAVED ADDRESSES MODAL -->
@@ -1719,7 +1725,7 @@ function addToCartLogic(name, price, qtyInputStr, showCart = true) {
             if(document.getElementById('checkout-total')) document.getElementById('checkout-total').innerText = `₹${total}`;
             if(badge) { badge.innerText = totalItems; badge.style.display = totalItems > 0 ? 'flex' : 'none'; }
         }
-function processCheckout() {
+async function processCheckout() {
     try {
         let itemsToCheckout = [];
         if (typeof isDirectBuy !== 'undefined' && isDirectBuy) {
@@ -1749,17 +1755,30 @@ function processCheckout() {
         }
         
         let totalAmt = 0;
-        let msgItems = '';
+        let orderItems = [];
         
-        // NAYA FORMAT YAHAN HAI
+        // Admin panel format ke hisaab se item array banana
         itemsToCheckout.forEach(item => { 
-            msgItems += `${item.name} | ${item.qty} | ₹${item.price} | ₹${item.price * item.qty}%0A`; 
+            orderItems.push({
+                name: item.name,
+                qty: item.qty,
+                price: item.price,
+                total: item.price * item.qty
+            });
             totalAmt += (item.price * item.qty); 
         });
+
+        // Button state change (Taki user 2 baar click na kare)
+        const placeBtn = document.getElementById('place-order-btn');
+        if(placeBtn) {
+            placeBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`;
+            placeBtn.disabled = true;
+        }
 
         if (paymentMethod.includes('Pay Now')) {
             if (typeof Razorpay === 'undefined') {
                 alert("⚠️ Razorpay load nahi hua. Kripya page refresh karein.");
+                if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
                 return; 
             }
             var options = {
@@ -1769,7 +1788,7 @@ function processCheckout() {
                 "name": "Netaji Jhadu Store",
                 "description": "Premium Grass Brooms",
                 "handler": function (response){
-                    sendOrderToWhatsApp(name, phone, address, msgItems, totalAmt, paymentMethod, response.razorpay_payment_id);
+                    saveOrderToDatabase(name, phone, address, orderItems, totalAmt, paymentMethod, response.razorpay_payment_id);
                 },
                 "prefill": { "name": name, "contact": phone },
                 "theme": { "color": "#16a34a" }
@@ -1777,63 +1796,73 @@ function processCheckout() {
             var rzp = new Razorpay(options);
             rzp.on('payment.failed', function (response){
                 alert("❌ Payment Failed! Reason: " + response.error.description);
+                if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
             });
             rzp.open(); 
             
         } else {
-            sendOrderToWhatsApp(name, phone, address, msgItems, totalAmt, paymentMethod, "N/A");
+            saveOrderToDatabase(name, phone, address, orderItems, totalAmt, paymentMethod, "N/A");
         }
     } catch (error) {
         alert("🚨 Error: " + error.message);
+        const placeBtn = document.getElementById('place-order-btn');
+        if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
     }
 }
 
-
-// WhatsApp par bhejne ka helper function
-function sendOrderToWhatsApp(name, phone, address, msgItems, totalAmt, paymentMethod, paymentId) {
+// Naya function jo direct Firebase me order bheje (Admin + User dono ke liye)
+async function saveOrderToDatabase(name, phone, address, items, totalAmt, paymentMethod, paymentId) {
     const dateObj = new Date();
     const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-    let paymentStatus = paymentId !== "N/A" ? "Paid ✅" : "Pending";
+    let paymentStatus = paymentId !== "N/A" ? "Paid" : "Unpaid";
 
-    let msg = `*NETAJI JHADU STORE*%0A%0A`;
-    msg += `_Quality You Trust, Cleanliness You Deserve_%0A%0A`;
-    msg += `*ORDER INVOICE*%0A%0A`;
-    
-    msg += `*Customer Details*%0A`;
-    msg += `━━━━━━━━━━━━━━━━━━━━%0A`;
-    msg += `Name: ${name}%0A`;
-    msg += `Phone: ${phone}%0A%0A`;
-    
-    msg += `Order Date: ${dateStr}%0A%0A`;
-    
-    msg += `*ORDER SUMMARY*%0A%0A`;
-    msg += `Product | Qty. | Rate | Amount%0A`;
-    msg += msgItems; // Items directly attach ho jayenge
-    
-    msg += `%0A━━━━━━━━━━━━━━━━━━━━%0A%0A`;
-    msg += `*TOTAL AMOUNT: ₹${totalAmt}*%0A%0A`;
-    
-    msg += `Payment Mode: ${paymentMethod}%0A`;
-    msg += `Payment Status: ${paymentStatus}%0A`;
-    
-    if (paymentId !== "N/A") {
-        msg += `Txn ID: ${paymentId}%0A`;
+    const currentUser = firebase.auth().currentUser;
+    const userId = currentUser ? currentUser.uid : "guest";
+
+    const newOrder = {
+        date: dateStr,
+        customerName: name,
+        customerPhone: phone,
+        address: address, 
+        items: items,
+        grandTotal: totalAmt,
+        payStatus: paymentStatus,
+        payMode: paymentMethod,
+        txnId: paymentId,
+        userId: userId, // Taki 'My Orders' me filter ho sake
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        // Bills collection me jayega toh Admin Panel me apne aap dikhega!
+        const docRef = await db.collection('bills').add(newOrder);
+        newOrder.id = docRef.id;
+        
+        // Agar Admin panel ka variable loaded hai toh use bhi update kar do
+        if (typeof adminBills !== 'undefined') {
+            adminBills.unshift(newOrder);
+            if(typeof renderAdminBills === 'function') renderAdminBills();
+        }
+
+        // Cart khali karna
+        if (typeof isDirectBuy !== 'undefined' && !isDirectBuy) {
+            if(typeof cart !== 'undefined') cart = []; 
+            if(typeof saveCart === 'function') saveCart(); 
+            if(typeof renderCart === 'function') renderCart();
+        }
+        
+        closeAllModals();
+
+        // 🎉 Final Popup Message 
+        alert("✅ Place order successfully check now at my order section");
+        
+    } catch (error) {
+        console.error("Error saving order: ", error);
+        alert("❌ Order save failed: " + error.message);
+    } finally {
+        const placeBtn = document.getElementById('place-order-btn');
+        if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
     }
-    
-    msg += `%0A*DELIVERY ADDRESS*%0A%0A`;
-    msg += `${encodeURIComponent(address)}%0A%0A`;
-    
-    msg += `━━━━━━━━━━━━━━━━━━━━%0A%0A`;
-    msg += `“Thank you for choosing Netaji Jhadu Store — We value your trust!”`;
-    
-    window.open(`https://wa.me/918750900635?text=${msg}`, '_blank');
-    
-    if (typeof isDirectBuy !== 'undefined' && !isDirectBuy) {
-        if(typeof cart !== 'undefined') cart = []; 
-        if(typeof saveCart === 'function') saveCart(); 
-        if(typeof renderCart === 'function') renderCart();
-    }
-    closeAllModals();
 }
 
 
@@ -1947,7 +1976,8 @@ function toggleDescription(id) {
             if (document.getElementById('user-display-name')) document.getElementById('user-display-name').innerText = savedName;
             if (document.getElementById('profile-avatar')) document.getElementById('profile-avatar').innerText = savedName.charAt(0).toUpperCase();
             if (document.getElementById('new-name-input')) document.getElementById('new-name-input').value = savedName;
-            
+            const savedRole = localStorage.getItem('userRole');
+    if(savedRole) saveUserRole(savedRole);
             if (profileDashboard) profileDashboard.classList.remove('hidden');
             setTimeout(() => { if (profileDashboard) profileDashboard.classList.add('opacity-100'); }, 10);
             document.body.style.overflow = 'hidden';
@@ -2912,6 +2942,209 @@ async function saveBillOnly() {
         saveBtn.innerHTML = originalText;
         saveBtn.disabled = false;
     }
+}
+// ==========================================
+// 👤 ROLE SELECTION LOGIC
+// ==========================================
+
+// 1. Modal Open Karne Ke Liye
+function openRoleChanger() {
+    closeAllModals(); // Baaki sab close kar do
+    const roleModal = document.getElementById('role-selection-modal');
+    const closeBtn = document.getElementById('role-close-btn');
+    
+    if (roleModal) {
+        roleModal.classList.remove('hidden');
+        if (closeBtn) closeBtn.classList.remove('hidden'); // Close button dikhao
+        setTimeout(() => roleModal.classList.add('opacity-100'), 10);
+    }
+}
+
+// 2. Modal Close Karne Ke Liye
+function closeRoleModal() {
+    const roleModal = document.getElementById('role-selection-modal');
+    if (roleModal) {
+        roleModal.classList.remove('opacity-100');
+        setTimeout(() => roleModal.classList.add('hidden'), 300);
+    }
+}
+
+// 3. Role Save Aur UI Update Karne Ke Liye
+async function saveUserRole(role) {
+    // LocalStorage mein save karo (Fast access ke liye)
+    localStorage.setItem('userRole', role);
+    
+    // UI Badge Update (Naam ke bagal mein role dikhane ke liye)
+    const badge = document.getElementById('user-role-badge');
+    if (badge) {
+        badge.classList.remove('hidden');
+        badge.innerText = role;
+        
+        // Role ke hisaab se color change
+        if (role === 'Shop Owner') {
+            badge.className = 'bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ml-2';
+        } else if (role === 'Supplier') {
+            badge.className = 'bg-purple-500/10 text-purple-400 border border-purple-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ml-2';
+        } else { // Normal Customer
+            badge.className = 'bg-brand-green/10 text-brand-green border border-brand-green/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ml-2';
+        }
+    }
+    
+    // Firebase Database mein save karo (Agar user login hai)
+    const currentUser = firebase.auth().currentUser;
+    if (currentUser) {
+        try {
+            await db.collection("users").doc(currentUser.uid).set({
+                role: role
+            }, { merge: true });
+        } catch (error) {
+            console.error("Error saving role:", error);
+        }
+    }
+    
+    closeRoleModal();
+}
+// My orders ka live data fetch karna
+async function loadMyOrders() {
+    const container = document.getElementById('my-orders-list-container');
+    if(!container) return;
+    
+    const currentUser = firebase.auth().currentUser;
+    if(!currentUser) {
+        container.innerHTML = `
+        <div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800">
+            <i class="fas fa-user-lock text-4xl text-gray-700 mb-3"></i>
+            <p class="text-gray-400 text-sm font-semibold">Please log in to track your orders.</p>
+        </div>`;
+        return;
+    }
+
+    try {
+        // Sirf is user ke orders laana (Local sort taki index error na aaye)
+        const snapshot = await db.collection('bills').where('userId', '==', currentUser.uid).get();
+             
+        if(snapshot.empty) {
+            container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><i class="fas fa-receipt text-4xl text-gray-700 mb-3"></i><p class="text-gray-400 text-sm font-semibold">No recent orders found.</p></div>`;
+            return;
+        }
+        
+        let orders = [];
+        snapshot.forEach(doc => orders.push({id: doc.id, ...doc.data()}));
+        // Naye orders sabse upar
+        orders.sort((a, b) => b.timestamp - a.timestamp); 
+        
+        let html = '';
+        orders.forEach(order => {
+            let statusBadge = order.payStatus === 'Paid' 
+                ? `<span class="bg-green-500/10 text-green-400 border border-green-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Paid</span>`
+                : `<span class="bg-red-500/10 text-red-400 border border-red-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Unpaid</span>`;
+                
+            let itemsList = '';
+            if(order.items) {
+                order.items.forEach(item => {
+                    itemsList += `<div class="flex justify-between text-xs text-gray-400 mt-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${item.total}</span></div>`;
+                });
+            }
+
+            html += `
+            <div class="bg-brand-dark border border-gray-700 rounded-xl p-4 mb-3 shadow-sm hover:border-brand-green/30 transition">
+                <div class="flex justify-between items-start mb-2 border-b border-gray-800 pb-2">
+                    <div>
+                        <p class="text-white font-semibold text-sm">Order on ${order.date}</p>
+                        <p class="text-gray-500 text-[10px] mt-0.5">Order ID: #${order.id.substring(0, 8).toUpperCase()}</p>
+                    </div>
+                    ${statusBadge}
+                </div>
+                <div class="mb-3">
+                    ${itemsList}
+                </div>
+                <div class="flex justify-between items-center border-t border-gray-800 pt-2">
+                    <span class="text-xs text-gray-400">Total Amount</span>
+                    <span class="text-brand-green font-bold text-base">₹${order.grandTotal}</span>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+        
+    } catch(e) {
+        container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><p class="text-red-400 text-sm">Error loading orders.</p></div>`;
+    }
+}
+
+// Purane openMyOrders function ko update kardo:
+function openMyOrders() {
+    const modal = document.getElementById('my-orders-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+    
+    // Yahan function call add ki hai jo orders fetch karega
+    loadMyOrders(); 
+}
+// 1. Place Order Logic
+async function processCheckout() {
+    let items = (typeof isDirectBuy !== 'undefined' && isDirectBuy) ? [directBuyItem] : cart;
+    if(!items.length) return alert("Cart is empty!");
+
+    let name = document.getElementById('checkout-name').value;
+    let phone = document.getElementById('checkout-phone').value;
+    let address = document.getElementById('checkout-address').value;
+    if(!name || !phone || !address) return alert("Please fill all details!");
+
+    let btn = document.getElementById('place-order-btn'); 
+    btn.innerHTML = "Processing..."; btn.disabled = true;
+
+    let total = items.reduce((sum, i) => sum + (i.price * i.qty), 0);
+    let payMode = document.querySelector('input[name="payment-method"]:checked').value;
+
+    let newOrder = {
+        date: new Date().toLocaleDateString('en-GB'), customerName: name, customerPhone: phone, address: address,
+        items: items, grandTotal: total, payStatus: "Unpaid", payMode: payMode,
+        userId: firebase.auth().currentUser ? firebase.auth().currentUser.uid : "guest", 
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        await db.collection('bills').add(newOrder);
+        
+        // Cart clear & UI reset
+        if(typeof isDirectBuy !== 'undefined' && !isDirectBuy) { cart = []; saveCart(); renderCart(); }
+        closeAllModals();
+        alert("✅ Order placed successfully! Check My Orders section.");
+        
+    } catch(e) {
+        alert("Error: " + e.message);
+    } finally {
+        btn.innerHTML = "Place Order"; btn.disabled = false;
+    }
+}
+
+// 2. Load My Orders
+async function openMyOrders() {
+    const modal = document.getElementById('my-orders-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+    
+    let container = document.getElementById('my-orders-list-container');
+    let user = firebase.auth().currentUser;
+    
+    if(!user) return container.innerHTML = `<p class="text-center py-5">Please login to see orders.</p>`;
+    container.innerHTML = `<p class="text-center py-5">Loading...</p>`;
+
+    let snap = await db.collection('bills').where('userId', '==', user.uid).get();
+    if(snap.empty) return container.innerHTML = `<p class="text-center py-5 text-gray-400">No orders found.</p>`;
+
+    let html = '';
+    snap.forEach(doc => {
+        let d = doc.data();
+        html += `<div class="bg-brand-dark p-3 rounded mb-2 border border-gray-700">
+            <div class="flex justify-between font-bold text-sm mb-1">
+                <span class="text-white">${d.date}</span>
+                <span class="text-brand-green">₹${d.grandTotal}</span>
+            </div>
+            <p class="text-xs text-gray-400">${d.items.length} Items | Status: ${d.payStatus}</p>
+        </div>`;
+    });
+    container.innerHTML = html;
 }
 
     </script>
