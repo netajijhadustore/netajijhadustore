@@ -647,6 +647,38 @@
 
         </nav>
     </aside>
+    <!-- MY ORDERS MODAL -->
+    <div id="my-orders-modal" class="fixed inset-0 bg-brand-dark/95 z-[110] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-brand-card border border-gray-800 rounded-xl w-full max-w-md p-6 relative shadow-2xl">
+            <button onclick="closeMyOrders()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full bg-gray-800"><i class="fas fa-times"></i></button>
+            
+            <h3 class="text-xl font-bold text-white mb-6"><i class="fas fa-box-open text-brand-green mr-2"></i> My Orders</h3>
+            
+            <div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800">
+                <i class="fas fa-receipt text-4xl text-gray-700 mb-3"></i>
+                <p class="text-gray-400 text-sm font-semibold">No recent orders found.</p>
+                <p class="text-xs text-gray-500 mt-2 px-4">Orders placed via WhatsApp will be tracked here in future updates.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAVED ADDRESSES MODAL -->
+    <div id="saved-addresses-modal" class="fixed inset-0 bg-brand-dark/95 z-[110] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-brand-card border border-gray-800 rounded-xl w-full max-w-md p-6 relative shadow-2xl">
+            <button onclick="closeSavedAddresses()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full bg-gray-800"><i class="fas fa-times"></i></button>
+            
+            <h3 class="text-xl font-bold text-white mb-6"><i class="fas fa-map-marker-alt text-brand-green mr-2"></i> Saved Addresses</h3>
+            
+            <div class="text-center py-8 bg-brand-dark rounded-xl border border-gray-800 mb-5">
+                <i class="fas fa-map-pin text-3xl text-gray-700 mb-3"></i>
+                <p class="text-gray-400 text-sm">You haven't saved any addresses yet.</p>
+            </div>
+            
+            <button class="w-full bg-brand-dark border border-brand-green/50 text-brand-green py-3.5 rounded-lg text-sm font-bold hover:bg-brand-green hover:text-black transition flex justify-center items-center gap-2">
+                <i class="fas fa-plus"></i> Add New Address
+            </button>
+        </div>
+    </div>
 
     <!-- USER PROFILE DASHBOARD -->
     <div id="profile-dashboard" class="fixed inset-0 bg-brand-dark z-[80] hidden opacity-0 transition-opacity duration-300 overflow-y-auto custom-scrollbar">
@@ -698,19 +730,23 @@
                 </div>
             </div>
 
-            <h4 class="text-white font-bold mb-4 px-1">Account Settings</h4>
+                      <h4 class="text-white font-bold mb-4 px-1">Account Settings</h4>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                <button class="bg-brand-card border border-gray-800 hover:border-brand-green/40 rounded-xl p-5 flex items-center gap-4 transition text-left group">
+                <!-- My Orders Button (Updated) -->
+                <button onclick="openMyOrders()" class="bg-brand-card border border-gray-800 hover:border-brand-green/40 rounded-xl p-5 flex items-center gap-4 transition text-left group">
                     <div class="w-12 h-12 bg-brand-dark rounded-full flex items-center justify-center text-brand-green group-hover:scale-110 transition"><i class="fas fa-box-open text-lg"></i></div>
                     <div><h5 class="text-white font-semibold mb-0.5">My Orders</h5><p class="text-gray-500 text-xs">Track your orders</p></div>
-                    <i class="fas fa-chevron-right text-gray-600 ml-auto"></i>
+                    <i class="fas fa-chevron-right text-gray-600 ml-auto group-hover:text-brand-green transition"></i>
                 </button>
-                <button class="bg-brand-card border border-gray-800 hover:border-brand-green/40 rounded-xl p-5 flex items-center gap-4 transition text-left group">
+                
+                <!-- Saved Addresses Button (Updated) -->
+                <button onclick="openSavedAddresses()" class="bg-brand-card border border-gray-800 hover:border-brand-green/40 rounded-xl p-5 flex items-center gap-4 transition text-left group">
                     <div class="w-12 h-12 bg-brand-dark rounded-full flex items-center justify-center text-brand-green group-hover:scale-110 transition"><i class="fas fa-map-marker-alt text-lg"></i></div>
                     <div><h5 class="text-white font-semibold mb-0.5">Saved Addresses</h5><p class="text-gray-500 text-xs">Edit delivery locations</p></div>
-                    <i class="fas fa-chevron-right text-gray-600 ml-auto"></i>
+                    <i class="fas fa-chevron-right text-gray-600 ml-auto group-hover:text-brand-green transition"></i>
                 </button>
             </div>
+
 
             <button onclick="handleLogout()" class="w-full sm:w-auto bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 font-semibold py-3 px-8 rounded-xl transition flex justify-center items-center gap-2 mx-auto">
                 <i class="fas fa-sign-out-alt"></i> Log Out
@@ -2356,6 +2392,31 @@ async function deleteReview(id) {
             alert("Error deleting review: " + error.message);
         }
     }
+}
+// --- MY ORDERS & ADDRESSES MODAL LOGIC ---
+
+function openMyOrders() {
+    const modal = document.getElementById('my-orders-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+function closeMyOrders() {
+    const modal = document.getElementById('my-orders-modal');
+    modal.classList.remove('opacity-100');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+function openSavedAddresses() {
+    const modal = document.getElementById('saved-addresses-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+function closeSavedAddresses() {
+    const modal = document.getElementById('saved-addresses-modal');
+    modal.classList.remove('opacity-100');
+    setTimeout(() => modal.classList.add('hidden'), 300);
 }
 
     </script>
