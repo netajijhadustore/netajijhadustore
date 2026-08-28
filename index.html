@@ -600,7 +600,7 @@
                             </div>
                         </label>
                         <label class="cursor-pointer relative">
-                            <input type="radio" name="payment-method" value="Pay Later (Cash)" class="peer sr-only">
+                            <input type="radio" name="payment-method" value="Pay Later " class="peer sr-only">
                             <div class="border border-gray-700 bg-brand-dark rounded-lg p-3 text-center peer-checked:border-brand-green peer-checked:bg-brand-green/10 transition h-full flex flex-col justify-center">
                                 <i class="fas fa-money-bill-wave text-brand-green mb-1.5 text-lg"></i>
                                 <p class="text-white text-xs font-semibold">Pay Later</p>
@@ -948,6 +948,18 @@
             </button>
         </div>
     </div>
+<!-- ADMIN ORDER DETAILS MODAL -->
+<div id="admin-order-details-modal" class="fixed inset-0 bg-brand-dark/95 z-[100] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-brand-card border border-gray-800 rounded-xl w-full max-w-md shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-brand-dark shrink-0">
+            <h3 class="text-lg font-bold text-white"><i class="fas fa-box-open text-brand-green mr-2"></i> Order Details</h3>
+            <button onclick="closeAdminOrderDetails()" class="text-gray-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full bg-gray-800"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto custom-scrollbar" id="admin-order-details-content">
+            <!-- Details yahan JS se aayengi -->
+        </div>
+    </div>
+</div>
 
     <!-- CREATE BILL MODAL (WITH UNPAID = NONE LOGIC) -->
     <div id="create-bill-modal" class="fixed inset-0 bg-brand-dark/95 z-[90] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
@@ -3118,7 +3130,7 @@ async function processCheckout() {
     }
 }
 
-// 2. Load My Orders
+// 2. Load My Orders (Full Details & Fixes)
 async function openMyOrders() {
     const modal = document.getElementById('my-orders-modal');
     modal.classList.remove('hidden');
@@ -3127,24 +3139,497 @@ async function openMyOrders() {
     let container = document.getElementById('my-orders-list-container');
     let user = firebase.auth().currentUser;
     
-    if(!user) return container.innerHTML = `<p class="text-center py-5">Please login to see orders.</p>`;
-    container.innerHTML = `<p class="text-center py-5">Loading...</p>`;
+    // Agar user login nahi hai
+    if(!user) {
+        return container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><p class="text-gray-400 text-sm font-semibold">Please log in to track your orders.</p></div>`;
+    }
+    
+    // Proper Loading Spinner
+    container.innerHTML = `
+        <div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800">
+            <i class="fas fa-spinner fa-spin text-4xl text-brand-green mb-3"></i>
+            <p class="text-gray-400 text-sm font-semibold">Loading your orders...</p>
+        </div>`;
 
-    let snap = await db.collection('bills').where('userId', '==', user.uid).get();
-    if(snap.empty) return container.innerHTML = `<p class="text-center py-5 text-gray-400">No orders found.</p>`;
+    try {
+        let snap = await db.collection('bills').where('userId', '==', user.uid).get();
+        
+        // Agar koi order nahi hai
+        if(snap.empty) {
+            return container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><i class="fas fa-receipt text-4xl text-gray-700 mb-3"></i><p class="text-gray-400 text-sm font-semibold">No recent orders found.</p></div>`;
+        }
+
+        let orders = [];
+        snap.forEach(doc => orders.push({id: doc.id, ...doc.data()}));
+        
+        // Naye orders sabse upar dikhane ke liye sort
+        orders.sort((a, b) => b.timestamp - a.timestamp); 
+
+        let html = '';
+        orders.forEach(order => {
+            // Status Badge ka color
+            let statusBadge = order.payStatus.includes('Paid')
+                ? `<span class="bg-green-500/10 text-green-400 border border-green-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Paid</span>`
+                : `<span class="bg-red-500/10 text-red-400 border border-red-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Unpaid</span>`;
+                
+            // Items ki list banana (Puri details ke sath)
+            let itemsList = '';
+            if(order.items && Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    itemsList += `<div class="flex justify-between text-xs text-gray-400 mt-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${item.total}</span></div>`;
+                });
+            }
+
+            // Final Order Card Design
+            html += `
+            <div class="bg-brand-dark border border-gray-700 rounded-xl p-4 mb-3 shadow-sm hover:border-brand-green/30 transition">
+                <div class="flex justify-between items-start mb-2 border-b border-gray-800 pb-2">
+                    <div>
+                        <p class="text-white font-semibold text-sm">Order on ${order.date}</p>
+                        <p class="text-gray-500 text-[10px] mt-0.5">ID: #${order.id.substring(0, 8).toUpperCase()}</p>
+                    </div>
+                    ${statusBadge}
+                </div>
+                <div class="mb-3">
+                    ${itemsList}
+                </div>
+                <div class="flex justify-between items-center border-t border-gray-800 pt-2">
+                    <span class="text-xs text-gray-400">Total Amount</span>
+                    <span class="text-brand-green font-bold text-base">₹${order.grandTotal}</span>
+                </div>
+            </div>`;
+        });
+        
+        // Loop khatam hone ke baad HTML container me daal do (Spinner automatically hat jayega)
+        container.innerHTML = html;
+        
+    } catch(e) {
+        container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-red-500/30"><p class="text-red-400 text-sm">Error loading orders: ${e.message}</p></div>`;
+    }
+}
+// 1. Admin Panel ke Bills ko Clickable banana
+function renderAdminBills() {
+    const list = document.getElementById('admin-bills-list');
+    const totalCount = document.getElementById('admin-total-orders');
+    if(!list || !totalCount) return;
+
+    totalCount.innerText = adminBills.length;
+    
+    if (adminBills.length === 0) {
+        list.innerHTML = `<p class="text-gray-500 text-sm italic py-4 text-center">No bills generated yet.</p>`;
+        return;
+    }
 
     let html = '';
-    snap.forEach(doc => {
-        let d = doc.data();
-        html += `<div class="bg-brand-dark p-3 rounded mb-2 border border-gray-700">
-            <div class="flex justify-between font-bold text-sm mb-1">
-                <span class="text-white">${d.date}</span>
-                <span class="text-brand-green">₹${d.grandTotal}</span>
+    [...adminBills].reverse().forEach(bill => {
+        let payStatus = bill.payStatus || 'Unpaid';
+        let payMode = bill.payMode || 'Cash (Offline)';
+
+        let payBadge = payStatus.includes('Paid') 
+            ? `<span class="bg-green-500/10 text-green-400 border border-green-500/30 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase font-bold tracking-wider">PAID</span>`
+            : `<span class="bg-red-500/10 text-red-400 border border-red-500/30 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase font-bold tracking-wider">UNPAID</span>`;
+        
+        let modeIcon = payMode.includes('UPI') ? `<i class="fas fa-qrcode text-[10px] mr-1 text-gray-400"></i>` : `<i class="fas fa-money-bill-wave text-[10px] mr-1 text-gray-400"></i>`;
+
+        html += `
+        <div class="bg-[#0e141a] border border-gray-800 rounded-xl p-3.5 flex flex-col hover:border-brand-green/30 transition group">
+            
+            <!-- Ye hissa ab CLICKABLE hai -->
+            <div class="flex justify-between items-start mb-2 cursor-pointer" onclick="viewAdminOrderDetails('${bill.id}')" title="Click to view full details">
+                <div>
+                    <p class="text-white font-semibold text-sm flex items-center">${bill.customerName} ${payBadge}</p>
+                    <p class="text-gray-400 text-xs mt-0.5 flex items-center gap-2">
+                        <span>${bill.items.length} Items</span>
+                        <span class="text-gray-600">•</span>
+                        <span class="flex items-center">${modeIcon} ${payMode}</span>
+                    </p>
+                </div>
+                <div class="text-right">
+                    <p class="text-brand-green font-bold text-base">₹${bill.grandTotal}</p>
+                    <p class="text-[9px] text-blue-400 mt-1 hover:underline">View Details <i class="fas fa-chevron-right text-[8px]"></i></p>
+                </div>
             </div>
-            <p class="text-xs text-gray-400">${d.items.length} Items | Status: ${d.payStatus}</p>
+            
+            <div class="flex justify-end gap-2 mt-2 pt-2 border-t border-gray-800/50">
+                <button onclick="downloadBillImage('${bill.id}')" class="text-brand-green hover:bg-brand-green hover:text-black border border-brand-green/30 transition flex items-center gap-1.5 bg-brand-green/5 px-2.5 py-1 rounded text-[10px] font-bold"><i class="fas fa-image"></i> Save Image</button>
+                <button onclick="resendBill('${bill.id}')" class="text-gray-300 hover:text-white transition flex items-center gap-1.5 bg-gray-700 px-2.5 py-1 rounded text-[10px]"><i class="fab fa-whatsapp text-brand-green"></i> Text Bill</button>
+                <button onclick="deleteBill('${bill.id}')" class="text-gray-500 hover:text-red-500 transition flex items-center justify-center bg-gray-800 w-7 h-6 rounded"><i class="fas fa-trash-alt text-[10px]"></i></button>
+            </div>
         </div>`;
     });
-    container.innerHTML = html;
+    list.innerHTML = html;
+    renderInsights(); 
+}
+
+// 2. Order ki Puri Detail Dikhane ka function (Fixed undefined issue)
+function viewAdminOrderDetails(id) {
+    const order = adminBills.find(b => b.id === id);
+    if (!order) return;
+
+    let itemsHtml = '';
+    order.items.forEach(item => {
+        // FIX: Agar item.total missing hai, toh ye automatically (price * qty) nikal lega
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        
+        itemsHtml += `<div class="flex justify-between text-sm text-gray-300 mb-1 border-b border-gray-800/50 pb-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
+    });
+
+    // Agar address hai toh dikhao, warna hide kardo
+    let addressHtml = order.address ? `<div class="mt-4 bg-[#0b1115] p-3 rounded-lg border border-gray-800"><p class="text-xs text-gray-500 mb-1 uppercase font-bold tracking-wider">Delivery Address</p><p class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">${order.address}</p></div>` : '';
+
+    const content = document.getElementById('admin-order-details-content');
+    content.innerHTML = `
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <p class="text-xs text-gray-500">Order ID</p>
+                <p class="text-sm text-white font-mono bg-gray-800 px-2 py-0.5 rounded mt-0.5">#${order.id}</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-gray-500">Date</p>
+                <p class="text-sm text-white font-semibold mt-0.5">${order.date}</p>
+            </div>
+        </div>
+
+        <div class="bg-[#0b1115] p-3 rounded-lg border border-gray-800 mb-4">
+            <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Customer Details</p>
+            <p class="text-sm text-white font-semibold"><i class="fas fa-user text-brand-green mr-2"></i> ${order.customerName}</p>
+            <p class="text-sm text-gray-400 mt-1.5"><i class="fab fa-whatsapp text-brand-green mr-2"></i> ${order.customerPhone}</p>
+        </div>
+
+        ${addressHtml}
+
+        <div class="mt-4 mb-2 bg-[#0b1115] p-3 rounded-lg border border-gray-800">
+            <p class="text-xs text-gray-500 mb-3 uppercase font-bold tracking-wider border-b border-gray-800 pb-2">Items Ordered</p>
+            ${itemsHtml}
+            <div class="mt-3 pt-2 flex justify-between items-center">
+                <span class="text-gray-400 text-sm">Grand Total</span>
+                <span class="text-brand-green font-bold text-xl">₹${order.grandTotal}</span>
+            </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3">
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status</p>
+                <p class="text-sm font-semibold mt-1 ${order.payStatus.includes('Paid') ? 'text-green-400' : 'text-red-400'}">${order.payStatus || 'Unpaid'}</p>
+            </div>
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Payment Mode</p>
+                <p class="text-sm text-white font-semibold mt-1 truncate">${order.payMode || 'N/A'}</p>
+            </div>
+        </div>
+    `;
+
+    const modal = document.getElementById('admin-order-details-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+
+// 3. Popup band karne ka function
+function closeAdminOrderDetails() {
+    const modal = document.getElementById('admin-order-details-modal');
+    modal.classList.remove('opacity-100');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+// BILL IMAGE GENERATOR & WHATSAPP REDIRECT
+function downloadBillImage(id) {
+    // Ye line galti se card ka popup khulne se rokegi
+    if (window.event) window.event.stopPropagation(); 
+
+    const bill = adminBills.find(b => b.id === id);
+    if(!bill) return;
+
+    // Data fill karna template mein
+    document.getElementById('receipt-name').innerText = bill.customerName;
+    document.getElementById('receipt-phone').innerText = bill.customerPhone;
+    document.getElementById('receipt-date').innerText = bill.date;
+    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
+    document.getElementById('receipt-paymode').innerText = bill.payMode || 'N/A';
+    
+    let displayStatus = bill.payStatus.includes('Paid') ? 'Paid ✅' : 'Pending';
+    document.getElementById('receipt-paystatus').innerText = displayStatus;
+
+    // Items list banayein
+    let itemsHtml = '';
+    bill.items.forEach(item => {
+        itemsHtml += `
+            <tr class="border-b border-dashed border-gray-200">
+                <td class="py-1.5 pr-2 truncate max-w-[150px]">${item.name}</td>
+                <td class="py-1.5 text-center">${item.qty}</td>
+                <td class="py-1.5 text-right">₹${item.price}</td>
+                <td class="py-1.5 text-right font-semibold">₹${item.total}</td>
+            </tr>
+        `;
+    });
+    document.getElementById('receipt-items').innerHTML = itemsHtml;
+
+    // HTML ko Image mein convert karein
+    const container = document.getElementById('receipt-container');
+    
+    // Thoda delay taki DOM update ho jaye
+    setTimeout(() => {
+        html2canvas(container, {
+            scale: 2, 
+            backgroundColor: "#ffffff"
+        }).then(canvas => {
+            // 1. Image Download Karega
+            let link = document.createElement('a');
+            link.download = `NetajiJhadu_Bill_${bill.customerName}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+            
+            // 2. WhatsApp par Redirect (Download ke 1 second baad taki browser atke nahi)
+            setTimeout(() => {
+                let msg = `Hello ${bill.customerName}, Here Is Your Order Receipt
+
+Thank you for choosing Netaji Jhadu Store!
+Please find your order receipt attached with this message.
+
+Quality You Trust, Cleanliness You Deserve. `;
+                window.open(`https://wa.me/91${bill.customerPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+            }, 1000); 
+            
+        });
+    }, 100);
+}
+
+// Baki dono buttons (Text Bill aur Delete) dabane par card popup na khule, uske liye ye fix:
+const originalResendBill = resendBill;
+resendBill = function(id) {
+    if (window.event) window.event.stopPropagation();
+    originalResendBill(id);
+};
+
+const originalDeleteBill = deleteBill;
+deleteBill = function(id) {
+    if (window.event) window.event.stopPropagation();
+    originalDeleteBill(id);
+};
+// ==========================================
+// 1. USER SIDE: MY ORDERS (FULL DETAIL + PAY NOW + DELIVERY STATUS)
+// ==========================================
+async function openMyOrders() {
+    const modal = document.getElementById('my-orders-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+    
+    let container = document.getElementById('my-orders-list-container');
+    let user = firebase.auth().currentUser;
+    
+    if(!user) {
+        return container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><p class="text-gray-400 text-sm font-semibold">Please log in to track your orders.</p></div>`;
+    }
+    
+    container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><i class="fas fa-spinner fa-spin text-4xl text-brand-green mb-3"></i><p class="text-gray-400 text-sm font-semibold">Loading your orders...</p></div>`;
+
+    try {
+        let snap = await db.collection('bills').where('userId', '==', user.uid).get();
+        if(snap.empty) {
+            return container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><i class="fas fa-receipt text-4xl text-gray-700 mb-3"></i><p class="text-gray-400 text-sm font-semibold">No recent orders found.</p></div>`;
+        }
+
+        let orders = [];
+        snap.forEach(doc => orders.push({id: doc.id, ...doc.data()}));
+        orders.sort((a, b) => b.timestamp - a.timestamp); 
+
+        let html = '';
+        orders.forEach(order => {
+            let isPaid = order.payStatus.includes('Paid');
+            let statusBadge = isPaid 
+                ? `<span class="bg-green-500/10 text-green-400 border border-green-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Paid</span>`
+                : `<span class="bg-red-500/10 text-red-400 border border-red-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Unpaid</span>`;
+                
+            let itemsList = '';
+            if(order.items && Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    let itemTotal = item.total || (item.price * item.qty);
+                    itemsList += `<div class="flex justify-between text-xs text-gray-400 mt-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
+                });
+            }
+
+            let addressHtml = order.address ? `<div class="mt-2 p-2 bg-[#0b1115] rounded border border-gray-800 text-xs text-gray-400 whitespace-pre-wrap">${order.address}</div>` : '';
+            let deliveryStatus = order.deliveryStatus || 'Processing';
+            
+            // PAY NOW BUTTON (Sirf Unpaid par dikhega)
+            let payBtnHtml = !isPaid ? `
+                <button onclick="payFromMyOrders('${order.id}', ${order.grandTotal}, '${order.customerName}', '${order.customerPhone}')" class="w-full mt-3 bg-brand-green hover:bg-brand-greenhover text-black font-bold py-2.5 rounded-lg text-sm flex justify-center items-center gap-2 transition shadow-lg">
+                    <i class="fas fa-qrcode"></i> Pay ₹${order.grandTotal} Now
+                </button>
+            ` : '';
+
+            html += `
+            <div class="bg-brand-dark border border-gray-700 rounded-xl p-4 mb-3 shadow-sm">
+                <div class="flex justify-between items-start mb-2 border-b border-gray-800 pb-2">
+                    <div>
+                        <p class="text-white font-semibold text-sm">Order on ${order.date}</p>
+                        <p class="text-gray-500 text-[10px] mt-0.5">ID: #${order.id.substring(0, 8).toUpperCase()}</p>
+                    </div>
+                    ${statusBadge}
+                </div>
+                
+                <!-- DELIVERY STATUS BANNER -->
+                <div class="bg-brand-green/10 border border-brand-green/20 rounded p-2 mb-3 flex items-center gap-2">
+                    <i class="fas fa-truck text-brand-green text-xs"></i>
+                    <span class="text-xs text-brand-green font-medium">Status: <span class="text-white">${deliveryStatus}</span></span>
+                </div>
+
+                <div class="mb-2">
+                    ${itemsList}
+                </div>
+                
+                ${addressHtml}
+                
+                <div class="flex justify-between items-center border-t border-gray-800 pt-2 mt-2">
+                    <span class="text-xs text-gray-400">Total Amount</span>
+                    <span class="text-brand-green font-bold text-base">₹${order.grandTotal}</span>
+                </div>
+                ${payBtnHtml}
+            </div>`;
+        });
+        
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-red-500/30"><p class="text-red-400 text-sm">Error: ${e.message}</p></div>`;
+    }
+}
+
+// ==========================================
+// 2. USER SIDE: DIRECT PAYMENT FROM ORDERS
+// ==========================================
+function payFromMyOrders(orderId, amount, name, phone) {
+    if (typeof Razorpay === 'undefined') {
+        return alert("⚠️ Razorpay load nahi hua. Kripya page refresh karein.");
+    }
+    
+    var options = {
+        "key": "rzp_live_TLl4cQ2FJnrsx6", // Tumhari Razorpay Key
+        "amount": amount * 100, 
+        "currency": "INR",
+        "name": "Netaji Jhadu Store",
+        "description": "Pending Order Payment",
+        "handler": async function (response) {
+            try {
+                // Payment success hone par Database aur Bill Auto-Update
+                await db.collection('bills').doc(orderId).update({
+                    payStatus: "Paid",
+                    payMode: "Pay Now (UPI)",
+                    txnId: response.razorpay_payment_id
+                });
+                
+                alert("✅ Payment Successful! Bill Auto-Updated.");
+                
+                // Admin array mein bhi update kar do taki 'Save Image' karte waqt 'Paid' likha aaye
+                if (typeof adminBills !== 'undefined') {
+                    let bill = adminBills.find(b => b.id === orderId);
+                    if (bill) {
+                        bill.payStatus = "Paid";
+                        bill.payMode = "Pay Now (UPI)";
+                        if(typeof renderAdminBills === 'function') renderAdminBills();
+                    }
+                }
+                
+                openMyOrders(); // Page refresh kiye bina My Orders update karega
+            } catch(e) {
+                alert("Database update failed: " + e.message);
+            }
+        },
+        "prefill": { "name": name, "contact": phone },
+        "theme": { "color": "#16a34a" }
+    };
+    var rzp = new Razorpay(options);
+    rzp.on('payment.failed', function (response){
+        alert("❌ Payment Failed: " + response.error.description);
+    });
+    rzp.open(); 
+}
+// 3. ADMIN SIDE: ORDER DETAILS + DELIVERY UPDATE (Mobile UI Fixed)
+function viewAdminOrderDetails(id) {
+    const order = adminBills.find(b => b.id === id);
+    if (!order) return;
+
+    let itemsHtml = '';
+    order.items.forEach(item => {
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemsHtml += `<div class="flex justify-between text-sm text-gray-300 mb-1 border-b border-gray-800/50 pb-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
+    });
+
+    let addressHtml = order.address ? `<div class="mt-4 bg-[#0b1115] p-3 rounded-lg border border-gray-800"><p class="text-xs text-gray-500 mb-1 uppercase font-bold tracking-wider">Delivery Address</p><p class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">${order.address}</p></div>` : '';
+    let currentDelivery = order.deliveryStatus || 'Processing';
+
+    const content = document.getElementById('admin-order-details-content');
+    content.innerHTML = `
+        <div class="flex justify-between items-center mb-4">
+            <div class="min-w-0 pr-2">
+                <p class="text-xs text-gray-500">Order ID</p>
+                <p class="text-sm text-white font-mono bg-gray-800 px-2 py-0.5 rounded mt-0.5 truncate">#${order.id}</p>
+            </div>
+            <div class="text-right shrink-0">
+                <p class="text-xs text-gray-500">Date</p>
+                <p class="text-sm text-white font-semibold mt-0.5">${order.date}</p>
+            </div>
+        </div>
+
+        <!-- FIXED: DELIVERY STATUS UPDATE BOX -->
+        <div class="bg-brand-green/10 p-3 rounded-lg border border-brand-green/30 mb-4">
+            <p class="text-[10px] text-brand-green mb-1.5 uppercase font-bold tracking-wider">Update Delivery Status</p>
+            <div class="flex gap-2 w-full items-stretch">
+                <input type="text" id="admin-delivery-status-${order.id}" value="${currentDelivery}" placeholder="e.g. Delivery in 2 days" class="flex-1 min-w-0 bg-brand-dark border border-brand-green/50 rounded px-2 py-2 text-white text-sm outline-none">
+                <button onclick="updateDeliveryStatus('${order.id}')" class="shrink-0 bg-brand-green text-black px-3 py-2 rounded font-bold text-sm shadow-md hover:bg-brand-greenhover transition">Update</button>
+            </div>
+        </div>
+
+        <div class="bg-[#0b1115] p-3 rounded-lg border border-gray-800 mb-4">
+            <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Customer Details</p>
+            <p class="text-sm text-white font-semibold"><i class="fas fa-user text-brand-green mr-2"></i> ${order.customerName}</p>
+            <p class="text-sm text-gray-400 mt-1.5"><i class="fab fa-whatsapp text-brand-green mr-2"></i> ${order.customerPhone}</p>
+        </div>
+
+        ${addressHtml}
+
+        <div class="mt-4 mb-2 bg-[#0b1115] p-3 rounded-lg border border-gray-800">
+            <p class="text-xs text-gray-500 mb-3 uppercase font-bold tracking-wider border-b border-gray-800 pb-2">Items Ordered</p>
+            ${itemsHtml}
+            <div class="mt-3 pt-2 flex justify-between items-center">
+                <span class="text-gray-400 text-sm">Grand Total</span>
+                <span class="text-brand-green font-bold text-xl">₹${order.grandTotal}</span>
+            </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3">
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status</p>
+                <p class="text-sm font-semibold mt-1 ${order.payStatus.includes('Paid') ? 'text-green-400' : 'text-red-400'}">${order.payStatus || 'Unpaid'}</p>
+            </div>
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center flex flex-col justify-center items-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider w-full">Payment Mode</p>
+                <p class="text-[11px] text-white font-semibold mt-1 w-full text-center leading-tight">${order.payMode || 'N/A'}</p>
+            </div>
+        </div>
+    `;
+
+    const modal = document.getElementById('admin-order-details-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+
+// 4. ADMIN SIDE: FIREBASE ME DELIVERY STATUS UPDATE KARNA
+async function updateDeliveryStatus(id) {
+    let input = document.getElementById(`admin-delivery-status-${id}`);
+    let newStatus = input.value.trim();
+    if(!newStatus) return alert("Please enter a status!");
+    
+    try {
+        await db.collection('bills').doc(id).update({ deliveryStatus: newStatus });
+        
+        // Admin ke array mein update karo
+        let order = adminBills.find(b => b.id === id);
+        if(order) order.deliveryStatus = newStatus;
+        
+        alert("✅ Delivery Status Updated Successfully!");
+    } catch(e) { 
+        alert("❌ Error: " + e.message); 
+    }
 }
 
     </script>
