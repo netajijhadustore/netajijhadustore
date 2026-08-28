@@ -1327,15 +1327,6 @@ async function handleAddNewProduct(e) {
 
     const saveNewProductData = async (base64Img) => {
         try {
-            // Firebase Firestore has a 1MB limit per document. 
-            // If the image is still too large after compression, prevent upload.
-            if (base64Img && base64Img.length > 1000000) {
-                alert("❌ Image is too large even after compression. Please select a smaller photo.");
-                submitBtn.innerText = originalBtnText;
-                submitBtn.disabled = false;
-                return;
-            }
-
             const newProduct = {
                 name: document.getElementById('new-prod-name').value,
                 price: parseInt(document.getElementById('new-prod-price').value), 
@@ -1366,60 +1357,51 @@ async function handleAddNewProduct(e) {
         }
     };
 
-    if (fileInput.files && fileInput.files[0]) {
+    // 🌟 बिल्कुल SSCWarRoom वाला सिंपल FileReader Logic 🌟
+    if (fileInput.files && fileInput.files.length > 0) {
         const file = fileInput.files[0];
+        const reader = new FileReader();
         
-        // Use URL.createObjectURL which is much safer and faster on mobile devices
-        const objectUrl = URL.createObjectURL(file);
-        const img = new Image();
-        
-        img.onload = function() {
-            URL.revokeObjectURL(objectUrl); // Clean up memory immediately
-            
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-            
-            // Size limit to 600x600 for compression
-            const MAX_SIZE = 600;
-            if (width > height && width > MAX_SIZE) {
-                height *= MAX_SIZE / width;
-                width = MAX_SIZE;
-            } else if (height > MAX_SIZE) {
-                width *= MAX_SIZE / height;
-                height = MAX_SIZE;
-            }
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600;
+                const MAX_HEIGHT = 600;
+                let width = img.width;
+                let height = img.height;
 
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
+                if (width > height) {
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                } else {
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                }
 
-            // Compress to 60% quality JPEG
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-            saveNewProductData(compressedBase64);
-        };
-        
-        img.onerror = function() {
-            // Fallback: If drawing to canvas fails, try FileReader as a last resort
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                saveNewProductData(event.target.result);
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Compress image easily (70% quality jaisa aapne SSC me kiya hai)
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                saveNewProductData(compressedBase64);
             };
-            reader.onerror = function() {
-                alert("❌ Ye photo support nahi kar rahi hai. Kripya dusri photo chunein ya screen-shot lekar upload karein.");
-                submitBtn.innerText = originalBtnText;
-                submitBtn.disabled = false;
-            };
-            reader.readAsDataURL(file);
+            img.src = e.target.result;
         };
-        
-        img.src = objectUrl;
+
+        reader.onerror = function() {
+            alert("❌ Photo upload fail ho gayi. Kripya doosri photo chunein.");
+            submitBtn.innerText = originalBtnText;
+            submitBtn.disabled = false;
+        };
+
+        reader.readAsDataURL(file);
     } else { 
-        // If saving without a photo
+        // Agar photo select nahi ki hai toh bina photo ke save karein
         saveNewProductData(""); 
     }
 }
+
 
 async function deleteProduct(id) {
     if(confirm('Are you sure you want to delete this product?')) {
