@@ -503,6 +503,38 @@
             <button class="w-full mt-3 bg-brand-card hover:bg-gray-800 text-white font-medium py-3 rounded-lg border border-gray-700 transition text-sm" onclick="toggleCart()">Continue Shopping</button>
         </div>
     </aside>
+    <!-- ROLE SELECTION MODAL -->
+    <div id="role-selection-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+        <div class="bg-brand-card/95 border border-brand-green/30 rounded-2xl w-full max-w-sm shadow-[0_0_40px_rgba(22,163,74,0.15)] p-6 relative text-center">
+            
+            <div class="w-16 h-16 mx-auto bg-brand-green/10 rounded-full flex items-center justify-center mb-4 border border-brand-green/20 shadow-inner">
+                <i class="fas fa-users-cog text-brand-green text-2xl"></i>
+            </div>
+            
+            <h3 class="text-2xl font-bold text-white mb-2">Welcome to Netaji Jhadu!</h3>
+            <p class="text-xs text-gray-400 mb-6">To help us serve you better, please tell us who you are:</p>
+
+            <div class="flex flex-col gap-3">
+                <!-- Customer Button -->
+                <button onclick="saveUserRole('Customer')" class="w-full bg-[#0b1115] hover:bg-gray-800 border border-gray-700 hover:border-brand-green text-white font-semibold py-3.5 rounded-xl transition flex items-center justify-between px-5 group shadow-sm">
+                    <span class="flex items-center gap-3"><i class="fas fa-shopping-basket text-gray-400 group-hover:text-brand-green transition-colors"></i> Normal Customer</span>
+                    <i class="fas fa-chevron-right text-xs text-gray-600 group-hover:text-brand-green transition-colors"></i>
+                </button>
+
+                <!-- Shop Owner Button -->
+                <button onclick="saveUserRole('Shop Owner')" class="w-full bg-[#0b1115] hover:bg-gray-800 border border-gray-700 hover:border-brand-green text-white font-semibold py-3.5 rounded-xl transition flex items-center justify-between px-5 group shadow-sm">
+                    <span class="flex items-center gap-3"><i class="fas fa-store text-gray-400 group-hover:text-brand-green transition-colors"></i> Shop Owner (Retailer)</span>
+                    <i class="fas fa-chevron-right text-xs text-gray-600 group-hover:text-brand-green transition-colors"></i>
+                </button>
+
+                <!-- Supplier / Wholesaler Button -->
+                <button onclick="saveUserRole('Supplier')" class="w-full bg-[#0b1115] hover:bg-gray-800 border border-gray-700 hover:border-brand-green text-white font-semibold py-3.5 rounded-xl transition flex items-center justify-between px-5 group shadow-sm">
+                    <span class="flex items-center gap-3"><i class="fas fa-truck-loading text-gray-400 group-hover:text-brand-green transition-colors"></i> Wholesaler / Supplier</span>
+                    <i class="fas fa-chevron-right text-xs text-gray-600 group-hover:text-brand-green transition-colors"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- CHECKOUT MODAL -->
     <div id="checkout-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] sm:w-full max-w-lg bg-brand-card border border-gray-800 rounded-xl z-[60] hidden opacity-0 transition-opacity duration-300 max-h-[90vh] overflow-y-auto shadow-2xl custom-scrollbar">
@@ -1673,18 +1705,87 @@ async function handleEmailAuth(event) {
     }
 }
 
-function loginSuccess(user) {
+// --- NEW LOGIN & ROLE SELECTION LOGIC ---
+
+async function loginSuccess(user) {
     closeLogin();
-    
-    // ईमेल के @ से पहले वाले हिस्से को नाम की तरह यूज़ करेंगे
     const displayName = user.displayName || user.email.split('@')[0];
+
+    try {
+        // Firebase Database में चेक करें कि क्या यूज़र का रोल पहले से सेव है
+        const userDoc = await db.collection("users").doc(user.uid).get();
+
+        if (userDoc.exists && userDoc.data().role) {
+            // अगर पुराना यूज़र है और रोल पहले से सेव है, तो डायरेक्ट लॉगिन करें
+            finishLoginProcess(displayName, userDoc.data().role);
+        } else {
+            // अगर नया यूज़र है, तो उसे Role Selection वाला पॉपअप दिखाएं
+            document.getElementById('role-selection-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('role-selection-modal').classList.add('opacity-100'), 10);
+            
+            // डेटा टेम्पररी सेव करें ताकि बटन क्लिक करने पर काम आए
+            window.pendingRoleUid = user.uid;
+            window.pendingRoleName = displayName;
+            window.pendingRoleEmail = user.email;
+        }
+    } catch (error) {
+        console.error("Error checking role:", error);
+        // अगर इंटरनेट दिक्कत करे तो डिफ़ॉल्ट Customer मानकर लॉगिन कर दें
+        finishLoginProcess(displayName, "Customer");
+    }
+}
+
+// जब यूज़र पॉपअप में से कोई रोल (Customer/Shop Owner/Supplier) चुनेगा
+async function saveUserRole(selectedRole) {
+    const uid = window.pendingRoleUid;
+    const name = window.pendingRoleName;
+    const email = window.pendingRoleEmail;
     
-    localStorage.setItem('isLoggedIn', 'true'); 
-    localStorage.setItem('isAdmin', 'false');
-    localStorage.setItem('userName', displayName); 
-    
-    updateHeaderToProfile(displayName); 
-    openProfile();
+    // पॉपअप को गायब करें
+    const modal = document.getElementById('role-selection-modal');
+    modal.classList.remove('opacity-100');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+
+    try {
+        // Firebase Firestore में यूज़र का रोल सेव करें
+        await db.collection("users").doc(uid).set({
+            name: name,
+            email: email,
+            role: selectedRole,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        // लॉगिन प्रोसेस पूरा करें
+        finishLoginProcess(name, selectedRole);
+
+    } catch (error) {
+        alert("Error saving role: " + error.message);
+    }
+}
+
+// लॉगिन का आखिरी स्टेप (UI अपडेट करना)
+function finishLoginProcess(name, role) {
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('isAdmin', role === 'Admin' ? 'true' : 'false');
+    localStorage.setItem('userName', name);
+    localStorage.setItem('userRole', role); // यूज़र का रोल फोन में भी सेव कर लिया
+
+    if (role === 'Admin') {
+        updateHeaderToAdmin();
+        openAdmin();
+    } else {
+        updateHeaderToProfile(name);
+        openProfile();
+        
+        // प्रोफाइल में नाम के साथ रोल दिखाने का छोटा सा अलर्ट/अपडेट
+        const roleDisplay = document.getElementById('user-display-name');
+        if(roleDisplay && role !== 'Customer') {
+             // अगर दूकानदार या सप्लायर है, तो प्रोफाइल में उसके नाम के आगे बैज लगा देंगे
+             if(!roleDisplay.innerHTML.includes('text-[10px]')) {
+                 roleDisplay.innerHTML += ` <span class="bg-brand-green/20 text-brand-green text-[10px] px-2 py-0.5 rounded-full border border-brand-green/30 align-middle ml-2 uppercase tracking-wider">${role}</span>`;
+             }
+        }
+    }
     alert("✅ Authentication Successful!");
 }
 
