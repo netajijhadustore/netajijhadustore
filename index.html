@@ -503,15 +503,20 @@
             <button class="w-full mt-3 bg-brand-card hover:bg-gray-800 text-white font-medium py-3 rounded-lg border border-gray-700 transition text-sm" onclick="toggleCart()">Continue Shopping</button>
         </div>
     </aside>
-    <!-- ROLE SELECTION MODAL -->
+        <!-- ROLE SELECTION MODAL -->
     <div id="role-selection-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
         <div class="bg-brand-card/95 border border-brand-green/30 rounded-2xl w-full max-w-sm shadow-[0_0_40px_rgba(22,163,74,0.15)] p-6 relative text-center">
+            
+            <!-- Close Button (सिर्फ प्रोफाइल से खोलने पर दिखेगा) -->
+            <button onclick="closeRoleModal()" id="role-close-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hidden"><i class="fas fa-times"></i></button>
             
             <div class="w-16 h-16 mx-auto bg-brand-green/10 rounded-full flex items-center justify-center mb-4 border border-brand-green/20 shadow-inner">
                 <i class="fas fa-users-cog text-brand-green text-2xl"></i>
             </div>
             
             <h3 class="text-2xl font-bold text-white mb-2">Welcome to Netaji Jhadu!</h3>
+            <!-- बाकी आपका पुराना कोड (बटन वाला) वैसे ही रहेगा... -->
+
             <p class="text-xs text-gray-400 mb-6">To help us serve you better, please tell us who you are:</p>
 
             <div class="flex flex-col gap-3">
@@ -662,12 +667,23 @@
                         V
                     </div>
                     <div class="flex-1 overflow-hidden">
-                        <div id="display-name-mode" class="flex items-center gap-3">
-                            <h3 id="user-display-name" class="text-xl sm:text-2xl font-bold text-white truncate">Veer</h3>
-                            <button onclick="toggleEditName()" class="text-gray-400 hover:text-brand-green transition text-sm shrink-0">
-                                <i class="fas fa-pen"></i> Edit
-                            </button>
-                        </div>
+                        <div id="display-name-mode" class="flex flex-wrap items-center gap-3">
+    <h3 id="user-display-name" class="text-xl sm:text-2xl font-bold text-white truncate">Veer</h3>
+    
+    <!-- Role Badge (JS इसे कलर और नाम देगा) -->
+    <span id="user-role-badge" class="hidden"></span>
+
+    <!-- Edit Name Button -->
+    <button onclick="toggleEditName()" class="text-gray-400 hover:text-brand-green transition text-sm shrink-0">
+        <i class="fas fa-pen"></i> Edit
+    </button>
+
+    <!-- Change Role Button (Naya) -->
+    <button onclick="openRoleChanger()" class="text-gray-400 hover:text-brand-green transition text-sm shrink-0 border-l border-gray-700 pl-3 ml-1">
+        <i class="fas fa-user-tag"></i> Change Role
+    </button>
+</div>
+
                         
                         <div id="edit-name-mode" class="hidden flex-wrap items-center gap-2 mt-1">
                             <input type="text" id="new-name-input" class="bg-brand-dark border border-brand-green/50 rounded px-3 py-1.5 text-white text-sm focus:outline-none w-full max-w-[140px]">
@@ -1705,70 +1721,88 @@ async function handleEmailAuth(event) {
     }
 }
 
-// --- NEW LOGIN & ROLE SELECTION LOGIC ---
+// --- NEW ROLE & PROFILE LOGIC ---
 
 async function loginSuccess(user) {
     closeLogin();
     const displayName = user.displayName || user.email.split('@')[0];
 
     try {
-        // Firebase Database में चेक करें कि क्या यूज़र का रोल पहले से सेव है
         const userDoc = await db.collection("users").doc(user.uid).get();
 
         if (userDoc.exists && userDoc.data().role) {
-            // अगर पुराना यूज़र है और रोल पहले से सेव है, तो डायरेक्ट लॉगिन करें
             finishLoginProcess(displayName, userDoc.data().role);
         } else {
-            // अगर नया यूज़र है, तो उसे Role Selection वाला पॉपअप दिखाएं
+            // नए यूज़र के लिए क्लोज़ बटन छुपा दें (ताकि वो रोल बिना चुने भाग न पाए)
+            const closeBtn = document.getElementById('role-close-btn');
+            if(closeBtn) closeBtn.classList.add('hidden');
+            
             document.getElementById('role-selection-modal').classList.remove('hidden');
             setTimeout(() => document.getElementById('role-selection-modal').classList.add('opacity-100'), 10);
             
-            // डेटा टेम्पररी सेव करें ताकि बटन क्लिक करने पर काम आए
             window.pendingRoleUid = user.uid;
             window.pendingRoleName = displayName;
             window.pendingRoleEmail = user.email;
         }
     } catch (error) {
-        console.error("Error checking role:", error);
-        // अगर इंटरनेट दिक्कत करे तो डिफ़ॉल्ट Customer मानकर लॉगिन कर दें
         finishLoginProcess(displayName, "Customer");
     }
 }
 
-// जब यूज़र पॉपअप में से कोई रोल (Customer/Shop Owner/Supplier) चुनेगा
-async function saveUserRole(selectedRole) {
-    const uid = window.pendingRoleUid;
-    const name = window.pendingRoleName;
-    const email = window.pendingRoleEmail;
+// यह फंक्शन प्रोफाइल से रोल बदलने के लिए है
+function openRoleChanger() {
+    const closeBtn = document.getElementById('role-close-btn');
+    if(closeBtn) closeBtn.classList.remove('hidden'); // यहाँ क्लोज़ बटन दिखा दें
     
-    // पॉपअप को गायब करें
+    const roleModal = document.getElementById('role-selection-modal');
+    roleModal.classList.remove('hidden');
+    setTimeout(() => roleModal.classList.add('opacity-100'), 10);
+}
+
+function closeRoleModal() {
     const modal = document.getElementById('role-selection-modal');
     modal.classList.remove('opacity-100');
     setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+async function saveUserRole(selectedRole) {
+    // चेक करें कि यूज़र प्रोफाइल से अपडेट कर रहा है या पहली बार लॉगिन कर रहा है
+    const isUpdating = localStorage.getItem('isLoggedIn') === 'true';
+    const currentUser = firebase.auth().currentUser;
+    
+    const uid = isUpdating && currentUser ? currentUser.uid : window.pendingRoleUid;
+    const name = isUpdating ? localStorage.getItem('userName') : window.pendingRoleName;
+    const email = isUpdating && currentUser ? currentUser.email : window.pendingRoleEmail;
+    
+    closeRoleModal(); // पॉपअप बंद करें
 
     try {
-        // Firebase Firestore में यूज़र का रोल सेव करें
+        // Firebase अपडेट
         await db.collection("users").doc(uid).set({
             name: name,
             email: email,
             role: selectedRole,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        // लॉगिन प्रोसेस पूरा करें
-        finishLoginProcess(name, selectedRole);
+        localStorage.setItem('userRole', selectedRole);
 
+        if (isUpdating) {
+            alert("✅ Status Updated to: " + selectedRole);
+            openProfile(); // प्रोफाइल रिफ्रेश करें ताकि नया टैग दिखे
+        } else {
+            finishLoginProcess(name, selectedRole);
+        }
     } catch (error) {
         alert("Error saving role: " + error.message);
     }
 }
 
-// लॉगिन का आखिरी स्टेप (UI अपडेट करना)
 function finishLoginProcess(name, role) {
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('isAdmin', role === 'Admin' ? 'true' : 'false');
     localStorage.setItem('userName', name);
-    localStorage.setItem('userRole', role); // यूज़र का रोल फोन में भी सेव कर लिया
+    localStorage.setItem('userRole', role);
 
     if (role === 'Admin') {
         updateHeaderToAdmin();
@@ -1776,18 +1810,41 @@ function finishLoginProcess(name, role) {
     } else {
         updateHeaderToProfile(name);
         openProfile();
+    }
+}
+
+// ओपन प्रोफाइल को अपडेट किया गया है ताकि कलरफुल बैज दिखे
+function openProfile() {
+    closeAllModals();
+    clearTimeout(modalTimer); 
+    const savedName = localStorage.getItem('userName') || 'Veer';
+    const savedRole = localStorage.getItem('userRole') || 'Customer'; // रोल फेच करें
+
+    if (document.getElementById('user-display-name')) document.getElementById('user-display-name').innerText = savedName;
+    if (document.getElementById('profile-avatar')) document.getElementById('profile-avatar').innerText = savedName.charAt(0).toUpperCase();
+    if (document.getElementById('new-name-input')) document.getElementById('new-name-input').value = savedName;
+    
+    // डायनामिक कलरफुल बैज
+    const roleBadge = document.getElementById('user-role-badge');
+    if(roleBadge) {
+        roleBadge.innerText = savedRole;
+        roleBadge.classList.remove('hidden');
         
-        // प्रोफाइल में नाम के साथ रोल दिखाने का छोटा सा अलर्ट/अपडेट
-        const roleDisplay = document.getElementById('user-display-name');
-        if(roleDisplay && role !== 'Customer') {
-             // अगर दूकानदार या सप्लायर है, तो प्रोफाइल में उसके नाम के आगे बैज लगा देंगे
-             if(!roleDisplay.innerHTML.includes('text-[10px]')) {
-                 roleDisplay.innerHTML += ` <span class="bg-brand-green/20 text-brand-green text-[10px] px-2 py-0.5 rounded-full border border-brand-green/30 align-middle ml-2 uppercase tracking-wider">${role}</span>`;
-             }
+        // अलग-अलग रोल के लिए अलग-अलग कलर
+        if(savedRole === 'Shop Owner') {
+            roleBadge.className = "bg-blue-500/20 text-blue-400 text-[10px] px-2.5 py-1 rounded-full border border-blue-500/30 uppercase tracking-wider font-bold";
+        } else if(savedRole === 'Supplier') {
+            roleBadge.className = "bg-purple-500/20 text-purple-400 text-[10px] px-2.5 py-1 rounded-full border border-purple-500/30 uppercase tracking-wider font-bold";
+        } else {
+            roleBadge.className = "bg-brand-green/20 text-brand-green text-[10px] px-2.5 py-1 rounded-full border border-brand-green/30 uppercase tracking-wider font-bold";
         }
     }
-    alert("✅ Authentication Successful!");
+
+    if (profileDashboard) profileDashboard.classList.remove('hidden');
+    setTimeout(() => { if (profileDashboard) profileDashboard.classList.add('opacity-100'); }, 10);
+    document.body.style.overflow = 'hidden';
 }
+
 
                 function handleLogout() {
             if (confirm("Are you sure you want to log out?")) {
