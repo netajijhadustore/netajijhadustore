@@ -2851,6 +2851,68 @@ function downloadBillImage(id) {
         });
     }, 100);
 }
+// ✅ MISSING LOGIN SUCCESS FUNCTION
+function loginSuccess(user) {
+    closeLogin();
+    localStorage.setItem('isLoggedIn', 'true');
+    
+    // User ka naam nikalna (Google se ya email ke prefix se)
+    let displayName = user.displayName || user.email.split('@')[0] || 'User';
+    localStorage.setItem('userName', displayName);
+    
+    // UI Update karna
+    updateHeaderToProfile(displayName);
+    
+    // Notification
+    alert("✅ Login Successful! Welcome " + displayName);
+}
+// ✅ MISSING SAVE BILL FUNCTION
+async function saveBillOnly() {
+    const name = document.getElementById('bill-cust-name').value.trim();
+    const phone = document.getElementById('bill-cust-phone').value.trim();
+    const payStatus = document.getElementById('bill-pay-status').value;
+    const payMode = document.getElementById('bill-pay-mode').value;
+    
+    if(!name || !phone) return alert("Please enter Customer Name and WhatsApp Number.");
+    if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
+    
+    // Button ko disable karo taki double click na ho
+    const saveBtn = event.currentTarget;
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1.5"></i> Saving...`;
+    saveBtn.disabled = true;
+    
+    let grandTotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
+    const dateObj = new Date();
+    const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const newBill = {
+        date: dateStr,
+        customerName: name, 
+        customerPhone: phone, 
+        items: [...draftBillItems],
+        grandTotal: grandTotal, 
+        payStatus: payStatus, 
+        payMode: payMode,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    try {
+        const docRef = await db.collection('bills').add(newBill);
+        newBill.id = docRef.id;
+        adminBills.unshift(newBill);
+        
+        closeCreateBillModal();
+        renderAdminBills();
+        alert("✅ Bill Saved Successfully (Without sending WhatsApp message).");
+    } catch (error) {
+        alert("❌ Error saving bill: " + error.message);
+    } finally {
+        // Button reset
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
+}
 
     </script>
 <!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION -->
