@@ -17,6 +17,9 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
+<!-- Razorpay SDK -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -541,7 +544,7 @@
         </div>
     </div>
 
-    <!-- CHECKOUT MODAL -->
+     <!-- CHECKOUT MODAL -->
     <div id="checkout-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] sm:w-full max-w-lg bg-brand-card border border-gray-800 rounded-xl z-[60] hidden opacity-0 transition-opacity duration-300 max-h-[90vh] overflow-y-auto shadow-2xl custom-scrollbar">
         <div class="sticky top-0 bg-brand-card px-6 py-4 border-b border-gray-800 flex justify-between items-center z-10">
             <h3 class="text-lg font-bold text-white">Secure Checkout</h3>
@@ -557,25 +560,63 @@
                     <span class="flex items-center gap-1"><i class="fas fa-shield-check"></i> SSL Secure</span>
                 </div>
             </div>
-            <form onsubmit="processCheckout(event)" class="flex flex-col gap-4">
+            
+                        <!-- FORM YAHAN SE HATA DI GAYI HAI -->
+            <div class="flex flex-col gap-4">
                 <h4 class="text-sm font-semibold text-white border-b border-gray-800 pb-2">Customer Details</h4>
+                
                 <div>
-                    <label class="text-xs text-gray-400 mb-1 block">Full Name</label>
-                    <input type="text" id="checkout-name" placeholder="Enter your name" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green" required>
+                    <label class="text-xs text-gray-400 mb-1 block">Full Name *</label>
+                    <input type="text" id="checkout-name" placeholder="Enter your name" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green">
                 </div>
+                
                 <div>
-                    <label class="text-xs text-gray-400 mb-1 block">WhatsApp Number</label>
-                    <input type="tel" id="checkout-phone" placeholder="91xxxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green" required>
+                    <label class="text-xs text-gray-400 mb-1 block">WhatsApp Number *</label>
+                    <input type="tel" id="checkout-phone" placeholder="91xxxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green">
                 </div>
-                <div class="bg-brand-green/10 border border-brand-green/30 rounded-lg p-4 mb-2 mt-2">
-                    <p class="text-sm text-brand-green font-semibold mb-1"><i class="fas fa-store mr-1"></i> Store Pickup Only</p>
-                    <p class="text-xs text-gray-400">Home delivery is starting soon. You can collect your order from our Nangloi store.</p>
+
+                <!-- Delivery Address Upar Aa Gaya -->
+                <div class="mt-1">
+                    <div class="flex justify-between items-end mb-1.5">
+                        <label class="text-xs text-gray-400 block font-medium">Delivery Address *</label>
+                        <button type="button" onclick="getCheckoutLocation()" class="text-[10px] text-blue-400 font-bold bg-blue-500/10 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500/20 transition flex items-center gap-1 shadow-sm">
+                            <i class="fas fa-crosshairs"></i> Auto Detect GPS
+                        </button>
+                    </div>
+                    <textarea id="checkout-address" rows="3" placeholder="Enter your full address or detect location..." class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green transition resize-none"></textarea>
                 </div>
-                <button type="submit" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-4 rounded-lg mt-2 transition text-sm">
-                    Confirm Order (Via WhatsApp)
+                
+                <!-- Payment Method Niche Chala Gaya (Pichla sr-only fix applied) -->
+                <div class="mt-1">
+                    <label class="text-xs text-gray-400 mb-2 block">Payment Method</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer relative">
+                            <input type="radio" name="payment-method" value="Pay Now (UPI)" class="peer sr-only" checked>
+                            <div class="border border-gray-700 bg-brand-dark rounded-lg p-3 text-center peer-checked:border-brand-green peer-checked:bg-brand-green/10 transition h-full flex flex-col justify-center">
+                                <i class="fas fa-qrcode text-brand-green mb-1.5 text-lg"></i>
+                                <p class="text-white text-xs font-semibold">Pay Now (UPI)</p>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer relative">
+                            <input type="radio" name="payment-method" value="Pay Later (Cash)" class="peer sr-only">
+                            <div class="border border-gray-700 bg-brand-dark rounded-lg p-3 text-center peer-checked:border-brand-green peer-checked:bg-brand-green/10 transition h-full flex flex-col justify-center">
+                                <i class="fas fa-money-bill-wave text-brand-green mb-1.5 text-lg"></i>
+                                <p class="text-white text-xs font-semibold">Pay Later</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- BUTTON KO BHI CHANGE KAR DIYA HAI -->
+                <button type="button" onclick="processCheckout()" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-4 rounded-lg mt-2 transition text-sm">
+                    Confirm Order
                 </button>
-            </form>
+            </div>
+
+
         </div>
+    </div>
+
     </div>
 
     <!-- LOGIN MODAL -->
@@ -1065,7 +1106,8 @@ let storeProducts = []; // localStorage हटा दिया
 let adminBills = []; // localStorage हटा दिया
 let allReviews = []; // इसे भी खाली रखें
 let draftBillItems = [];
-
+let isDirectBuy = false; // Check karne ke liye ki direct buy hai ya cart se
+let directBuyItem = null; // Direct buy item ki detail save karne ke liye
 
         // Modals & Elements
         const overlay = document.getElementById('overlay');
@@ -1548,16 +1590,51 @@ async function deleteProduct(id) {
         
         function saveCart() { localStorage.setItem('netaji_cart', JSON.stringify(cart)); }
 
-        function addToCartFromStore(name, price, qtyInputId) { addToCartLogic(name, price, document.getElementById(qtyInputId).value); }
-        function buyNowFromStore(name, price, qtyInputId) { addToCartFromStore(name, price, qtyInputId); setTimeout(openCheckout, 300); }
+        // Naya Updated Cart Logic
+function addToCartFromStore(name, price, qtyInputId) { 
+    addToCartLogic(name, price, document.getElementById(qtyInputId).value, true); 
+}
 
-        function addToCartLogic(name, price, qtyInputStr) {
-            let qty = parseInt(qtyInputStr) || 1;
-            let existing = cart.find(item => item.name === name);
-            if (existing) existing.qty += qty; else cart.push({ name, price, qty });
-            saveCart(); renderCart();
-            if (cartDrawer.classList.contains('translate-x-full')) toggleCart();
-        }
+
+
+function addToCartFromStore(name, price, qtyInputId) { 
+    addToCartLogic(name, price, document.getElementById(qtyInputId).value, true); 
+}
+
+function buyNowFromStore(name, price, qtyInputId) {
+    let qty = parseInt(document.getElementById(qtyInputId).value) || 1;
+    isDirectBuy = true;
+    directBuyItem = { name: name, price: price, qty: qty };
+    document.getElementById('checkout-total').innerText = `₹${price * qty}`;
+    
+    fillCheckoutAddress(); // <-- NAYI LINE
+    openModalBasic(checkoutModal);
+}
+
+function openCheckout() {
+    if(cart.length === 0) return alert("Your cart is empty!");
+    isDirectBuy = false; 
+    let total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    document.getElementById('checkout-total').innerText = `₹${total}`;
+    
+    fillCheckoutAddress(); // <-- NAYI LINE
+    openModalBasic(checkoutModal);
+}
+
+
+function addToCartLogic(name, price, qtyInputStr, showCart = true) {
+    let qty = parseInt(qtyInputStr) || 1;
+    let existing = cart.find(item => item.name === name);
+    if (existing) existing.qty += qty; else cart.push({ name, price, qty });
+    saveCart(); 
+    renderCart();
+    
+    // Agar showCart true hai tabhi side drawer khulega
+    if (showCart && cartDrawer.classList.contains('translate-x-full')) {
+        toggleCart();
+    }
+}
+
 
         function updateCartItemQty(name, change) {
             let item = cart.find(i => i.name === name);
@@ -1601,19 +1678,108 @@ async function deleteProduct(id) {
             if(badge) { badge.innerText = totalItems; badge.style.display = totalItems > 0 ? 'flex' : 'none'; }
         }
 
-        function processCheckout(event) {
-            event.preventDefault();
-            if(cart.length === 0) return alert("Your cart is empty!");
-            const name = document.getElementById('checkout-name').value;
-            const phone = document.getElementById('checkout-phone').value;
-            
-            let msg = `*New Order - Netaji Jhadu Store*%0A---------------------------%0A*Name:* ${name}%0A*Phone:* ${phone}%0A---------------------------%0A`;
-            let totalAmt = 0;
-            cart.forEach(item => { msg += `▪ ${item.name} (x${item.qty}) - ₹${item.price * item.qty}%0A`; totalAmt += (item.price * item.qty); });
-            msg += `---------------------------%0A*Total Amount: ₹${totalAmt}*%0APayment: Pay at Store (Pickup)`;
-            window.open(`https://wa.me/918750900635?text=${msg}`, '_blank');
-            cart = []; saveCart(); renderCart(); closeAllModals();
+         function processCheckout() {
+    try {
+        let itemsToCheckout = [];
+        if (typeof isDirectBuy !== 'undefined' && isDirectBuy) {
+            itemsToCheckout = [directBuyItem];
+        } else {
+            itemsToCheckout = typeof cart !== 'undefined' ? cart : [];
         }
+
+        if(itemsToCheckout.length === 0) {
+            alert("⚠️ Your cart is empty!");
+            return;
+        }
+
+        // Details Fetch Karna
+        const nameEl = document.getElementById('checkout-name');
+        const phoneEl = document.getElementById('checkout-phone');
+        const addressEl = document.getElementById('checkout-address');
+        const paymentMethodEl = document.querySelector('input[name="payment-method"]:checked');
+        
+        const name = nameEl ? nameEl.value.trim() : "";
+        const phone = phoneEl ? phoneEl.value.trim() : "";
+        const address = addressEl ? addressEl.value.trim() : "";
+        const paymentMethod = paymentMethodEl ? paymentMethodEl.value : "Pay Later"; 
+
+        // Khali dabbe check karna (Kyunki Form tag hata diya hai)
+        if(!name || !phone || !address) {
+            alert("⚠️ Kripya apna Naam, WhatsApp Number aur Address bharein!");
+            return;
+        }
+        
+        let totalAmt = 0;
+        let msgItems = '';
+        
+        itemsToCheckout.forEach(item => { 
+            msgItems += `▪ ${item.name} (x${item.qty}) - ₹${item.price * item.qty}%0A`; 
+            totalAmt += (item.price * item.qty); 
+        });
+
+        // Agar user ne Pay Now (UPI) select kiya hai
+        if (paymentMethod.includes('Pay Now')) {
+            
+            if (typeof Razorpay === 'undefined') {
+                alert("⚠️ Razorpay Blocked!\nKaran: Aap Local File (file:///) chala rahe hain. Secure payment ke liye Live Server use karein, ya abhi ke liye 'Pay Later' chunein.");
+                return; 
+            }
+
+            alert("⏳ Razorpay Secure Payment Open ho raha hai...");
+
+            var options = {
+                "key": "rzp_live_TLl4cQ2FJnrsx6", // Aapki Key
+                "amount": totalAmt * 100, 
+                "currency": "INR",
+                "name": "Netaji Jhadu Store",
+                "description": "Premium Grass Brooms",
+                "handler": function (response){
+                    sendOrderToWhatsApp(name, phone, address, msgItems, totalAmt, paymentMethod, response.razorpay_payment_id);
+                },
+                "prefill": { "name": name, "contact": phone },
+                "theme": { "color": "#16a34a" }
+            };
+            
+            var rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (response){
+                alert("❌ Payment Failed! Reason: " + response.error.description);
+            });
+            rzp.open(); 
+            
+        } else {
+            // Pay Later (Cash)
+            sendOrderToWhatsApp(name, phone, address, msgItems, totalAmt, paymentMethod, "N/A");
+        }
+
+    } catch (error) {
+        alert("🚨 Error: " + error.message);
+    }
+}
+
+// WhatsApp par bhejne ka helper function
+function sendOrderToWhatsApp(name, phone, address, msgItems, totalAmt, paymentMethod, paymentId) {
+    let msg = `*New Order - Netaji Jhadu Store*%0A---------------------------%0A*Name:* ${name}%0A*Phone:* ${phone}%0A---------------------------%0A`;
+    msg += msgItems;
+    msg += `---------------------------%0A*Total Amount: ₹${totalAmt}*%0A*Payment Mode:* ${paymentMethod}%0A`;
+    
+    if (paymentId !== "N/A") {
+        msg += `*Payment Status:* PAID ✅%0A*Txn ID:* ${paymentId}%0A`;
+    }
+    
+    msg += `*Delivery Address:*%0A${encodeURIComponent(address)}`;
+    
+    window.open(`https://wa.me/918750900635?text=${msg}`, '_blank');
+    
+    // Cart clear karna
+    if (typeof isDirectBuy !== 'undefined' && !isDirectBuy) {
+        if(typeof cart !== 'undefined') cart = []; 
+        if(typeof saveCart === 'function') saveCart(); 
+        if(typeof renderCart === 'function') renderCart();
+    }
+    closeAllModals();
+}
+
+
 
         function orderDirectWhatsApp(itemName, price, qtyInputId) {
             const input = document.getElementById(qtyInputId);
@@ -1704,10 +1870,19 @@ function toggleDescription(id) {
             } else { closeAllModals(); }
         }
         
-        function openCheckout() {
-            if(cart.length === 0) return alert("Your cart is empty!");
-            openModalBasic(checkoutModal);
-        }
+     function openCheckout() {
+    if(cart.length === 0) return alert("Your cart is empty!");
+    
+    // Iska matlab user apni cart se order kar raha hai, direct buy se nahi
+    isDirectBuy = false; 
+    
+    // Cart ka total amount calculate karein
+    let total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    document.getElementById('checkout-total').innerText = `₹${total}`;
+    
+    openModalBasic(checkoutModal);
+}
+
         
         function openProfile() {
             closeAllModals();
@@ -2508,6 +2683,67 @@ async function loadSavedAddressFromDB() {
         }
     } catch(err) {
         console.error("Error loading address:", err);
+    }
+}
+// Database se Saved Address auto-fill karne ke liye
+async function fillCheckoutAddress() {
+    const addrInput = document.getElementById('checkout-address');
+    if(!addrInput) return;
+    
+    const currentUser = firebase.auth().currentUser;
+    if(currentUser) {
+        addrInput.placeholder = "Loading saved address...";
+        try {
+            const doc = await db.collection("users").doc(currentUser.uid).get();
+            if(doc.exists && doc.data().savedAddress) {
+                addrInput.value = doc.data().savedAddress;
+            } else {
+                addrInput.value = "";
+                addrInput.placeholder = "Enter your full address or detect location...";
+            }
+        } catch(e) {
+            addrInput.value = "";
+        }
+    } else {
+        addrInput.value = "";
+    }
+}
+
+// Checkout me Live GPS Location nikalne ke liye
+function getCheckoutLocation() {
+    const addrInput = document.getElementById('checkout-address');
+    const originalPh = addrInput.placeholder;
+    addrInput.placeholder = "Detecting GPS please wait...";
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+                
+                if(addrInput.value.trim() !== '') {
+                    if(!addrInput.value.includes('maps?q=')) {
+                        addrInput.value += `\n\n📍 Location: ${mapLink}`;
+                    }
+                } else {
+                    addrInput.value = `📍 Location: ${mapLink}\n(Please type your House/Flat no. above)`;
+                }
+                addrInput.placeholder = "Enter your full address or detect location...";
+            },
+            (error) => {
+                alert("⚠️ GPS Detect nahi ho paya. Kripya phone ki Location/GPS ON karein aur permission allow karein.");
+                addrInput.placeholder = originalPh;
+            },
+            { 
+                enableHighAccuracy: true, 
+                timeout: 10000, // 10 second baad apne aap error dega, atka nahi rahega
+                maximumAge: 0 
+            }
+        );
+    } else {
+        alert("Geolocation is not supported by your browser.");
+        addrInput.placeholder = originalPh;
     }
 }
 
