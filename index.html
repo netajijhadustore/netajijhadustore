@@ -1217,33 +1217,41 @@ async function fetchFirebaseData() {
 
         // New Feature: Resend Full Bill Data
         function resendBill(id) {
-            const bill = adminBills.find(b => b.id === id);
-            if(!bill) return;
+    const bill = adminBills.find(b => b.id === id);
+    if(!bill) return;
 
-            let msg = `*NETAJI JHADU STORE - INVOICE*%0A`;
-            msg += `---------------------------%0A`;
-            msg += `*Customer:* ${bill.customerName}%0A`;
-            msg += `*Date:* ${bill.date}%0A`;
-            msg += `---------------------------%0A`;
-            msg += `*Items:*%0A`;
-            
-            bill.items.forEach((item, index) => { 
-                msg += `${index + 1}. ${item.name} (x${item.qty}) - ₹${item.total}%0A`; 
-            });
-            
-            msg += `---------------------------%0A`;
-            msg += `*Grand Total: ₹${bill.grandTotal}*%0A`;
-            msg += `*Payment Status:* ${bill.payStatus}%0A`;
-            
-            if(bill.payStatus === 'Paid') {
-                msg += `*Payment Mode:* ${bill.payMode}%0A%0A`;
-            } else {
-                msg += `_Please complete your payment soon._%0A%0A`;
-            }
-            msg += `Thank you for shopping with us!`;
+    let displayStatus = bill.payStatus === 'Paid' ? 'Paid ✅' : 'Pending';
 
-            window.open(`https://wa.me/91${bill.customerPhone}?text=${msg}`, '_blank');
-        }
+    let msg = `*NETAJI JHADU STORE*%0A%0A`;
+    msg += `_Quality You Trust, Cleanliness You Deserve_%0A%0A`;
+    msg += `*ORDER INVOICE*%0A%0A`;
+    
+    msg += `*Customer Details*%0A`;
+    msg += `━━━━━━━━━━━━━━━━━━━━%0A`;
+    msg += `Name: ${bill.customerName}%0A`;
+    msg += `Phone: ${bill.customerPhone}%0A%0A`;
+    
+    msg += `Order Date: ${bill.date}%0A%0A`;
+    
+    msg += `*ORDER SUMMARY*%0A%0A`;
+    msg += `Product | Qty. | Rate | Amount%0A`;
+    
+    bill.items.forEach(item => { 
+        msg += `${item.name} | ${item.qty} | ₹${item.price} | ₹${item.total}%0A`; 
+    });
+    
+    msg += `%0A━━━━━━━━━━━━━━━━━━━━%0A%0A`;
+    msg += `*TOTAL AMOUNT: ₹${bill.grandTotal}*%0A%0A`;
+    
+    msg += `Payment Mode: ${bill.payMode}%0A`;
+    msg += `Payment Status: ${displayStatus}%0A%0A`;
+    
+    msg += `━━━━━━━━━━━━━━━━━━━━%0A%0A`;
+    msg += `“Thank you for choosing Netaji Jhadu Store — We value your trust!”`;
+
+    window.open(`https://wa.me/91${bill.customerPhone}?text=${msg}`, '_blank');
+}
+
 
         // Unpaid = None Logic
         function handlePaymentStatusChange() {
@@ -1343,7 +1351,7 @@ async function fetchFirebaseData() {
             tbody.innerHTML = html; totalDisplay.innerText = `₹${grandTotal}`;
         }
 
-        async function saveAndSendBill() {
+   async function saveAndSendBill() {
     const name = document.getElementById('bill-cust-name').value.trim();
     const phone = document.getElementById('bill-cust-phone').value.trim();
     const payStatus = document.getElementById('bill-pay-status').value;
@@ -1354,8 +1362,11 @@ async function fetchFirebaseData() {
     
     let grandTotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
 
+    const dateObj = new Date();
+    const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
     const newBill = {
-        date: new Date().toLocaleDateString(),
+        date: dateStr,
         customerName: name, 
         customerPhone: phone, 
         items: [...draftBillItems],
@@ -1365,18 +1376,38 @@ async function fetchFirebaseData() {
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
     
-    // Firebase में Save
     const docRef = await db.collection('bills').add(newBill);
     newBill.id = docRef.id;
     adminBills.unshift(newBill);
     
-    // WhatsApp Msg
-    let msg = `*NETAJI JHADU STORE - INVOICE*%0A---------------------------%0A*Customer:* ${name}%0A*Date:* ${newBill.date}%0A---------------------------%0A*Items:*%0A`;
-    draftBillItems.forEach((item, index) => { msg += `${index + 1}. ${item.name} (x${item.qty}) - ₹${item.total}%0A`; });
-    msg += `---------------------------%0A*Grand Total: ₹${grandTotal}*%0A*Payment Status:* ${payStatus}%0A`;
-    if(payStatus === 'Paid') msg += `*Payment Mode:* ${payMode}%0A%0A`;
-    else msg += `_Please complete your payment soon._%0A%0A`;
-    msg += `Thank you for shopping with us!`;
+    let displayStatus = payStatus === 'Paid' ? 'Paid ✅' : 'Pending';
+
+    let msg = `*NETAJI JHADU STORE*%0A%0A`;
+    msg += `_Quality You Trust, Cleanliness You Deserve_%0A%0A`;
+    msg += `*ORDER INVOICE*%0A%0A`;
+    
+    msg += `*Customer Details*%0A`;
+    msg += `━━━━━━━━━━━━━━━━━━━━%0A`;
+    msg += `Name: ${name}%0A`;
+    msg += `Phone: ${phone}%0A%0A`;
+    
+    msg += `Order Date: ${dateStr}%0A%0A`;
+    
+    msg += `*ORDER SUMMARY*%0A%0A`;
+    msg += `Product | Qty. | Rate | Amount%0A`;
+    
+    draftBillItems.forEach(item => { 
+        msg += `${item.name} | ${item.qty} | ₹${item.price} | ₹${item.total}%0A`; 
+    });
+    
+    msg += `%0A━━━━━━━━━━━━━━━━━━━━%0A%0A`;
+    msg += `*TOTAL AMOUNT: ₹${grandTotal}*%0A%0A`;
+    
+    msg += `Payment Mode: ${payMode}%0A`;
+    msg += `Payment Status: ${displayStatus}%0A%0A`;
+    
+    msg += `━━━━━━━━━━━━━━━━━━━━%0A%0A`;
+    msg += `“Thank you for choosing Netaji Jhadu Store — We value your trust!”`;
 
     window.open(`https://wa.me/91${phone}?text=${msg}`, '_blank');
     closeCreateBillModal();
@@ -1677,8 +1708,7 @@ function addToCartLogic(name, price, qtyInputStr, showCart = true) {
             if(document.getElementById('checkout-total')) document.getElementById('checkout-total').innerText = `₹${total}`;
             if(badge) { badge.innerText = totalItems; badge.style.display = totalItems > 0 ? 'flex' : 'none'; }
         }
-
-         function processCheckout() {
+function processCheckout() {
     try {
         let itemsToCheckout = [];
         if (typeof isDirectBuy !== 'undefined' && isDirectBuy) {
@@ -1692,7 +1722,6 @@ function addToCartLogic(name, price, qtyInputStr, showCart = true) {
             return;
         }
 
-        // Details Fetch Karna
         const nameEl = document.getElementById('checkout-name');
         const phoneEl = document.getElementById('checkout-phone');
         const addressEl = document.getElementById('checkout-address');
@@ -1701,9 +1730,8 @@ function addToCartLogic(name, price, qtyInputStr, showCart = true) {
         const name = nameEl ? nameEl.value.trim() : "";
         const phone = phoneEl ? phoneEl.value.trim() : "";
         const address = addressEl ? addressEl.value.trim() : "";
-        const paymentMethod = paymentMethodEl ? paymentMethodEl.value : "Pay Later"; 
+        const paymentMethod = paymentMethodEl ? paymentMethodEl.value : "Pay Later (Cash)"; 
 
-        // Khali dabbe check karna (Kyunki Form tag hata diya hai)
         if(!name || !phone || !address) {
             alert("⚠️ Kripya apna Naam, WhatsApp Number aur Address bharein!");
             return;
@@ -1712,23 +1740,19 @@ function addToCartLogic(name, price, qtyInputStr, showCart = true) {
         let totalAmt = 0;
         let msgItems = '';
         
+        // NAYA FORMAT YAHAN HAI
         itemsToCheckout.forEach(item => { 
-            msgItems += `▪ ${item.name} (x${item.qty}) - ₹${item.price * item.qty}%0A`; 
+            msgItems += `${item.name} | ${item.qty} | ₹${item.price} | ₹${item.price * item.qty}%0A`; 
             totalAmt += (item.price * item.qty); 
         });
 
-        // Agar user ne Pay Now (UPI) select kiya hai
         if (paymentMethod.includes('Pay Now')) {
-            
             if (typeof Razorpay === 'undefined') {
-                alert("⚠️ Razorpay Blocked!\nKaran: Aap Local File (file:///) chala rahe hain. Secure payment ke liye Live Server use karein, ya abhi ke liye 'Pay Later' chunein.");
+                alert("⚠️ Razorpay load nahi hua. Kripya page refresh karein.");
                 return; 
             }
-
-            alert("⏳ Razorpay Secure Payment Open ho raha hai...");
-
             var options = {
-                "key": "rzp_live_TLl4cQ2FJnrsx6", // Aapki Key
+                "key": "rzp_live_TLl4cQ2FJnrsx6", 
                 "amount": totalAmt * 100, 
                 "currency": "INR",
                 "name": "Netaji Jhadu Store",
@@ -1739,7 +1763,6 @@ function addToCartLogic(name, price, qtyInputStr, showCart = true) {
                 "prefill": { "name": name, "contact": phone },
                 "theme": { "color": "#16a34a" }
             };
-            
             var rzp = new Razorpay(options);
             rzp.on('payment.failed', function (response){
                 alert("❌ Payment Failed! Reason: " + response.error.description);
@@ -1747,30 +1770,53 @@ function addToCartLogic(name, price, qtyInputStr, showCart = true) {
             rzp.open(); 
             
         } else {
-            // Pay Later (Cash)
             sendOrderToWhatsApp(name, phone, address, msgItems, totalAmt, paymentMethod, "N/A");
         }
-
     } catch (error) {
         alert("🚨 Error: " + error.message);
     }
 }
 
+
 // WhatsApp par bhejne ka helper function
 function sendOrderToWhatsApp(name, phone, address, msgItems, totalAmt, paymentMethod, paymentId) {
-    let msg = `*New Order - Netaji Jhadu Store*%0A---------------------------%0A*Name:* ${name}%0A*Phone:* ${phone}%0A---------------------------%0A`;
-    msg += msgItems;
-    msg += `---------------------------%0A*Total Amount: ₹${totalAmt}*%0A*Payment Mode:* ${paymentMethod}%0A`;
+    const dateObj = new Date();
+    const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    let paymentStatus = paymentId !== "N/A" ? "Paid ✅" : "Pending";
+
+    let msg = `*NETAJI JHADU STORE*%0A%0A`;
+    msg += `_Quality You Trust, Cleanliness You Deserve_%0A%0A`;
+    msg += `*ORDER INVOICE*%0A%0A`;
+    
+    msg += `*Customer Details*%0A`;
+    msg += `━━━━━━━━━━━━━━━━━━━━%0A`;
+    msg += `Name: ${name}%0A`;
+    msg += `Phone: ${phone}%0A%0A`;
+    
+    msg += `Order Date: ${dateStr}%0A%0A`;
+    
+    msg += `*ORDER SUMMARY*%0A%0A`;
+    msg += `Product | Qty. | Rate | Amount%0A`;
+    msg += msgItems; // Items directly attach ho jayenge
+    
+    msg += `%0A━━━━━━━━━━━━━━━━━━━━%0A%0A`;
+    msg += `*TOTAL AMOUNT: ₹${totalAmt}*%0A%0A`;
+    
+    msg += `Payment Mode: ${paymentMethod}%0A`;
+    msg += `Payment Status: ${paymentStatus}%0A`;
     
     if (paymentId !== "N/A") {
-        msg += `*Payment Status:* PAID ✅%0A*Txn ID:* ${paymentId}%0A`;
+        msg += `Txn ID: ${paymentId}%0A`;
     }
     
-    msg += `*Delivery Address:*%0A${encodeURIComponent(address)}`;
+    msg += `%0A*DELIVERY ADDRESS*%0A%0A`;
+    msg += `${encodeURIComponent(address)}%0A%0A`;
+    
+    msg += `━━━━━━━━━━━━━━━━━━━━%0A%0A`;
+    msg += `“Thank you for choosing Netaji Jhadu Store — We value your trust!”`;
     
     window.open(`https://wa.me/918750900635?text=${msg}`, '_blank');
     
-    // Cart clear karna
     if (typeof isDirectBuy !== 'undefined' && !isDirectBuy) {
         if(typeof cart !== 'undefined') cart = []; 
         if(typeof saveCart === 'function') saveCart(); 
@@ -1778,7 +1824,6 @@ function sendOrderToWhatsApp(name, phone, address, msgItems, totalAmt, paymentMe
     }
     closeAllModals();
 }
-
 
 
         function orderDirectWhatsApp(itemName, price, qtyInputId) {
