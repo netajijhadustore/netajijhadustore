@@ -219,7 +219,8 @@
 
 
     <!-- DETAILED FEATURES SECTION (Sliding Boxes) -->
-    <section class="py-16 sm:py-20 relative z-10">
+    <section id="about" class="py-16 sm:py-20 relative z-10">
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
                 <h2 class="text-[10px] text-brand-green font-bold tracking-[0.3em] uppercase mb-3">Why Choose Us</h2>
@@ -388,7 +389,8 @@
     </div>
 
     <!-- FOOTER -->
-    <footer class="pt-16 pb-24 border-t border-gray-800 bg-brand-card mt-12 relative z-10">
+    <footer id="contact" class="pt-16 pb-24 border-t border-gray-800 bg-brand-card mt-12 relative z-10">
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
                 <div class="lg:col-span-1">
@@ -600,11 +602,12 @@
             <a href="#shop" onclick="toggleMobileMenu()" class="text-base font-medium text-gray-300 hover:text-brand-green transition">Shop</a>
             <a href="#about" onclick="toggleMobileMenu()" class="text-base font-medium text-gray-300 hover:text-brand-green transition">Why Us</a>
             <a href="#contact" onclick="toggleMobileMenu()" class="text-base font-medium text-gray-300 hover:text-brand-green transition">Contact Us</a>
-            <div class="border-t border-gray-800 pt-6 mt-2">
-                <button onclick="toggleMobileMenu(); openLogin()" class="w-full bg-brand-green/10 border border-brand-green/30 text-brand-green hover:bg-brand-green/20 font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                       <div class="border-t border-gray-800 pt-6 mt-2">
+                <button id="mobile-auth-btn" onclick="toggleMobileMenu(); openLogin()" class="w-full bg-brand-green/10 border border-brand-green/30 text-brand-green hover:bg-brand-green/20 font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
                     <i class="far fa-user"></i> Sign In / Register
                 </button>
             </div>
+
         </nav>
     </aside>
 
@@ -1357,66 +1360,67 @@ async function handleAddNewProduct(e) {
     if (fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
         
-        // चेक करें कि फाइल फोटो ही है न
         if (!file.type.match('image.*')) {
-            alert("❌ Please select a valid image file.");
+            alert("❌ Kripya sirf image (photo) select karein.");
             submitBtn.innerText = originalBtnText;
             submitBtn.disabled = false;
             return;
         }
 
-        const reader = new FileReader();
-        
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                // साइज 600x600 फिक्स किया ताकि फोटो 100KB के आसपास रहे
-                const MAX_WIDTH = 600; 
-                const MAX_HEIGHT = 600;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // फोटो को JPEG में 60% क्वालिटी पर कंप्रेस करें
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                saveNewProductData(compressedBase64);
-            };
+        try {
+            // सबसे नया और सेफ तरीका - सीधे Bitmap बनाना
+            const bitmap = await createImageBitmap(file);
             
-            img.onerror = function() {
-                alert("❌ Error: Image corrupt hai ya format sahi nahi hai.");
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 600;
+            const MAX_HEIGHT = 600;
+            let width = bitmap.width;
+            let height = bitmap.height;
+
+            if (width > height) {
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+            } else {
+                if (height > MAX_HEIGHT) {
+                    width *= MAX_HEIGHT / height;
+                    height = MAX_HEIGHT;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(bitmap, 0, 0, width, height);
+
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6); // 60% Quality
+            bitmap.close(); // मेमोरी फ्री करें
+            
+            saveNewProductData(compressedBase64);
+            
+        } catch (err) {
+            console.error("Compression Failed:", err);
+            // अगर Bitmap भी फेल हो जाए (Cloud photo की वजह से), तो सीधा FileReader से लास्ट ट्राई करें
+            try {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    saveNewProductData(event.target.result);
+                };
+                reader.onerror = function() {
+                    alert("❌ Error: Ye photo read nahi ho pa rahi. Kripya dhyan rakhein ki photo phone ki storage me ho (Cloud/Google Photos par nahi). Koi aur photo try karein.");
+                    submitBtn.innerText = originalBtnText;
+                    submitBtn.disabled = false;
+                };
+                reader.readAsDataURL(file);
+            } catch(fallbackErr) {
+                alert("❌ System Error: Kripya browser refresh karein aur dusri photo try karein.");
                 submitBtn.innerText = originalBtnText;
                 submitBtn.disabled = false;
-            };
-            
-            img.src = event.target.result;
-        };
-        
-        reader.onerror = function() {
-            alert("❌ Error: Photo read nahi ho paayi.");
-            submitBtn.innerText = originalBtnText;
-            submitBtn.disabled = false;
-        };
-        
-        reader.readAsDataURL(file);
+            }
+        }
     } else { 
-        // अगर बिना फोटो के सेव कर रहे हैं
+        // बिना फोटो के सेव
         saveNewProductData(""); 
     }
 }
@@ -1706,36 +1710,62 @@ function loginSuccess(user) {
     alert("✅ Authentication Successful!");
 }
 
-        function handleLogout() {
+                function handleLogout() {
             if (confirm("Are you sure you want to log out?")) {
                 localStorage.removeItem('isLoggedIn'); localStorage.removeItem('isAdmin');
                 closeAdmin(); closeProfile();
+                
+                // Desktop Header Reset
                 const authIcon = document.getElementById('auth-icon'); const authText = document.getElementById('auth-text'); const authBtn = document.getElementById('auth-btn');
                 if (authIcon && authText && authBtn) {
                     authIcon.innerHTML = '<i class="far fa-user text-[1.35rem]"></i>';
                     authText.innerText = 'Login'; authText.classList.remove('text-brand-green');
                     authBtn.setAttribute('onclick', 'openLogin()');
                 }
+                
+                // Mobile Menu Reset
+                const mobileAuthBtn = document.getElementById('mobile-auth-btn');
+                if(mobileAuthBtn) {
+                    mobileAuthBtn.innerHTML = `<i class="far fa-user"></i> Sign In / Register`;
+                    mobileAuthBtn.setAttribute('onclick', 'toggleMobileMenu(); openLogin()');
+                }
             }
         }
 
         function updateHeaderToProfile(userName) {
+            // Desktop Update
             const authIcon = document.getElementById('auth-icon'); const authText = document.getElementById('auth-text'); const authBtn = document.getElementById('auth-btn');
             if (authIcon && authText && authBtn) {
                 authIcon.innerHTML = `<div class="w-7 h-7 bg-brand-green rounded-full flex items-center justify-center text-black font-bold text-xs shadow-lg">${userName.charAt(0).toUpperCase()}</div>`;
                 authText.innerText = 'Profile'; authText.classList.add('text-brand-green');
                 authBtn.setAttribute('onclick', 'openProfile()');
             }
+            
+            // Mobile Menu Update
+            const mobileAuthBtn = document.getElementById('mobile-auth-btn');
+            if(mobileAuthBtn) {
+                mobileAuthBtn.innerHTML = `<div class="w-6 h-6 bg-brand-green rounded-full flex items-center justify-center text-black font-bold text-xs mr-2">${userName.charAt(0).toUpperCase()}</div> My Account`;
+                mobileAuthBtn.setAttribute('onclick', 'toggleMobileMenu(); openProfile()');
+            }
         }
 
         function updateHeaderToAdmin() {
+            // Desktop Update
             const authIcon = document.getElementById('auth-icon'); const authText = document.getElementById('auth-text'); const authBtn = document.getElementById('auth-btn');
             if (authIcon && authText && authBtn) {
                 authIcon.innerHTML = `<div class="w-7 h-7 bg-brand-green rounded-full flex items-center justify-center text-black shadow-lg"><i class="fas fa-shield-alt text-xs"></i></div>`;
                 authText.innerText = 'Admin Panel'; authText.classList.add('text-brand-green');
                 authBtn.setAttribute('onclick', 'openAdmin()');
             }
+            
+            // Mobile Menu Update
+            const mobileAuthBtn = document.getElementById('mobile-auth-btn');
+            if(mobileAuthBtn) {
+                mobileAuthBtn.innerHTML = `<i class="fas fa-shield-alt mr-2"></i> Admin Panel`;
+                mobileAuthBtn.setAttribute('onclick', 'toggleMobileMenu(); openAdmin()');
+            }
         }
+
           let insightChartInstance = null;
 
         function renderInsights() {
