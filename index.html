@@ -1327,6 +1327,15 @@ async function handleAddNewProduct(e) {
 
     const saveNewProductData = async (base64Img) => {
         try {
+            // Firebase Firestore has a 1MB limit per document. 
+            // If the image is still too large after compression, prevent upload.
+            if (base64Img && base64Img.length > 1000000) {
+                alert("❌ Image is too large even after compression. Please select a smaller photo.");
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+                return;
+            }
+
             const newProduct = {
                 name: document.getElementById('new-prod-name').value,
                 price: parseInt(document.getElementById('new-prod-price').value), 
@@ -1359,55 +1368,55 @@ async function handleAddNewProduct(e) {
 
     if (fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
-        const reader = new FileReader();
         
-        reader.onload = function(event) {
-            const img = new Image();
+        // Use URL.createObjectURL which is much safer and faster on mobile devices
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+        
+        img.onload = function() {
+            URL.revokeObjectURL(objectUrl); // Clean up memory immediately
             
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                
-                // साइज 600x600 फिक्स किया
-                const MAX_SIZE = 600;
-                if (width > height && width > MAX_SIZE) {
-                    height *= MAX_SIZE / width;
-                    width = MAX_SIZE;
-                } else if (height > MAX_SIZE) {
-                    width *= MAX_SIZE / height;
-                    height = MAX_SIZE;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // फोटो को कंप्रेस करें
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-                saveNewProductData(compressedBase64);
-            };
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
             
-            img.onerror = function() {
-                // ⚠️ अगर ब्राउज़र फोटो कंप्रेस करने में फेल हो जाए, तो हार न मानें और फोटो को सीधे (Raw) सेव कर दें!
-                console.log("Compression failed, saving raw image.");
+            // Size limit to 600x600 for compression
+            const MAX_SIZE = 600;
+            if (width > height && width > MAX_SIZE) {
+                height *= MAX_SIZE / width;
+                width = MAX_SIZE;
+            } else if (height > MAX_SIZE) {
+                width *= MAX_SIZE / height;
+                height = MAX_SIZE;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Compress to 60% quality JPEG
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            saveNewProductData(compressedBase64);
+        };
+        
+        img.onerror = function() {
+            // Fallback: If drawing to canvas fails, try FileReader as a last resort
+            const reader = new FileReader();
+            reader.onload = function(event) {
                 saveNewProductData(event.target.result);
             };
-            
-            img.src = event.target.result;
+            reader.onerror = function() {
+                alert("❌ Ye photo support nahi kar rahi hai. Kripya dusri photo chunein ya screen-shot lekar upload karein.");
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
         };
         
-        reader.onerror = function() {
-            // अगर फोन गैलरी से फोटो उठाने ही न दे
-            alert("❌ Phone is photo ko block kar raha hai. Kripya file select karte time seedhe 'Camera' 📸 ka option chunein aur turant photo khinch kar dalein.");
-            submitBtn.innerText = originalBtnText;
-            submitBtn.disabled = false;
-        };
-        
-        reader.readAsDataURL(file);
+        img.src = objectUrl;
     } else { 
-        // अगर बिना फोटो के सेव कर रहे हैं
+        // If saving without a photo
         saveNewProductData(""); 
     }
 }
