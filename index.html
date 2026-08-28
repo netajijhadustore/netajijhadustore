@@ -399,11 +399,17 @@
                     <p class="text-gray-400 text-sm mb-6 leading-relaxed">
                         Premium Indian brooms — handcrafted, eco-friendly, made to last. Cleaning tools for the modern Indian home.
                     </p>
-                    <div class="flex items-center gap-4">
-                        <a href="#" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-300 hover:text-white transition"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-300 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-300 hover:text-white transition"><i class="fab fa-whatsapp"></i></a>
-                    </div>
+                   <div class="flex items-center gap-4">
+    <!-- Instagram Link -->
+    <a href="https://www.instagram.com/netajijhadustore" target="_blank" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-300 hover:text-[#E1306C] transition-colors"><i class="fab fa-instagram"></i></a>
+    
+    <!-- Email Link (Gmail) -->
+    <a href="mailto:netajijhadustore@gmail.com" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-300 hover:text-[#EA4335] transition-colors"><i class="fas fa-envelope"></i></a>
+    
+    <!-- WhatsApp Link -->
+    <a href="https://wa.me/918750900635" target="_blank" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-300 hover:text-[#25D366] transition-colors"><i class="fab fa-whatsapp"></i></a>
+</div>
+
                 </div>
 
                 <div>
@@ -1350,55 +1356,70 @@ async function handleAddNewProduct(e) {
 
     if (fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
-        const img = new Image();
         
-        // Android के लिए ज़्यादा सेफ तरीका
-        const objectUrl = URL.createObjectURL(file);
+        // चेक करें कि फाइल फोटो ही है न
+        if (!file.type.match('image.*')) {
+            alert("❌ Please select a valid image file.");
+            submitBtn.innerText = originalBtnText;
+            submitBtn.disabled = false;
+            return;
+        }
 
-        img.onload = function() {
-            URL.revokeObjectURL(objectUrl); // मेमोरी खाली करने के लिए
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                // साइज 600x600 फिक्स किया ताकि फोटो 100KB के आसपास रहे
+                const MAX_WIDTH = 600; 
+                const MAX_HEIGHT = 600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // फोटो को JPEG में 60% क्वालिटी पर कंप्रेस करें
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                saveNewProductData(compressedBase64);
+            };
             
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 800;
-            const MAX_HEIGHT = 800;
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height) {
-                if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                }
-            } else {
-                if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
-                }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-            saveNewProductData(compressedBase64);
+            img.onerror = function() {
+                alert("❌ Error: Image corrupt hai ya format sahi nahi hai.");
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+            };
+            
+            img.src = event.target.result;
         };
         
-        img.onerror = function() {
-            URL.revokeObjectURL(objectUrl);
-            alert("❌ Error: Photo support nahi kar rahi. Kripya dusri photo try karein.");
+        reader.onerror = function() {
+            alert("❌ Error: Photo read nahi ho paayi.");
             submitBtn.innerText = originalBtnText;
             submitBtn.disabled = false;
         };
         
-        img.src = objectUrl;
+        reader.readAsDataURL(file);
     } else { 
+        // अगर बिना फोटो के सेव कर रहे हैं
         saveNewProductData(""); 
     }
 }
-
-
 
 async function deleteProduct(id) {
     if(confirm('Are you sure you want to delete this product?')) {
