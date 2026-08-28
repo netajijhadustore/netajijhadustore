@@ -1388,7 +1388,12 @@ async function deleteBill(id) {
                         <div class="flex justify-between items-start mb-2">
                             <div><p class="text-brand-green text-[10px] font-bold uppercase tracking-wider mb-1">${p.category}</p><h3 class="text-xl font-bold text-white cursor-pointer hover:text-brand-green transition line-clamp-1">${p.name}</h3></div>
                         </div>
-                        <p class="text-gray-400 text-sm mb-4 line-clamp-2">${p.desc}</p>
+                        <div class="mb-4">
+    <p id="desc-${p.id}" class="text-gray-400 text-sm line-clamp-2 transition-all duration-300">${p.desc}</p>
+    <!-- Agar description 70 characters se bada hai, tabhi button dikhayega -->
+    ${p.desc.length > 70 ? `<button id="btn-desc-${p.id}" onclick="toggleDescription('${p.id}')" class="text-brand-green text-xs font-semibold mt-1 hover:underline focus:outline-none">Read more</button>` : ''}
+</div>
+
                         <div class="flex items-end gap-2 mb-6 mt-auto">
                             <span class="text-2xl font-bold text-white">₹${p.price}</span>
                             ${p.mrp ? `<span class="text-gray-500 line-through text-sm mb-1">₹${p.mrp}</span>` : ''}
@@ -1615,6 +1620,22 @@ async function deleteProduct(id) {
             let qty = parseInt(input ? input.value : 1) || 1;
             window.open(`https://wa.me/918750900635?text=*Direct Order Inquiry*%0A---------------------------%0A*Item:* ${itemName}%0A*Qty:* ${qty}%0A*Total:* ₹${price * qty}%0A---------------------------%0AI would like to place this order.`, '_blank');
         }
+        // Product Description Toggle Function
+function toggleDescription(id) {
+    const descElement = document.getElementById(`desc-${id}`);
+    const btnElement = document.getElementById(`btn-desc-${id}`);
+    
+    if (descElement.classList.contains('line-clamp-2')) {
+        // Expand karna
+        descElement.classList.remove('line-clamp-2');
+        btnElement.innerText = "Show less";
+    } else {
+        // Wapas collapse karna
+        descElement.classList.add('line-clamp-2');
+        btnElement.innerText = "Read more";
+    }
+}
+
 
         // -----------------------------------------
         // 4. UI MODALS & LOGIC
@@ -1748,15 +1769,13 @@ async function deleteProduct(id) {
         }
 
 async function handleEmailAuth(event) {
-    event.preventDefault(); // यह पेज को रिफ्रेश होने से 100% रोकेगा
+    event.preventDefault(); 
     
     const emailInput = document.getElementById('email').value.trim();
     const passwordInput = document.getElementById('password').value.trim();
-    
-    // अब कोड सीधे ID से बटन पकड़ेगा, तो कभी क्रैश नहीं होगा
     const submitBtn = document.getElementById('login-submit-btn'); 
     
-    // एडमिन पैनल चेक
+    // Admin Check
     if (emailInput === 'netajijhadustore@gmail.com' && passwordInput === '9650335512') {
         closeLogin();
         localStorage.setItem('isLoggedIn', 'true'); 
@@ -1770,18 +1789,24 @@ async function handleEmailAuth(event) {
     submitBtn.disabled = true;
 
     try {
-        // Firebase Login
+        // Pehle Sign In try karein
         const userCredential = await firebase.auth().signInWithEmailAndPassword(emailInput, passwordInput);
         loginSuccess(userCredential.user);
         
     } catch (error) {
-        // Firebase Signup (अगर अकाउंट नहीं है तो नया बना देगा)
+        // Naya Firebase 'invalid-credential' deta hai agar user nahi hai ya password galat hai
         if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
             try {
+                // Agar account nahi mila toh naya bana do (Sign Up)
                 const newCredential = await firebase.auth().createUserWithEmailAndPassword(emailInput, passwordInput);
                 loginSuccess(newCredential.user);
             } catch (signUpError) {
-                alert("❌ Signup Error: " + signUpError.message);
+                // Agar Signup fail hua kyuki Email pehle se maujud hai = iska matlab Password galat tha!
+                if(signUpError.code === 'auth/email-already-in-use') {
+                    alert("❌ Galat Password! Kripya dobara check karein.");
+                } else {
+                    alert("❌ Signup Error: " + signUpError.message);
+                }
             }
         } else if (error.code === 'auth/wrong-password') {
             alert("❌ Galat Password! Kripya dobara check karein.");
@@ -1794,129 +1819,6 @@ async function handleEmailAuth(event) {
     }
 }
 
-// --- NEW ROLE & PROFILE LOGIC ---
-
-async function loginSuccess(user) {
-    closeLogin();
-    const displayName = user.displayName || user.email.split('@')[0];
-
-    try {
-        const userDoc = await db.collection("users").doc(user.uid).get();
-
-        if (userDoc.exists && userDoc.data().role) {
-            finishLoginProcess(displayName, userDoc.data().role);
-        } else {
-            // नए यूज़र के लिए क्लोज़ बटन छुपा दें (ताकि वो रोल बिना चुने भाग न पाए)
-            const closeBtn = document.getElementById('role-close-btn');
-            if(closeBtn) closeBtn.classList.add('hidden');
-            
-            document.getElementById('role-selection-modal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('role-selection-modal').classList.add('opacity-100'), 10);
-            
-            window.pendingRoleUid = user.uid;
-            window.pendingRoleName = displayName;
-            window.pendingRoleEmail = user.email;
-        }
-    } catch (error) {
-        finishLoginProcess(displayName, "Customer");
-    }
-}
-
-// यह फंक्शन प्रोफाइल से रोल बदलने के लिए है
-function openRoleChanger() {
-    const closeBtn = document.getElementById('role-close-btn');
-    if(closeBtn) closeBtn.classList.remove('hidden'); // यहाँ क्लोज़ बटन दिखा दें
-    
-    const roleModal = document.getElementById('role-selection-modal');
-    roleModal.classList.remove('hidden');
-    setTimeout(() => roleModal.classList.add('opacity-100'), 10);
-}
-
-function closeRoleModal() {
-    const modal = document.getElementById('role-selection-modal');
-    modal.classList.remove('opacity-100');
-    setTimeout(() => modal.classList.add('hidden'), 300);
-}
-
-async function saveUserRole(selectedRole) {
-    // चेक करें कि यूज़र प्रोफाइल से अपडेट कर रहा है या पहली बार लॉगिन कर रहा है
-    const isUpdating = localStorage.getItem('isLoggedIn') === 'true';
-    const currentUser = firebase.auth().currentUser;
-    
-    const uid = isUpdating && currentUser ? currentUser.uid : window.pendingRoleUid;
-    const name = isUpdating ? localStorage.getItem('userName') : window.pendingRoleName;
-    const email = isUpdating && currentUser ? currentUser.email : window.pendingRoleEmail;
-    
-    closeRoleModal(); // पॉपअप बंद करें
-
-    try {
-        // Firebase अपडेट
-        await db.collection("users").doc(uid).set({
-            name: name,
-            email: email,
-            role: selectedRole,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-
-        localStorage.setItem('userRole', selectedRole);
-
-        if (isUpdating) {
-            alert("✅ Status Updated to: " + selectedRole);
-            openProfile(); // प्रोफाइल रिफ्रेश करें ताकि नया टैग दिखे
-        } else {
-            finishLoginProcess(name, selectedRole);
-        }
-    } catch (error) {
-        alert("Error saving role: " + error.message);
-    }
-}
-
-function finishLoginProcess(name, role) {
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('isAdmin', role === 'Admin' ? 'true' : 'false');
-    localStorage.setItem('userName', name);
-    localStorage.setItem('userRole', role);
-
-    if (role === 'Admin') {
-        updateHeaderToAdmin();
-        openAdmin();
-    } else {
-        updateHeaderToProfile(name);
-        openProfile();
-    }
-}
-
-// ओपन प्रोफाइल को अपडेट किया गया है ताकि कलरफुल बैज दिखे
-function openProfile() {
-    closeAllModals();
-    clearTimeout(modalTimer); 
-    const savedName = localStorage.getItem('userName') || 'Veer';
-    const savedRole = localStorage.getItem('userRole') || 'Customer'; // रोल फेच करें
-
-    if (document.getElementById('user-display-name')) document.getElementById('user-display-name').innerText = savedName;
-    if (document.getElementById('profile-avatar')) document.getElementById('profile-avatar').innerText = savedName.charAt(0).toUpperCase();
-    if (document.getElementById('new-name-input')) document.getElementById('new-name-input').value = savedName;
-    
-    // डायनामिक कलरफुल बैज
-    const roleBadge = document.getElementById('user-role-badge');
-    if(roleBadge) {
-        roleBadge.innerText = savedRole;
-        roleBadge.classList.remove('hidden');
-        
-        // अलग-अलग रोल के लिए अलग-अलग कलर
-        if(savedRole === 'Shop Owner') {
-            roleBadge.className = "bg-blue-500/20 text-blue-400 text-[10px] px-2.5 py-1 rounded-full border border-blue-500/30 uppercase tracking-wider font-bold";
-        } else if(savedRole === 'Supplier') {
-            roleBadge.className = "bg-purple-500/20 text-purple-400 text-[10px] px-2.5 py-1 rounded-full border border-purple-500/30 uppercase tracking-wider font-bold";
-        } else {
-            roleBadge.className = "bg-brand-green/20 text-brand-green text-[10px] px-2.5 py-1 rounded-full border border-brand-green/30 uppercase tracking-wider font-bold";
-        }
-    }
-
-    if (profileDashboard) profileDashboard.classList.remove('hidden');
-    setTimeout(() => { if (profileDashboard) profileDashboard.classList.add('opacity-100'); }, 10);
-    document.body.style.overflow = 'hidden';
-}
 
 
                 function handleLogout() {
