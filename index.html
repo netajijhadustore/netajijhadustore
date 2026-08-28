@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Netaji Jhadu Store | Premium Indian Grass Brooms</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            dark: '#0b1115',
+                            card: '#111820',
+                            green: '#16a34a',
+                            greenhover: '#15803d',
+                            light: '#e2e8f0'
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+        <style>
+        body { 
+            background-color: #0b1115; 
+            background-image: url('1000073429.png'); /* Aapki image yahan link ho gayi */
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed; /* Scroll karne par background fix rahega */
+            background-repeat: no-repeat;
+            color: #e2e8f0; 
+        }
+        .glass { background: rgba(17, 24, 32, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass-card { background: #111820; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 1rem; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0b1115; }
+        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #16a34a; }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        /* Custom scrollbar for inner modals */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+    </style>
+    <!-- Chart.js for Pie Chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+</head>
+<body class="antialiased overflow-x-hidden selection:bg-brand-green selection:text-black">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="fixed top-0 w-full z-40 glass transition-all duration-300 border-b border-gray-800" id="header">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 sm:h-20">
+                <div class="flex items-center gap-3 cursor-pointer">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-brand-green rounded-full flex items-center justify-center p-0.5">
+                        <div class="w-full h-full bg-brand-dark rounded-full flex items-center justify-center">
+                            <i class="fas fa-leaf text-brand-green text-sm sm:text-base"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-bold text-white tracking-tight leading-none">Netaji Jhadu</h1>
+                        <span class="text-[10px] sm:text-xs text-brand-green font-bold uppercase tracking-wider">Official Store</span>
+                    </div>
+                </div>
+
+                <nav class="hidden md:flex items-center gap-8">
+                    <a href="#" class="text-sm font-medium text-white hover:text-brand-green transition">Home</a>
+                    <a href="#shop" class="text-sm font-medium text-gray-300 hover:text-brand-green transition">Shop</a>
+                    <a href="#about" class="text-sm font-medium text-gray-300 hover:text-brand-green transition">Why Us</a>
+                    <a href="#contact" class="text-sm font-medium text-gray-300 hover:text-brand-green transition">Contact</a>
+                </nav>
+
+                <div class="flex items-center gap-3 sm:gap-6">
+                    <!-- Login Button -->
+                    <button id="auth-btn" onclick="openLogin()" class="text-gray-300 hover:text-white transition flex items-center gap-2 p-1.5 sm:p-2">
+                        <div id="auth-icon" class="flex items-center justify-center">
+                            <i class="far fa-user text-[1.35rem]"></i>
+                        </div>
+                        <span id="auth-text" class="hidden sm:inline text-sm font-medium">Login</span>
+                    </button>
+                    
+                    <button onclick="toggleCart()" class="relative text-gray-300 hover:text-brand-green transition p-1.5 sm:p-2">
+                        <i class="fas fa-shopping-bag text-xl"></i>
+                        <span id="cart-count-badge" class="absolute top-0 right-0 -mt-0.5 -mr-0.5 bg-brand-green text-black text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+                    </button>
+
+                    <button onclick="toggleMobileMenu()" class="md:hidden text-gray-300 hover:text-white p-1.5 ml-1">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-4 overflow-hidden">
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10">
+            <div class="text-center lg:text-left animate-fade-in-up">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-green/30 bg-brand-green/10 text-brand-green text-xs font-bold mb-6">
+                    <span>🇮🇳</span> PREMIUM INDIAN QUALITY
+                </div>
+                
+                <h2 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] mb-6 tracking-tight">
+                    Premium Grass Brooms <br>
+                    <span class="text-brand-green italic">Made for Every Indian Home</span>
+                </h2>
+                
+                <p class="text-gray-400 text-base sm:text-lg mb-10 max-w-xl mx-auto lg:mx-0 font-light leading-relaxed">
+                    Handcrafted from quality natural grass for powerful, everyday cleaning. Durable, eco-friendly and made with care.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
+                    <button onclick="document.getElementById('shop').scrollIntoView()" class="bg-brand-green hover:bg-brand-greenhover text-black font-bold py-4 px-8 rounded-xl text-base flex items-center justify-center gap-2 transition-all">
+                        Shop Collection <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button onclick="window.open('https://wa.me/918750900635', '_blank')" class="bg-brand-card hover:bg-gray-800 text-white font-semibold py-4 px-8 rounded-xl text-base flex items-center justify-center gap-2 transition-all border border-gray-700">
+                        <i class="fab fa-whatsapp text-brand-green text-lg"></i> Order via WhatsApp
+                    </button>
+                </div>
+
+                <div class="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 text-xs sm:text-sm text-gray-400 font-medium">
+                    <span class="flex items-center gap-1.5 text-gray-500"><i class="fas fa-truck text-gray-500"></i> Home Delivery (Starting Soon)</span>
+                    <span class="flex items-center gap-1.5"><i class="fas fa-money-bill-wave text-brand-green"></i> Cash on Delivery</span>
+                    <span class="flex items-center gap-1.5"><i class="fas fa-shield-check text-brand-green"></i> Secure Checkout</span>
+                </div>
+            </div>
+
+            <div class="relative w-full aspect-square max-w-md mx-auto lg:max-w-full hidden lg:block">
+                <div class="glass-card w-full h-full flex items-center justify-center relative overflow-hidden group border border-gray-800">
+                    <div class="text-center p-8">
+                        <i class="fas fa-images text-6xl text-gray-600 mb-4"></i>
+                        <p class="text-gray-400 text-sm">Product Photography Placeholder</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+        <!-- STATS / COUNTING SECTION -->
+    <section id="stats" class="py-12 sm:py-16 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-4 text-center">
+                
+                <!-- Stat 1 -->
+                <div class="flex flex-col items-center justify-center">
+                    <h3 class="text-4xl sm:text-5xl font-extrabold text-brand-green mb-2 drop-shadow-md flex items-center">
+                        <span class="counter" data-target="10000">0</span>+
+                    </h3>
+                    <p class="text-white font-bold text-[13px] sm:text-[15px] drop-shadow-sm tracking-wide">Happy Customers</p>
+                    <p class="text-gray-400 text-[11px] sm:text-xs mt-1">Across India</p>
+                </div>
+
+                <!-- Stat 2 -->
+                <div class="flex flex-col items-center justify-center">
+                    <h3 class="text-4xl sm:text-5xl font-extrabold text-brand-green mb-2 drop-shadow-md flex items-center">
+                        <span class="counter" data-target="15">0</span>+
+                    </h3>
+                    <p class="text-white font-bold text-[13px] sm:text-[15px] drop-shadow-sm tracking-wide">Years Experience</p>
+                    <p class="text-gray-400 text-[11px] sm:text-xs mt-1">In the craft</p>
+                </div>
+
+                <!-- Stat 3 -->
+                <div class="flex flex-col items-center justify-center">
+                    <h3 class="text-4xl sm:text-5xl font-extrabold text-brand-green mb-2 drop-shadow-md flex items-center">
+                        <span class="counter" data-target="100">0</span>%
+                    </h3>
+                    <p class="text-white font-bold text-[13px] sm:text-[15px] drop-shadow-sm tracking-wide">Natural Grass</p>
+                    <p class="text-gray-400 text-[11px] sm:text-xs mt-1">Zero plastic</p>
+                </div>
+
+         <!-- Stat 4 -->
+<div class="flex flex-col items-center justify-center">
+    <h3 class="text-4xl sm:text-5xl font-extrabold text-brand-green mb-2 drop-shadow-md flex items-center">
+        <!-- Niche wali line me id="stat-avg-rating" add kiya hai -->
+        <span id="stat-avg-rating" class="counter-float" data-target="5.0">0.0</span>
+        <i class="fas fa-star text-2xl sm:text-3xl ml-1 text-brand-green"></i>
+    </h3>
+    <p class="text-white font-bold text-[13px] sm:text-[15px] drop-shadow-sm tracking-wide">Average Rating</p>
+    <p class="text-gray-400 text-[11px] sm:text-xs mt-1">Verified reviews</p>
+</div>
+
+
+            </div>
+        </div>
+    </section>
+                  
+
+
+    <!-- DETAILED FEATURES SECTION (Sliding Boxes) -->
+    <section class="py-16 sm:py-20 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-[10px] text-brand-green font-bold tracking-[0.3em] uppercase mb-3">Why Choose Us</h2>
+                <h3 class="text-3xl md:text-4xl font-bold text-white mb-4">Crafted with Purpose</h3>
+                <p class="text-gray-400 text-sm md:text-base max-w-2xl mx-auto">Every Netaji Jhadu broom is made with care, quality materials, and the Indian household in mind.</p>
+            </div>
+
+            <!-- Grid for Desktop, Stack for Mobile -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- Box 1 -->
+                <div class="feature-box opacity-0 translate-y-16 transition-all duration-700 ease-out bg-[#111820] border border-white/5 rounded-2xl p-6 shadow-xl hover:border-brand-green/30">
+                    <div class="w-12 h-12 bg-brand-green/10 rounded-xl flex items-center justify-center mb-5">
+                        <i class="fas fa-leaf text-brand-green text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Premium Indian Grass</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Sourced from the finest grass farms across India. Natural, soft yet strong bristles.</p>
+                </div>
+
+                <!-- Box 2 -->
+                <div class="feature-box opacity-0 translate-y-16 transition-all duration-700 ease-out delay-100 bg-[#111820] border border-white/5 rounded-2xl p-6 shadow-xl hover:border-brand-green/30">
+                    <div class="w-12 h-12 bg-brand-green/10 rounded-xl flex items-center justify-center mb-5">
+                        <i class="fas fa-link text-brand-green text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Strong Double Binding</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Double-stitched binding holds the grass firmly together — no shedding, no loosening.</p>
+                </div>
+
+                <!-- Box 3 -->
+                <div class="feature-box opacity-0 translate-y-16 transition-all duration-700 ease-out delay-200 bg-[#111820] border border-white/5 rounded-2xl p-6 shadow-xl hover:border-brand-green/30">
+                    <div class="w-12 h-12 bg-brand-green/10 rounded-xl flex items-center justify-center mb-5">
+                        <i class="far fa-clock text-brand-green text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Long Lasting</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Built to last months of daily use. Outlasts most market brooms by 2-3x.</p>
+                </div>
+
+                <!-- Box 4 -->
+                <div class="feature-box opacity-0 translate-y-16 transition-all duration-700 ease-out bg-[#111820] border border-white/5 rounded-2xl p-6 shadow-xl hover:border-brand-green/30">
+                    <div class="w-12 h-12 bg-brand-green/10 rounded-xl flex items-center justify-center mb-5">
+                        <i class="fas fa-recycle text-brand-green text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Eco Friendly</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">100% biodegradable materials. Zero plastic. Good for your home and the planet.</p>
+                </div>
+
+                <!-- Box 5 -->
+                <div class="feature-box opacity-0 translate-y-16 transition-all duration-700 ease-out delay-100 bg-[#111820] border border-white/5 rounded-2xl p-6 shadow-xl hover:border-brand-green/30">
+                    <div class="w-12 h-12 bg-brand-green/10 rounded-xl flex items-center justify-center mb-5">
+                        <i class="fas fa-hand-paper text-brand-green text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Comfortable Grip</h3>
+                    <p class="text-gray-400 text-sm leading-relaxed">Ergonomic handle designed for Indian households — comfortable for long sweeping sessions.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- PRODUCT SHOWCASE -->
+    <section id="shop" class="py-20 px-4 max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
+            <div>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-3">Choose Your Perfect Broom</h2>
+                <p class="text-gray-400">Premium quality for every sweeping need.</p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <!-- Naya Search Bar -->
+                <div class="relative w-full sm:w-64">
+                    <input type="text" id="product-search" onkeyup="searchProducts()" placeholder="Search brooms..." class="w-full bg-brand-dark border border-gray-700 rounded-lg pl-10 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-brand-green transition shadow-inner">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 text-sm"></i>
+                </div>
+                
+                <!-- Purana Category Filter -->
+                <select class="bg-brand-card border border-gray-700 text-white text-sm rounded-lg focus:ring-brand-green focus:border-brand-green block w-full sm:w-auto p-2.5 outline-none cursor-pointer">
+                    <option>All Categories</option>
+                    <option>Soft Grass</option>
+                    <option>Hard Broom</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- PRODUCTS WILL BE RENDERED HERE VIA JAVASCRIPT -->
+        <div id="shop-product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Dynamic Injection -->
+        </div>
+    </section>
+
+    <!-- REVIEWS SECTION -->
+    <section id="reviews" class="py-16 sm:py-24 relative z-10 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <!-- Small Tag -->
+                <div class="inline-block bg-brand-green/10 border border-brand-green/30 px-3 py-1 rounded-full mb-3">
+                    <span class="text-[10px] text-brand-green font-bold tracking-[0.25em] uppercase">Reviews</span>
+                </div>
+                <h3 class="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg">Loved Across India</h3>
+                <p class="text-gray-400 text-sm md:text-base font-light max-w-2xl mx-auto drop-shadow-md">Real customers. Real homes. Real results.</p>
+                
+       <!-- Aggregate Rating (4.9 Left Side with Stars) -->
+<div class="flex items-center justify-center gap-4 mt-6">
+    <!-- Niche wali line me id add kiya hai -->
+    <span id="review-avg-rating" class="text-white font-bold text-4xl lg:text-5xl tracking-tight leading-none">4.9</span>
+    <div class="flex flex-col items-start justify-center gap-1">
+        <div class="flex text-yellow-400 text-lg lg:text-xl drop-shadow-md gap-0.5">
+            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+        </div>
+        <span class="text-gray-400 text-xs sm:text-sm">from 10,000+ customers</span>
+    </div>
+</div>
+
+            </div>
+            
+            <!-- Reviews Grid (Dynamic - JS Yahan Inject Karega) -->
+            <div id="reviews-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Default loading state (taki blank na dikhe) -->
+                <div class="col-span-full text-center text-gray-500 text-sm">Loading reviews...</div>
+            </div>
+
+            <!-- Review Buttons (More / Write Review) -->
+            <div class="mt-12 flex flex-wrap justify-center items-center gap-4">
+                <button id="load-more-reviews-btn" onclick="toggleReviews()" class="bg-brand-dark border border-gray-700 text-white hover:bg-gray-800 font-semibold py-3 px-8 rounded-full transition-all duration-300 hidden">
+                    More Reviews <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                </button>
+                
+                <button onclick="openReviewModal()" class="bg-transparent border border-brand-green/50 text-brand-green hover:bg-brand-green hover:text-black font-semibold py-3 px-8 rounded-full transition-all duration-300 shadow-[0_0_15px_rgba(22,163,74,0.1)] flex items-center gap-2">
+                    <i class="fas fa-pen text-sm"></i> Write a Review
+                </button>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- WRITE REVIEW MODAL (Hidden by default) -->
+    <div id="review-modal" class="fixed inset-0 bg-brand-dark/80 backdrop-blur-xl z-[90] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+        <div class="bg-brand-card/90 backdrop-blur-2xl border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 relative">
+            <button onclick="closeReviewModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full bg-white/10"><i class="fas fa-times"></i></button>
+            
+            <h3 class="text-xl font-bold text-white mb-2">Share Your Experience</h3>
+            <p class="text-xs text-gray-400 mb-6">Your feedback helps us improve and helps others make better choices.</p>
+            
+            <form id="submit-review-form" onsubmit="submitReview(event)" class="flex flex-col gap-4">
+                <!-- Star Selection -->
+                <div class="flex justify-center gap-2 text-2xl text-gray-600 mb-2 cursor-pointer" id="star-rating-selector">
+                    <i class="fas fa-star hover:text-yellow-400 transition-colors" onclick="setRating(1)"></i>
+                    <i class="fas fa-star hover:text-yellow-400 transition-colors" onclick="setRating(2)"></i>
+                    <i class="fas fa-star hover:text-yellow-400 transition-colors" onclick="setRating(3)"></i>
+                    <i class="fas fa-star hover:text-yellow-400 transition-colors" onclick="setRating(4)"></i>
+                    <i class="fas fa-star hover:text-yellow-400 transition-colors" onclick="setRating(5)"></i>
+                </div>
+                <input type="hidden" id="review-rating-value" value="5" required>
+
+               <div>
+    <input type="text" id="review-name" placeholder="Your Name" class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green transition" required>
+</div>
+<div>
+    <textarea id="review-text" rows="3" placeholder="Write your review here..." class="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green transition resize-none" required></textarea>
+</div>
+
+                <button type="submit" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-3.5 rounded-lg mt-2 transition text-sm shadow-lg">
+                    Submit Review
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="pt-16 pb-24 border-t border-gray-800 bg-brand-card mt-12 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+                <div class="lg:col-span-1">
+                    <div class="flex items-center gap-2 mb-6">
+                        <div class="w-8 h-8 bg-brand-green rounded-full flex items-center justify-center text-black"><i class="fas fa-leaf text-xs"></i></div>
+                        <span class="text-xl font-bold text-white tracking-wide">Netaji Jhadu</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mb-6 leading-relaxed">
+                        Premium Indian brooms — handcrafted, eco-friendly, made to last. Cleaning tools for the modern Indian home.
+                    </p>
+                    <div class="flex items-center gap-4">
+                        <a href="#" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-300 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-300 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-300 hover:text-white transition"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-white mb-5">Quick Links</h4>
+                    <ul class="flex flex-col gap-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-brand-green transition">Shop All</a></li>
+                        <li><a href="#" class="hover:text-brand-green transition">About Us</a></li>
+                        <li><a href="#" class="hover:text-brand-green transition">Bulk Orders</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="font-bold text-white mb-5">Legal</h4>
+                    <ul class="flex flex-col gap-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-brand-green transition">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-brand-green transition">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-brand-green transition">Refund Policy</a></li>
+                    </ul>
+                </div>
+
+                                <!-- CONTACT US SECTION (Updated with Google Maps Link) -->
+                <div>
+                    <h4 class="font-bold text-white mb-5">Contact Us & Visit</h4>
+                    <ul class="flex flex-col gap-4 text-sm text-gray-400">
+                        
+                        <!-- Offline Store Highlight Box -->
+                        <li class="flex items-start gap-3 p-3 rounded-lg border border-brand-green/20 bg-brand-green/5 shadow-inner">
+                            <i class="fas fa-map-marker-alt mt-1 text-brand-green text-lg"></i> 
+                            <div>
+                                <span class="block text-white font-bold mb-1">Visit Offline Store</span>
+                                <span class="block text-xs mb-3 leading-relaxed">5/1980, Shukar Bazar Rd, Chander Vihar, Nangloi, Delhi 110041</span>
+                                <a href="https://share.google/SQFiaD7rPpwgs7jGI" target="_blank" class="inline-flex items-center gap-1.5 text-black bg-brand-green hover:bg-brand-greenhover transition-colors text-[11px] font-bold px-3 py-1.5 rounded-md shadow-sm uppercase tracking-wide">
+                                    <i class="fas fa-location-arrow"></i> Get Directions
+                                </a>
+                            </div>
+                        </li>
+
+                        <!-- Phone & Email -->
+                        <li class="flex items-center gap-3 pl-2"><i class="fas fa-phone-alt text-gray-500"></i> <span>+91 87509 00635</span></li>
+                        <li class="flex items-center gap-3 pl-2"><i class="fas fa-envelope text-gray-500"></i> <span>netajijhadustore@gmail.com</span></li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    
+                <!-- Yahan tumhare footer ka purana grid div khatam hota hai -->
+            </div>
+            
+            <!-- Naya Copyright Tag -->
+            <div class="border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-gray-500 text-xs sm:text-sm text-center md:text-left">
+                    &copy; 2026 Netaji Jhadu Store. All Rights Reserved.
+                </p>
+                <p class="text-gray-500 text-xs sm:text-sm flex items-center gap-1.5">
+                    Made with <i class="fas fa-heart text-red-500 text-[10px]"></i> in India
+                </p>
+            </div>
+        </div> <!-- Ye Footer ka max-w-7xl wala main div band ho raha hai -->
+    </footer>
+
+    
+
+    <!-- FLOATING WHATSAPP BUTTON -->
+    <a href="https://wa.me/918750900635" target="_blank" class="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform duration-300 z-40 group">
+        <i class="fab fa-whatsapp text-3xl"></i>
+    </a>
+
+    <!-- OVERLAYS & MODALS -->
+    <div id="overlay" class="fixed inset-0 bg-black/70 z-50 hidden opacity-0 transition-opacity duration-300" onclick="closeAllModals()"></div>
+
+    <!-- CART DRAWER -->
+    <aside id="cart-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[400px] bg-brand-card border-l border-gray-800 z-[60] transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="px-6 py-5 border-b border-gray-800 flex justify-between items-center bg-brand-dark">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="fas fa-shopping-bag text-brand-green"></i> Your Cart</h3>
+            <button onclick="toggleCart()" class="text-gray-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full bg-gray-800"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div id="cart-items-container" class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar">
+            <!-- Cart Items Injected here -->
+        </div>
+
+        <div class="border-t border-gray-800 p-6 bg-brand-dark">
+            <div class="flex justify-between text-gray-400 text-sm mb-2"><span>Subtotal</span> <span id="cart-subtotal" class="text-white font-medium">₹0</span></div>
+            <div class="flex justify-between text-white font-bold text-lg mb-6 pt-4 border-t border-gray-800"><span>Total</span> <span id="cart-total">₹0</span></div>
+            <button onclick="openCheckout()" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-3.5 rounded-lg transition flex justify-center items-center gap-2">
+                Proceed to Checkout <i class="fas fa-arrow-right"></i>
+            </button>
+            <button class="w-full mt-3 bg-brand-card hover:bg-gray-800 text-white font-medium py-3 rounded-lg border border-gray-700 transition text-sm" onclick="toggleCart()">Continue Shopping</button>
+        </div>
+    </aside>
+
+    <!-- CHECKOUT MODAL -->
+    <div id="checkout-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95%] sm:w-full max-w-lg bg-brand-card border border-gray-800 rounded-xl z-[60] hidden opacity-0 transition-opacity duration-300 max-h-[90vh] overflow-y-auto shadow-2xl custom-scrollbar">
+        <div class="sticky top-0 bg-brand-card px-6 py-4 border-b border-gray-800 flex justify-between items-center z-10">
+            <h3 class="text-lg font-bold text-white">Secure Checkout</h3>
+            <button onclick="closeAllModals()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-6">
+            <div class="bg-brand-dark border border-gray-800 rounded-lg p-4 flex justify-between items-center mb-6">
+                <div>
+                    <p class="text-xs text-gray-400 mb-0.5">Total Amount</p>
+                    <p id="checkout-total" class="font-bold text-white text-lg">₹0</p>
+                </div>
+                <div class="text-brand-green text-xs flex flex-col items-end gap-1">
+                    <span class="flex items-center gap-1"><i class="fas fa-shield-check"></i> SSL Secure</span>
+                </div>
+            </div>
+            <form onsubmit="processCheckout(event)" class="flex flex-col gap-4">
+                <h4 class="text-sm font-semibold text-white border-b border-gray-800 pb-2">Customer Details</h4>
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">Full Name</label>
+                    <input type="text" id="checkout-name" placeholder="Enter your name" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green" required>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">WhatsApp Number</label>
+                    <input type="tel" id="checkout-phone" placeholder="91xxxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green" required>
+                </div>
+                <div class="bg-brand-green/10 border border-brand-green/30 rounded-lg p-4 mb-2 mt-2">
+                    <p class="text-sm text-brand-green font-semibold mb-1"><i class="fas fa-store mr-1"></i> Store Pickup Only</p>
+                    <p class="text-xs text-gray-400">Home delivery is starting soon. You can collect your order from our Nangloi store.</p>
+                </div>
+                <button type="submit" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-4 rounded-lg mt-2 transition text-sm">
+                    Confirm Order (Via WhatsApp)
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <div id="login-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] sm:w-[400px] bg-brand-card border border-gray-800 rounded-2xl z-[70] hidden opacity-0 transition-opacity duration-300 shadow-2xl">
+        <div class="p-6 relative">
+            <button onclick="closeLogin()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition"><i class="fas fa-times"></i></button>
+            <div class="text-center mb-6 mt-2">
+                <div class="w-12 h-12 mx-auto bg-brand-green/10 rounded-full flex items-center justify-center mb-3">
+                    <i class="far fa-user text-brand-green text-xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-1">Welcome Back</h3>
+                <p class="text-xs text-gray-400">Sign in to manage your orders</p>
+                <p class="text-[10px] text-brand-green mt-2 font-bold">Hint for Admin: netajijhadustore@gmail.com / 9650335512</p>
+            </div>
+           <form id="login-form" onsubmit="handleEmailAuth(event)" class="flex flex-col gap-4">
+    <div>
+        <input type="email" id="email" placeholder="Email Address" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green" required>
+    </div>
+    <div>
+        <input type="password" id="password" placeholder="Password" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green" required>
+    </div>
+    <div class="flex justify-between items-center text-xs">
+        <label class="flex items-center gap-2 text-gray-400 cursor-pointer"><input type="checkbox" class="accent-brand-green"> Remember me</label>
+        <a href="#" class="text-brand-green hover:underline">Forgot Password?</a>
+    </div>
+    
+    <!-- मैंने बटन को एक ID 'login-submit-btn' दे दी है -->
+    <button type="submit" id="login-submit-btn" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-3.5 rounded-lg mt-2 transition text-sm flex justify-center items-center gap-2">
+        Sign In / Sign Up <i class="fas fa-arrow-right"></i>
+    </button>
+    
+    <div class="relative flex py-2 items-center">
+        <div class="flex-grow border-t border-gray-700"></div>
+        <span class="flex-shrink-0 mx-4 text-gray-500 text-xs">OR</span>
+        <div class="flex-grow border-t border-gray-700"></div>
+    </div>
+    
+    <button type="button" onclick="handleGoogleLogin()" class="w-full bg-white hover:bg-gray-100 text-black font-semibold py-3 rounded-lg transition text-sm flex justify-center items-center gap-3">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-4 h-4" alt="Google">
+        Continue with Google
+    </button>
+</form>
+
+            <p class="text-center text-xs text-gray-400 mt-6">
+                Don't have an account? <a href="#" class="text-brand-green font-semibold hover:underline">Sign Up</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- MOBILE MENU -->
+    <aside id="mobile-menu" class="fixed top-0 left-0 h-full w-[280px] bg-brand-card border-r border-gray-800 z-[60] transform -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="px-6 py-5 border-b border-gray-800 flex justify-between items-center bg-brand-dark">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-leaf text-brand-green"></i>
+                <span class="text-lg font-bold text-white">Menu</span>
+            </div>
+            <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full bg-gray-800"><i class="fas fa-times"></i></button>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+            <a href="#" onclick="toggleMobileMenu()" class="text-base font-medium text-white hover:text-brand-green transition">Home</a>
+            <a href="#shop" onclick="toggleMobileMenu()" class="text-base font-medium text-gray-300 hover:text-brand-green transition">Shop</a>
+            <a href="#about" onclick="toggleMobileMenu()" class="text-base font-medium text-gray-300 hover:text-brand-green transition">Why Us</a>
+            <a href="#contact" onclick="toggleMobileMenu()" class="text-base font-medium text-gray-300 hover:text-brand-green transition">Contact Us</a>
+            <div class="border-t border-gray-800 pt-6 mt-2">
+                <button onclick="toggleMobileMenu(); openLogin()" class="w-full bg-brand-green/10 border border-brand-green/30 text-brand-green hover:bg-brand-green/20 font-semibold py-3 rounded-lg transition flex items-center justify-center gap-2">
+                    <i class="far fa-user"></i> Sign In / Register
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- USER PROFILE DASHBOARD -->
+    <div id="profile-dashboard" class="fixed inset-0 bg-brand-dark z-[80] hidden opacity-0 transition-opacity duration-300 overflow-y-auto custom-scrollbar">
+        <div class="sticky top-0 bg-brand-card/95 backdrop-blur-md px-4 py-4 sm:px-8 border-b border-gray-800 flex justify-between items-center z-10">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="far fa-user-circle text-brand-green"></i> My Account
+            </h2>
+            <button onclick="closeProfile()" class="text-gray-400 hover:text-white transition bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+
+        <div class="max-w-3xl mx-auto px-4 py-6 sm:p-8">
+            <div class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-6 relative overflow-hidden shadow-lg">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-brand-green/10 blur-[50px] rounded-full pointer-events-none"></div>
+                <div class="flex items-center gap-4 relative z-10">
+                    <div id="profile-avatar" class="w-16 h-16 shrink-0 bg-brand-green rounded-full flex items-center justify-center text-black text-2xl font-bold shadow-[0_0_15px_rgba(22,163,74,0.3)]">
+                        V
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                        <div id="display-name-mode" class="flex items-center gap-3">
+                            <h3 id="user-display-name" class="text-xl sm:text-2xl font-bold text-white truncate">Veer</h3>
+                            <button onclick="toggleEditName()" class="text-gray-400 hover:text-brand-green transition text-sm shrink-0">
+                                <i class="fas fa-pen"></i> Edit
+                            </button>
+                        </div>
+                        
+                        <div id="edit-name-mode" class="hidden flex-wrap items-center gap-2 mt-1">
+                            <input type="text" id="new-name-input" class="bg-brand-dark border border-brand-green/50 rounded px-3 py-1.5 text-white text-sm focus:outline-none w-full max-w-[140px]">
+                            <button onclick="saveName()" class="bg-brand-green text-black px-3 py-1.5 rounded text-sm font-bold hover:bg-brand-greenhover">Save</button>
+                            <button onclick="toggleEditName()" class="text-gray-400 hover:text-white text-sm px-2">Cancel</button>
+                        </div>
+                        
+                        <p class="text-gray-400 text-sm mt-2 flex items-center gap-2 truncate">
+                            <i class="fas fa-envelope text-gray-500 text-xs shrink-0"></i> netajijhadustore@gmail.com
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <h4 class="text-white font-bold mb-4 px-1">Account Settings</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <button class="bg-brand-card border border-gray-800 hover:border-brand-green/40 rounded-xl p-5 flex items-center gap-4 transition text-left group">
+                    <div class="w-12 h-12 bg-brand-dark rounded-full flex items-center justify-center text-brand-green group-hover:scale-110 transition"><i class="fas fa-box-open text-lg"></i></div>
+                    <div><h5 class="text-white font-semibold mb-0.5">My Orders</h5><p class="text-gray-500 text-xs">Track your orders</p></div>
+                    <i class="fas fa-chevron-right text-gray-600 ml-auto"></i>
+                </button>
+                <button class="bg-brand-card border border-gray-800 hover:border-brand-green/40 rounded-xl p-5 flex items-center gap-4 transition text-left group">
+                    <div class="w-12 h-12 bg-brand-dark rounded-full flex items-center justify-center text-brand-green group-hover:scale-110 transition"><i class="fas fa-map-marker-alt text-lg"></i></div>
+                    <div><h5 class="text-white font-semibold mb-0.5">Saved Addresses</h5><p class="text-gray-500 text-xs">Edit delivery locations</p></div>
+                    <i class="fas fa-chevron-right text-gray-600 ml-auto"></i>
+                </button>
+            </div>
+
+            <button onclick="handleLogout()" class="w-full sm:w-auto bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 font-semibold py-3 px-8 rounded-xl transition flex justify-center items-center gap-2 mx-auto">
+                <i class="fas fa-sign-out-alt"></i> Log Out
+            </button>
+        </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD MODAL -->
+    <div id="admin-dashboard" class="fixed inset-0 bg-brand-dark z-[80] hidden opacity-0 transition-opacity duration-300 overflow-y-auto custom-scrollbar">
+        <div class="sticky top-0 bg-brand-card/95 backdrop-blur-md px-4 py-4 sm:px-8 border-b border-gray-800 flex justify-between items-center z-10">
+            <h2 class="text-xl font-bold text-brand-green flex items-center gap-2">
+                <i class="fas fa-shield-alt"></i> Admin Panel
+            </h2>
+            <button onclick="closeAdmin()" class="text-gray-400 hover:text-white transition bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+
+        <div class="max-w-4xl mx-auto px-4 py-6 sm:p-8">
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-brand-card border border-gray-800 rounded-xl p-4 text-center shadow-md">
+                    <h4 class="text-gray-400 text-[11px] uppercase tracking-wider mb-1 font-semibold">Total Orders</h4>
+                    <p id="admin-total-orders" class="text-2xl font-bold text-brand-green">0</p>
+                </div>
+                <div class="bg-brand-card border border-gray-800 rounded-xl p-4 text-center shadow-md">
+                    <h4 class="text-gray-400 text-[11px] uppercase tracking-wider mb-1 font-semibold">Products</h4>
+                    <p id="admin-total-products" class="text-2xl font-bold text-white">0</p>
+                </div>
+            </div>
+            <!-- DETAILED INSIGHTS SECTION -->
+            <div class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8 shadow-lg">
+                <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-chart-pie text-brand-green mr-2"></i> Detailed Insights</h3>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-[#0e141a] rounded-lg p-3 border border-gray-800">
+                        <p class="text-[10px] text-gray-500 uppercase font-bold">All-Time Sale</p>
+                        <p id="insight-all-time" class="text-lg font-bold text-white">₹0</p>
+                    </div>
+                    <div class="bg-[#0e141a] rounded-lg p-3 border border-gray-800">
+                        <p class="text-[10px] text-gray-500 uppercase font-bold">This Month</p>
+                        <p id="insight-monthly" class="text-lg font-bold text-brand-green">₹0</p>
+                    </div>
+                    <div class="bg-[#0e141a] rounded-lg p-3 border border-red-500/30">
+                        <p class="text-[10px] text-red-400 uppercase font-bold">Udhar (Pending)</p>
+                        <p id="insight-udhar" class="text-lg font-bold text-red-500">₹0</p>
+                    </div>
+                    <div class="bg-[#0e141a] rounded-lg p-3 border border-gray-800">
+                        <p class="text-[10px] text-gray-500 uppercase font-bold">Best Day</p>
+                        <p id="insight-best-day" class="text-[11px] font-bold text-white mt-1">-</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row gap-6 items-center">
+                    <div class="w-full md:w-1/2 flex justify-center">
+                        <div class="relative w-40 h-40">
+                            <canvas id="insightsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-1/2 space-y-3">
+                        <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                            <span class="text-sm text-gray-400"><i class="fas fa-wallet text-brand-green mr-1"></i> Received (Profit)</span>
+                            <span id="insight-profit" class="font-bold text-white">₹0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-400"><i class="fas fa-hand-holding-usd text-red-500 mr-1"></i> Udhar (Loss risk)</span>
+                            <span id="insight-udhar-list" class="font-bold text-red-500">₹0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BILLING SYSTEM SECTION -->
+            <div class="bg-brand-card border border-brand-green/30 rounded-2xl p-6 mb-8 relative overflow-hidden shadow-[0_0_15px_rgba(22,163,74,0.05)]">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-white"><i class="fas fa-file-invoice-dollar text-brand-green mr-2"></i> Billing System</h3>
+                        <p class="text-xs text-gray-400 mt-1">Create invoices and manage payments</p>
+                    </div>
+                    <button onclick="openCreateBillModal()" class="bg-brand-green hover:bg-brand-greenhover text-black text-sm font-bold px-4 py-2.5 rounded-lg flex items-center gap-2 transition shadow-lg">
+                        <i class="fas fa-plus"></i> New Bill
+                    </button>
+                </div>
+                
+                <h4 class="text-[11px] text-gray-400 uppercase tracking-wider mb-3 border-b border-gray-800 pb-2 font-semibold">Recent Bills</h4>
+                <div id="admin-bills-list" class="flex flex-col gap-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                    <!-- Bills Injected by JS -->
+                </div>
+            </div>
+
+            <!-- Manage Products Section -->
+            <div class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-white"><i class="fas fa-box-open text-brand-green mr-2"></i> Manage Products</h3>
+                    <button onclick="openAddProductModal()" class="bg-brand-card border border-gray-700 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1 transition">
+                        <i class="fas fa-plus"></i> Add New
+                    </button>
+                </div>
+                <div id="admin-product-list" class="flex flex-col gap-4">
+                    <!-- Products Injected by JS -->
+                </div>
+            </div>
+
+            <button onclick="handleLogout()" class="w-full sm:w-auto bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 font-semibold py-3 px-8 rounded-xl transition flex justify-center items-center gap-2 mx-auto">
+                <i class="fas fa-sign-out-alt"></i> Exit Admin Panel
+            </button>
+        </div>
+    </div>
+
+    <!-- CREATE BILL MODAL (WITH UNPAID = NONE LOGIC) -->
+    <div id="create-bill-modal" class="fixed inset-0 bg-brand-dark/95 z-[90] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-gray-800 rounded-xl w-full max-w-lg shadow-2xl max-h-[95vh] flex flex-col overflow-hidden">
+            <div class="bg-brand-card px-6 py-4 border-b border-gray-800 flex justify-between items-center shrink-0">
+                <h3 class="text-lg font-bold text-white"><i class="fas fa-file-invoice text-brand-green mr-2"></i> New Invoice</h3>
+                <button onclick="closeCreateBillModal()" class="text-gray-400 hover:text-white transition bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <!-- Customer Details -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1.5 block font-medium">Customer Name *</label>
+                        <input type="text" id="bill-cust-name" placeholder="e.g. Satyam" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none transition">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1.5 block font-medium">WhatsApp No. *</label>
+                        <input type="number" id="bill-cust-phone" placeholder="91xxxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Add Items Section -->
+                <div class="bg-[#0e141a] border border-gray-800 rounded-xl p-4 mb-6 shadow-inner">
+                    <label class="text-xs text-gray-400 mb-3 block font-semibold border-b border-gray-700/50 pb-2">Add Product to Bill</label>
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                            <select id="bill-product-select" class="w-full bg-brand-card border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm outline-none focus:border-brand-green transition">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+                        <div class="w-20">
+                            <input type="number" id="bill-qty-input" value="1" min="1" class="w-full bg-brand-card border border-gray-700 rounded-lg px-2 py-2.5 text-white text-sm text-center outline-none focus:border-brand-green transition">
+                        </div>
+                        <button type="button" onclick="addItemToDraftBill()" class="bg-brand-green text-black font-bold px-5 py-2.5 rounded-lg text-sm hover:bg-brand-greenhover transition shadow-md">Add</button>
+                    </div>
+                </div>
+
+                <!-- Bill Items Table -->
+                <div class="mb-4">
+                    <table class="w-full text-left text-xs text-gray-400">
+                        <thead class="uppercase bg-brand-dark/50 border-y border-gray-800 text-gray-500 font-semibold tracking-wider">
+                            <tr>
+                                <th class="py-2.5 pl-3">Item</th>
+                                <th class="py-2.5 text-center">Qty</th>
+                                <th class="py-2.5 text-right">Price</th>
+                                <th class="py-2.5 text-right pr-3">Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="draft-bill-items-list" class="divide-y divide-gray-800">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                    <div id="draft-bill-empty" class="text-center py-6 text-sm text-gray-500 italic bg-brand-dark/20 rounded-b-lg border-b border-gray-800">No items added yet.</div>
+                </div>
+                
+                <!-- Payment Status & Mode Row -->
+                <div class="grid grid-cols-2 gap-4 mt-6 border-t border-gray-800 pt-5 mb-4">
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1.5 block font-medium">Payment Status</label>
+                        <select id="bill-pay-status" onchange="handlePaymentStatusChange()" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-green outline-none transition cursor-pointer">
+                            <option value="Paid">Paid</option>
+                            <option value="Unpaid">Unpaid</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1.5 block font-medium">Payment Method</label>
+                        <select id="bill-pay-mode" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-green outline-none transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
+                            <option value="UPI (Online)">UPI (Online)</option>
+                            <option value="Cash (Offline)">Cash (Offline)</option>
+                            <option value="None">None</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Bill Summary -->
+                <div class="border-t border-gray-700 pt-4 pb-2 flex justify-between items-end">
+                    <span class="text-sm text-gray-400 font-medium">Grand Total</span>
+                    <span id="draft-bill-total" class="text-2xl font-bold text-brand-green leading-none">₹0</span>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-800 bg-brand-dark shrink-0">
+                <button onclick="saveAndSendBill()" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-3.5 rounded-lg transition text-sm flex justify-center items-center gap-2 shadow-lg">
+                    Save & Send via WhatsApp <i class="fab fa-whatsapp text-lg ml-1"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD PRODUCT MODAL (For Admin) -->
+    <div id="add-product-modal" class="fixed inset-0 bg-brand-dark/95 z-[90] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-gray-800 rounded-xl w-full max-w-lg shadow-2xl max-h-[95vh] overflow-y-auto custom-scrollbar">
+            <div class="sticky top-0 bg-brand-card px-6 py-4 border-b border-gray-800 flex justify-between items-center z-10">
+                <h3 class="text-lg font-bold text-white">Add New Product</h3>
+                <button onclick="closeAddProductModal()" class="text-gray-400 hover:text-white transition"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="add-product-form" onsubmit="handleAddNewProduct(event)" class="p-6 flex flex-col gap-4">
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">Product Name *</label>
+                    <input type="text" id="new-prod-name" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Selling Price (₹) *</label>
+                        <input type="number" id="new-prod-price" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none" required>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">MRP / Original Price (₹)</label>
+                        <input type="number" id="new-prod-mrp" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Category</label>
+                        <select id="new-prod-cat" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none">
+                            <option value="Soft Grass">Soft Grass</option>
+                            <option value="Hard Broom">Hard Broom</option>
+                            <option value="Combo">Combo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Tag (e.g. BEST SELLER)</label>
+                        <input type="text" id="new-prod-tag" placeholder="Optional" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">Product Image (Optional)</label>
+                    <input type="file" id="new-prod-image" accept="image/*" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2 text-white text-sm focus:border-brand-green outline-none file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-brand-green file:text-black hover:file:bg-brand-greenhover">
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 mb-1 block">Description *</label>
+                    <textarea id="new-prod-desc" rows="3" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none" required></textarea>
+                </div>
+                <button type="submit" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-3.5 rounded-lg mt-2 transition text-sm">
+                    Save Product
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- FULLY INTEGRATED JAVASCRIPT -->
+    <script>
+        // 1. Apna config yahan paste karo
+const firebaseConfig = {
+  apiKey: "AIzaSyCdjIRokjni-cEB5CkKWQkkO8No7nZEMRo",
+  authDomain: "netajijhadustore-dda90.firebaseapp.com",
+  projectId: "netajijhadustore-dda90",
+  storageBucket: "netajijhadustore-dda90.firebasestorage.app",
+  messagingSenderId: "276385347012",
+  appId: "1:276385347012:web:f5b867ba929f27881c6091",
+  measurementId: "G-1VSQVJYKDN"
+};
+
+// 2. Iske turant baad aapka initialize function aayega
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore(); // डेटाबेस कनेक्ट हो गया
+
+// Data States
+let cart = JSON.parse(localStorage.getItem('netaji_cart')) || [];
+let storeProducts = []; // localStorage हटा दिया
+let adminBills = []; // localStorage हटा दिया
+let allReviews = []; // इसे भी खाली रखें
+let draftBillItems = [];
+
+
+        // Modals & Elements
+        const overlay = document.getElementById('overlay');
+        const cartDrawer = document.getElementById('cart-drawer');
+        const checkoutModal = document.getElementById('checkout-modal');
+        const loginModal = document.getElementById('login-modal');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const profileDashboard = document.getElementById('profile-dashboard');
+        const addProductModal = document.getElementById('add-product-modal');
+        const createBillModal = document.getElementById('create-bill-modal');
+        
+        let modalTimer;
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', async () => {
+    checkLoginState();
+    renderCart();
+    initCounters();
+    initBoxAnimations();
+    await fetchFirebaseData(); // डेटाबेस से डेटा लाने का कॉल
+});
+
+async function fetchFirebaseData() {
+    try {
+        // Products लाएं
+        const prodSnap = await db.collection('products').get();
+        storeProducts = [];
+        prodSnap.forEach(doc => storeProducts.push({ id: doc.id, ...doc.data() }));
+
+        // Bills लाएं (नए सबसे ऊपर)
+        const billSnap = await db.collection('bills').orderBy('timestamp', 'desc').get();
+        adminBills = [];
+        billSnap.forEach(doc => adminBills.push({ id: doc.id, ...doc.data() }));
+
+        // Reviews लाएं
+        const revSnap = await db.collection('reviews').orderBy('timestamp', 'desc').get();
+        allReviews = [];
+        revSnap.forEach(doc => allReviews.push({ id: doc.id, ...doc.data() }));
+
+        // UI रेंडर करें
+        renderShopProducts();
+        renderAdminProducts();
+        renderAdminBills();
+        renderReviews();
+    } catch (error) {
+        console.error("Firebase load error:", error);
+    }
+}
+
+
+        // -----------------------------------------
+        // 1. ADMIN BILLING SYSTEM (With Resend & Delete Fixed)
+        // -----------------------------------------
+
+        function renderAdminBills() {
+            const list = document.getElementById('admin-bills-list');
+            const totalCount = document.getElementById('admin-total-orders');
+            if(!list || !totalCount) return;
+
+            totalCount.innerText = adminBills.length;
+            
+            if (adminBills.length === 0) {
+                list.innerHTML = `<p class="text-gray-500 text-sm italic py-4 text-center">No bills generated yet.</p>`;
+                return;
+            }
+
+            let html = '';
+            [...adminBills].reverse().forEach(bill => {
+                let payStatus = bill.payStatus || 'Paid';
+                let payMode = bill.payMode || 'Cash (Offline)';
+
+                let payBadge = payStatus === 'Paid' 
+                    ? `<span class="bg-brand-green/10 text-brand-green border border-brand-green/30 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase font-bold tracking-wider">PAID</span>`
+                    : `<span class="bg-red-500/10 text-red-500 border border-red-500/30 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase font-bold tracking-wider">UNPAID</span>`;
+                
+                let modeIcon = '';
+                if (payMode.includes('UPI')) modeIcon = `<i class="fas fa-qrcode text-[10px] mr-1 text-gray-400"></i>`;
+                else if (payMode.includes('Cash')) modeIcon = `<i class="fas fa-money-bill-wave text-[10px] mr-1 text-gray-400"></i>`;
+                else modeIcon = `<i class="fas fa-minus-circle text-[10px] mr-1 text-gray-400"></i>`;
+
+                html += `
+                <div class="bg-[#0e141a] border border-gray-800 rounded-xl p-3.5 flex justify-between items-center hover:border-brand-green/30 transition group">
+                    <div>
+                        <p class="text-white font-semibold text-sm flex items-center">${bill.customerName} ${payBadge}</p>
+                        <p class="text-gray-400 text-xs mt-0.5 flex items-center gap-2">
+                            <span>${bill.items.length} Items</span>
+                            <span class="text-gray-600">•</span>
+                            <span class="flex items-center">${modeIcon} ${payMode}</span>
+                        </p>
+                    </div>
+                    <div class="text-right flex flex-col items-end">
+                        <p class="text-brand-green font-bold text-base">₹${bill.grandTotal}</p>
+                        <div class="flex items-center gap-1.5 mt-1">
+                            <button onclick="deleteBill('${bill.id}')" class="text-gray-500 hover:text-red-500 transition flex items-center justify-center bg-gray-800 w-6 h-5 rounded"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                            <button onclick="resendBill('${bill.id}')" class="text-gray-500 hover:text-white transition flex items-center gap-1 bg-gray-800 px-2 py-0.5 rounded text-[10px]"><i class="fab fa-whatsapp"></i> Resend</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html;
+       renderInsights(); }
+
+      
+        
+
+        // New Feature: Resend Full Bill Data
+        function resendBill(id) {
+            const bill = adminBills.find(b => b.id === id);
+            if(!bill) return;
+
+            let msg = `*NETAJI JHADU STORE - INVOICE*%0A`;
+            msg += `---------------------------%0A`;
+            msg += `*Customer:* ${bill.customerName}%0A`;
+            msg += `*Date:* ${bill.date}%0A`;
+            msg += `---------------------------%0A`;
+            msg += `*Items:*%0A`;
+            
+            bill.items.forEach((item, index) => { 
+                msg += `${index + 1}. ${item.name} (x${item.qty}) - ₹${item.total}%0A`; 
+            });
+            
+            msg += `---------------------------%0A`;
+            msg += `*Grand Total: ₹${bill.grandTotal}*%0A`;
+            msg += `*Payment Status:* ${bill.payStatus}%0A`;
+            
+            if(bill.payStatus === 'Paid') {
+                msg += `*Payment Mode:* ${bill.payMode}%0A%0A`;
+            } else {
+                msg += `_Please complete your payment soon._%0A%0A`;
+            }
+            msg += `Thank you for shopping with us!`;
+
+            window.open(`https://wa.me/91${bill.customerPhone}?text=${msg}`, '_blank');
+        }
+
+        // Unpaid = None Logic
+        function handlePaymentStatusChange() {
+            const statusSelect = document.getElementById('bill-pay-status');
+            const modeSelect = document.getElementById('bill-pay-mode');
+            if (statusSelect.value === 'Unpaid') {
+                modeSelect.value = 'None';
+                modeSelect.disabled = true;
+            } else {
+                if(modeSelect.value === 'None') modeSelect.value = 'UPI (Online)'; 
+                modeSelect.disabled = false;
+            }
+        }
+
+        function openCreateBillModal() {
+            draftBillItems = [];
+            document.getElementById('bill-cust-name').value = '';
+            document.getElementById('bill-cust-phone').value = '';
+            document.getElementById('bill-qty-input').value = '1';
+            document.getElementById('bill-pay-status').value = 'Paid';
+            
+            const modeSelect = document.getElementById('bill-pay-mode');
+            modeSelect.value = 'UPI (Online)';
+            modeSelect.disabled = false; 
+            
+            populateBillProductSelect();
+            renderDraftBill();
+            
+            createBillModal.classList.remove('hidden');
+            setTimeout(() => createBillModal.classList.add('opacity-100'), 10);
+        }
+
+        function closeCreateBillModal() {
+            createBillModal.classList.remove('opacity-100');
+            setTimeout(() => createBillModal.classList.add('hidden'), 300);
+        }
+
+        function populateBillProductSelect() {
+            const select = document.getElementById('bill-product-select');
+            if(storeProducts.length === 0) {
+                select.innerHTML = '<option value="" disabled selected>No products available</option>';
+                return;
+            }
+            let html = '<option value="" disabled selected>Select a Product</option>';
+            storeProducts.forEach(p => { html += `<option value="${p.id}">${p.name} - ₹${p.price}</option>`; });
+            select.innerHTML = html;
+        }
+
+        function addItemToDraftBill() {
+            const select = document.getElementById('bill-product-select');
+            const qtyInput = document.getElementById('bill-qty-input');
+            const prodId = select.value;
+            const qty = parseInt(qtyInput.value) || 1;
+            
+            if(!prodId) return alert("Please select a product first.");
+            const prod = storeProducts.find(p => p.id === prodId);
+            if(!prod) return;
+
+            let existing = draftBillItems.find(i => i.id === prodId);
+            if(existing) {
+                existing.qty += qty; existing.total = existing.qty * existing.price;
+            } else {
+                draftBillItems.push({ id: prod.id, name: prod.name, price: prod.price, qty: qty, total: prod.price * qty });
+            }
+            select.value = ""; qtyInput.value = "1";
+            renderDraftBill();
+        }
+
+        function removeDraftItem(id) {
+            draftBillItems = draftBillItems.filter(i => i.id !== id);
+            renderDraftBill();
+        }
+
+        function renderDraftBill() {
+            const tbody = document.getElementById('draft-bill-items-list');
+            const emptyMsg = document.getElementById('draft-bill-empty');
+            const totalDisplay = document.getElementById('draft-bill-total');
+            
+            if(draftBillItems.length === 0) {
+                tbody.innerHTML = ''; emptyMsg.style.display = 'block'; totalDisplay.innerText = '₹0';
+                return;
+            }
+            
+            emptyMsg.style.display = 'none';
+            let html = ''; let grandTotal = 0;
+            draftBillItems.forEach(item => {
+                grandTotal += item.total;
+                html += `
+                <tr class="text-white hover:bg-gray-800/30 transition border-b border-gray-800/50 last:border-0">
+                    <td class="py-3 pl-3 truncate max-w-[120px] sm:max-w-[180px]">${item.name}</td>
+                    <td class="py-3 text-center">${item.qty}</td>
+                    <td class="py-3 text-right">₹${item.price}</td>
+                    <td class="py-3 text-right pr-3 text-brand-green font-semibold">₹${item.total}</td>
+                    <td class="py-3 text-center text-gray-600 hover:text-red-500 cursor-pointer pr-1" onclick="removeDraftItem('${item.id}')"><i class="fas fa-times text-xs"></i></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html; totalDisplay.innerText = `₹${grandTotal}`;
+        }
+
+        async function saveAndSendBill() {
+    const name = document.getElementById('bill-cust-name').value.trim();
+    const phone = document.getElementById('bill-cust-phone').value.trim();
+    const payStatus = document.getElementById('bill-pay-status').value;
+    const payMode = document.getElementById('bill-pay-mode').value;
+    
+    if(!name || !phone) return alert("Please enter Customer Name and WhatsApp Number.");
+    if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
+    
+    let grandTotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
+
+    const newBill = {
+        date: new Date().toLocaleDateString(),
+        customerName: name, 
+        customerPhone: phone, 
+        items: [...draftBillItems],
+        grandTotal: grandTotal, 
+        payStatus: payStatus, 
+        payMode: payMode,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    // Firebase में Save
+    const docRef = await db.collection('bills').add(newBill);
+    newBill.id = docRef.id;
+    adminBills.unshift(newBill);
+    
+    // WhatsApp Msg
+    let msg = `*NETAJI JHADU STORE - INVOICE*%0A---------------------------%0A*Customer:* ${name}%0A*Date:* ${newBill.date}%0A---------------------------%0A*Items:*%0A`;
+    draftBillItems.forEach((item, index) => { msg += `${index + 1}. ${item.name} (x${item.qty}) - ₹${item.total}%0A`; });
+    msg += `---------------------------%0A*Grand Total: ₹${grandTotal}*%0A*Payment Status:* ${payStatus}%0A`;
+    if(payStatus === 'Paid') msg += `*Payment Mode:* ${payMode}%0A%0A`;
+    else msg += `_Please complete your payment soon._%0A%0A`;
+    msg += `Thank you for shopping with us!`;
+
+    window.open(`https://wa.me/91${phone}?text=${msg}`, '_blank');
+    closeCreateBillModal();
+    renderAdminBills();
+}
+
+async function deleteBill(id) {
+    if(confirm("Are you sure you want to delete this bill?")) {
+        await db.collection('bills').doc(id).delete(); // Firebase से Delete
+        adminBills = adminBills.filter(b => b.id !== id);
+        renderAdminBills();
+    }
+}
+
+        // -----------------------------------------
+        // 2. DYNAMIC PRODUCT MANAGEMENT
+        // -----------------------------------------
+        
+        function initProducts() {
+            if (storeProducts.length === 0) {
+                storeProducts = [{
+                    id: Date.now().toString(), name: "Classic Premium Jhadu", price: 70, mrp: 99, category: "Soft Grass", tag: "BEST SELLER",
+                    desc: "Traditional Indian soft grass broom. Lightweight, dense bristles, perfect for indoor dust sweeping.", image: "" 
+                }];
+                saveProducts();
+            }
+            renderShopProducts();
+        }
+
+        function saveProducts() {
+            try { localStorage.setItem('netaji_products', JSON.stringify(storeProducts)); } 
+            catch (e) { alert("Storage full! Image might be too large."); }
+        }
+
+        function renderShopProducts() {
+            const grid = document.getElementById('shop-product-grid');
+            if(!grid) return;
+            
+            let html = '';
+            storeProducts.forEach(p => {
+                let saveAmt = p.mrp > p.price ? p.mrp - p.price : 0;
+                let imageElement = p.image ? `<img src="${p.image}" alt="${p.name}" class="w-full h-full object-contain p-2">` : `<i class="fas fa-broom text-6xl text-gray-600"></i>`;
+                
+                html += `
+                <div class="glass-card overflow-hidden group flex flex-col">
+                    <div class="relative aspect-square bg-gray-800 cursor-pointer overflow-hidden flex items-center justify-center">
+                        <div class="absolute inset-0 flex items-center justify-center bg-[#1a2228]">${imageElement}</div>
+                        ${p.tag ? `<div class="absolute top-3 left-3 flex gap-2"><span class="bg-brand-green text-black text-[10px] font-bold px-2.5 py-1 rounded-sm tracking-wide uppercase">${p.tag}</span></div>` : ''}
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col">
+                        <div class="flex justify-between items-start mb-2">
+                            <div><p class="text-brand-green text-[10px] font-bold uppercase tracking-wider mb-1">${p.category}</p><h3 class="text-xl font-bold text-white cursor-pointer hover:text-brand-green transition line-clamp-1">${p.name}</h3></div>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-2">${p.desc}</p>
+                        <div class="flex items-end gap-2 mb-6 mt-auto">
+                            <span class="text-2xl font-bold text-white">₹${p.price}</span>
+                            ${p.mrp ? `<span class="text-gray-500 line-through text-sm mb-1">₹${p.mrp}</span>` : ''}
+                            ${saveAmt ? `<span class="text-brand-green text-xs font-bold mb-1.5 ml-1">Save ₹${saveAmt}</span>` : ''}
+                        </div>
+                        <div class="grid grid-cols-1 gap-3">
+                            <div class="flex items-center justify-between border border-gray-700 rounded-lg overflow-hidden h-11 bg-brand-dark">
+                                <button onclick="updateQtyInput('qty-${p.id}', -1)" class="px-4 text-gray-400 hover:text-white hover:bg-gray-800 h-full transition w-1/3"><i class="fas fa-minus text-xs"></i></button>
+                                <input type="number" id="qty-${p.id}" value="1" min="1" class="w-1/3 text-center bg-transparent text-white font-semibold text-sm outline-none" readonly>
+                                <button onclick="updateQtyInput('qty-${p.id}', 1)" class="px-4 text-gray-400 hover:text-white hover:bg-gray-800 h-full transition w-1/3"><i class="fas fa-plus text-xs"></i></button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="addToCartFromStore('${p.name}', ${p.price}, 'qty-${p.id}')" class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2.5 rounded-lg text-sm transition">Add to Cart</button>
+                                <button onclick="buyNowFromStore('${p.name}', ${p.price}, 'qty-${p.id}')" class="bg-brand-green hover:bg-brand-greenhover text-black font-bold py-2.5 rounded-lg text-sm transition">Buy Now</button>
+                            </div>
+                            <button onclick="orderDirectWhatsApp('${p.name}', ${p.price}, 'qty-${p.id}')" class="w-full border border-gray-700 text-white hover:bg-gray-800 font-semibold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition mt-1">
+                                <i class="fab fa-whatsapp text-brand-green text-lg"></i> Order on WhatsApp
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            grid.innerHTML = storeProducts.length === 0 ? `<div class="col-span-full text-center text-gray-500 py-10">Products are updating.</div>` : html;
+        }
+
+        function renderAdminProducts() {
+            const list = document.getElementById('admin-product-list');
+            const totalCount = document.getElementById('admin-total-products');
+            if(!list) return;
+            totalCount.innerText = storeProducts.length;
+
+            let html = '';
+            storeProducts.forEach(p => {
+                let adminImg = p.image ? `<img src="${p.image}" class="w-full h-full object-contain p-1">` : `<i class="fas fa-broom text-gray-500"></i>`;
+                html += `
+                <div class="bg-brand-dark border border-gray-700 rounded-xl p-4 flex justify-between items-center group">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-gray-800 rounded flex-shrink-0 flex justify-center items-center overflow-hidden">${adminImg}</div>
+                        <div>
+                            <h4 class="text-white font-semibold text-sm truncate max-w-[150px] sm:max-w-[300px]">${p.name}</h4>
+                            <p class="text-brand-green font-bold text-xs">₹${p.price} ${p.mrp ? `<span class="text-gray-500 line-through font-normal">₹${p.mrp}</span>` : ''}</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteProduct('${p.id}')" class="text-gray-400 hover:text-red-500 transition bg-gray-800 w-8 h-8 rounded flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button>
+                </div>`;
+            });
+            list.innerHTML = html || `<p class="text-gray-500 text-sm italic">No products found.</p>`;
+        }
+async function handleAddNewProduct(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById('new-prod-image');
+    
+    // Save बटन को ढूंढें ताकि उस पर Loading... दिखा सकें
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalBtnText = submitBtn.innerText;
+    submitBtn.innerText = "Saving...";
+    submitBtn.disabled = true; // डबल क्लिक से बचने के लिए
+
+    const saveNewProductData = async (base64Img) => {
+        try {
+            const newProduct = {
+                name: document.getElementById('new-prod-name').value,
+                price: parseInt(document.getElementById('new-prod-price').value), 
+                mrp: parseInt(document.getElementById('new-prod-mrp').value) || 0,
+                category: document.getElementById('new-prod-cat').value, 
+                tag: document.getElementById('new-prod-tag').value,
+                desc: document.getElementById('new-prod-desc').value, 
+                image: base64Img,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            // Firebase में Save
+            const docRef = await db.collection('products').add(newProduct);
+            newProduct.id = docRef.id;
+            storeProducts.push(newProduct);
+            
+            renderAdminProducts(); 
+            renderShopProducts();
+            document.getElementById('add-product-form').reset();
+            closeAddProductModal(); 
+            alert("✅ Product Added Successfully!");
+            
+        } catch (error) {
+            console.error("Firebase Error:", error);
+            alert("❌ Firebase Error: " + error.message); // यह बताएगा कि क्या फेल हुआ
+        } finally {
+            // बटन को वापस नार्मल करें
+            submitBtn.innerText = originalBtnText;
+            submitBtn.disabled = false;
+        }
+    };
+
+    try {
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(event) { 
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Aspect ratio
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    saveNewProductData(compressedBase64);
+                };
+                
+                img.onerror = function() {
+                    alert("❌ Error: Image process nahi ho paayi.");
+                    submitBtn.innerText = originalBtnText;
+                    submitBtn.disabled = false;
+                };
+                
+                img.src = event.target.result;
+            };
+            
+            reader.onerror = function() {
+                alert("❌ Error: File read nahi ho paayi.");
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+            };
+            
+            reader.readAsDataURL(file);
+        } else { 
+            saveNewProductData(""); 
+        }
+    } catch (err) {
+        alert("❌ System Error: " + err.message);
+        submitBtn.innerText = originalBtnText;
+        submitBtn.disabled = false;
+    }
+}
+
+
+async function deleteProduct(id) {
+    if(confirm('Are you sure you want to delete this product?')) {
+        await db.collection('products').doc(id).delete(); // Firebase से Delete
+        storeProducts = storeProducts.filter(p => p.id !== id);
+        renderAdminProducts(); renderShopProducts(); renderCart(); 
+    }
+}
+
+
+        function openAddProductModal() { addProductModal.classList.remove('hidden'); setTimeout(() => addProductModal.classList.add('opacity-100'), 10); }
+        function closeAddProductModal() { addProductModal.classList.remove('opacity-100'); setTimeout(() => addProductModal.classList.add('hidden'), 300); }
+        function updateQtyInput(inputId, change) { const input = document.getElementById(inputId); if(input) { let val = parseInt(input.value) + change; input.value = val < 1 ? 1 : val; } }
+
+        // -----------------------------------------
+        // 3. STORE CART SYSTEM
+        // -----------------------------------------
+        
+        function saveCart() { localStorage.setItem('netaji_cart', JSON.stringify(cart)); }
+
+        function addToCartFromStore(name, price, qtyInputId) { addToCartLogic(name, price, document.getElementById(qtyInputId).value); }
+        function buyNowFromStore(name, price, qtyInputId) { addToCartFromStore(name, price, qtyInputId); setTimeout(openCheckout, 300); }
+
+        function addToCartLogic(name, price, qtyInputStr) {
+            let qty = parseInt(qtyInputStr) || 1;
+            let existing = cart.find(item => item.name === name);
+            if (existing) existing.qty += qty; else cart.push({ name, price, qty });
+            saveCart(); renderCart();
+            if (cartDrawer.classList.contains('translate-x-full')) toggleCart();
+        }
+
+        function updateCartItemQty(name, change) {
+            let item = cart.find(i => i.name === name);
+            if (item) { item.qty += change; if (item.qty < 1) cart = cart.filter(i => i.name !== name); saveCart(); renderCart(); }
+        }
+        function removeFromCart(name) { cart = cart.filter(i => i.name !== name); saveCart(); renderCart(); }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            const badge = document.getElementById('cart-count-badge');
+            let html = ''; let total = 0; let totalItems = 0;
+
+            cart.forEach(item => {
+                total += item.price * item.qty; totalItems += item.qty;
+                let prodMatch = storeProducts.find(p => p.name === item.name);
+                let cartImg = (prodMatch && prodMatch.image) ? `<img src="${prodMatch.image}" class="w-full h-full object-contain p-1">` : `<i class="fas fa-broom text-gray-500 text-2xl"></i>`;
+                html += `
+                <div class="flex gap-4">
+                    <div class="w-20 h-20 bg-gray-800 rounded-lg border border-gray-700 shrink-0 flex items-center justify-center overflow-hidden">${cartImg}</div>
+                    <div class="flex-1 flex flex-col justify-between">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-semibold text-white text-sm leading-tight pr-4">${item.name}</h4>
+                            <button onclick="removeFromCart('${item.name}')" class="text-gray-500 hover:text-red-500 transition"><i class="fas fa-trash-alt text-xs"></i></button>
+                        </div>
+                        <div class="flex justify-between items-end mt-2">
+                            <div class="text-brand-green font-bold text-sm">₹${item.price}</div>
+                            <div class="flex items-center border border-gray-700 rounded bg-brand-dark overflow-hidden h-7">
+                                <button onclick="updateCartItemQty('${item.name}', -1)" class="px-2 text-gray-400 hover:text-white transition"><i class="fas fa-minus text-[10px]"></i></button>
+                                <span class="w-6 text-center text-xs font-semibold text-white">${item.qty}</span>
+                                <button onclick="updateCartItemQty('${item.name}', 1)" class="px-2 text-gray-400 hover:text-white transition"><i class="fas fa-plus text-[10px]"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            if (cart.length === 0) html = `<div class="text-center text-gray-500 mt-10"><i class="fas fa-shopping-cart text-3xl mb-3"></i><p>Your cart is empty</p></div>`;
+            if(container) container.innerHTML = html;
+            if(document.getElementById('cart-subtotal')) document.getElementById('cart-subtotal').innerText = `₹${total}`;
+            if(document.getElementById('cart-total')) document.getElementById('cart-total').innerText = `₹${total}`;
+            if(document.getElementById('checkout-total')) document.getElementById('checkout-total').innerText = `₹${total}`;
+            if(badge) { badge.innerText = totalItems; badge.style.display = totalItems > 0 ? 'flex' : 'none'; }
+        }
+
+        function processCheckout(event) {
+            event.preventDefault();
+            if(cart.length === 0) return alert("Your cart is empty!");
+            const name = document.getElementById('checkout-name').value;
+            const phone = document.getElementById('checkout-phone').value;
+            
+            let msg = `*New Order - Netaji Jhadu Store*%0A---------------------------%0A*Name:* ${name}%0A*Phone:* ${phone}%0A---------------------------%0A`;
+            let totalAmt = 0;
+            cart.forEach(item => { msg += `▪ ${item.name} (x${item.qty}) - ₹${item.price * item.qty}%0A`; totalAmt += (item.price * item.qty); });
+            msg += `---------------------------%0A*Total Amount: ₹${totalAmt}*%0APayment: Pay at Store (Pickup)`;
+            window.open(`https://wa.me/918750900635?text=${msg}`, '_blank');
+            cart = []; saveCart(); renderCart(); closeAllModals();
+        }
+
+        function orderDirectWhatsApp(itemName, price, qtyInputId) {
+            const input = document.getElementById(qtyInputId);
+            let qty = parseInt(input ? input.value : 1) || 1;
+            window.open(`https://wa.me/918750900635?text=*Direct Order Inquiry*%0A---------------------------%0A*Item:* ${itemName}%0A*Qty:* ${qty}%0A*Total:* ₹${price * qty}%0A---------------------------%0AI would like to place this order.`, '_blank');
+        }
+
+        // -----------------------------------------
+        // 4. UI MODALS & LOGIC
+        // -----------------------------------------
+        
+        function checkLoginState() {
+            if (localStorage.getItem('isLoggedIn') === 'true') {
+                if (localStorage.getItem('isAdmin') === 'true') updateHeaderToAdmin();
+                else updateHeaderToProfile(localStorage.getItem('userName') || 'Veer');
+            }
+        }
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 20) { header.classList.add('shadow-md', 'bg-brand-card'); header.classList.remove('glass'); } 
+            else { header.classList.remove('shadow-md', 'bg-brand-card'); header.classList.add('glass'); }
+        });
+
+        function closeAllModals() {
+            if (cartDrawer) cartDrawer.classList.add('translate-x-full');
+            if (mobileMenu) mobileMenu.classList.add('-translate-x-full');
+            if (checkoutModal) checkoutModal.classList.remove('opacity-100');
+            if (loginModal) loginModal.classList.remove('opacity-100');
+            if (profileDashboard) profileDashboard.classList.remove('opacity-100');
+            if (overlay) overlay.classList.remove('opacity-100');
+            clearTimeout(modalTimer);
+            modalTimer = setTimeout(() => {
+                if (checkoutModal) checkoutModal.classList.add('hidden');
+                if (loginModal) loginModal.classList.add('hidden');
+                if (profileDashboard) profileDashboard.classList.add('hidden');
+                if (overlay) overlay.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
+
+                function openModalBasic(modalElement) {
+            closeAllModals();
+            clearTimeout(modalTimer); // यह लाइन फालतू टाइमर को रोक देगी
+            if (overlay) overlay.classList.remove('hidden');
+            if (modalElement) modalElement.classList.remove('hidden');
+            setTimeout(() => { if (overlay) overlay.classList.add('opacity-100'); if (modalElement) modalElement.classList.add('opacity-100'); }, 10);
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function openLogin() { openModalBasic(loginModal); }
+        function closeLogin() { closeAllModals(); }
+        
+        function toggleCart() {
+            if (cartDrawer.classList.contains('translate-x-full')) {
+                closeAllModals();
+                clearTimeout(modalTimer); 
+                if (overlay) overlay.classList.remove('hidden');
+                setTimeout(() => { if (overlay) overlay.classList.add('opacity-100'); }, 10);
+                cartDrawer.classList.remove('translate-x-full');
+                document.body.style.overflow = 'hidden';
+            } else { closeAllModals(); }
+        }
+        
+        function toggleMobileMenu() {
+            if (mobileMenu.classList.contains('-translate-x-full')) {
+                closeAllModals();
+                clearTimeout(modalTimer); 
+                if (overlay) overlay.classList.remove('hidden');
+                setTimeout(() => { if (overlay) overlay.classList.add('opacity-100'); }, 10);
+                mobileMenu.classList.remove('-translate-x-full');
+                document.body.style.overflow = 'hidden';
+            } else { closeAllModals(); }
+        }
+        
+        function openCheckout() {
+            if(cart.length === 0) return alert("Your cart is empty!");
+            openModalBasic(checkoutModal);
+        }
+        
+        function openProfile() {
+            closeAllModals();
+            clearTimeout(modalTimer); 
+            const savedName = localStorage.getItem('userName') || 'Veer';
+            if (document.getElementById('user-display-name')) document.getElementById('user-display-name').innerText = savedName;
+            if (document.getElementById('profile-avatar')) document.getElementById('profile-avatar').innerText = savedName.charAt(0).toUpperCase();
+            if (document.getElementById('new-name-input')) document.getElementById('new-name-input').value = savedName;
+            
+            if (profileDashboard) profileDashboard.classList.remove('hidden');
+            setTimeout(() => { if (profileDashboard) profileDashboard.classList.add('opacity-100'); }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeProfile() {
+            if (profileDashboard) profileDashboard.classList.remove('opacity-100');
+            setTimeout(() => { if (profileDashboard) profileDashboard.classList.add('hidden'); document.body.style.overflow = 'auto'; }, 300);
+        }
+        
+        function toggleEditName() {
+            const displayMode = document.getElementById('display-name-mode');
+            const editMode = document.getElementById('edit-name-mode');
+            if (displayMode.classList.contains('hidden')) {
+                displayMode.classList.remove('hidden'); displayMode.classList.add('flex');
+                editMode.classList.add('hidden'); editMode.classList.remove('flex');
+            } else {
+                displayMode.classList.add('hidden'); displayMode.classList.remove('flex');
+                editMode.classList.remove('hidden'); editMode.classList.add('flex');
+                document.getElementById('new-name-input').focus();
+            }
+        }
+        
+        function saveName() {
+            const newName = document.getElementById('new-name-input').value;
+            if (newName.trim() !== '') {
+                localStorage.setItem('userName', newName.trim());
+                document.getElementById('user-display-name').innerText = newName.trim();
+                const avatarLetter = newName.trim().charAt(0).toUpperCase();
+                if(document.getElementById('profile-avatar')) document.getElementById('profile-avatar').innerText = avatarLetter;
+                if(document.querySelector('#auth-icon .bg-brand-green')) document.querySelector('#auth-icon .bg-brand-green').innerText = avatarLetter;
+            }
+            toggleEditName();
+        }
+
+        function openAdmin() {
+            closeAllModals();
+            clearTimeout(modalTimer); 
+            renderAdminProducts(); renderAdminBills(); 
+            if (adminDashboard) adminDashboard.classList.remove('hidden');
+            setTimeout(() => { if (adminDashboard) adminDashboard.classList.add('opacity-100'); }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeAdmin() {
+            if (adminDashboard) adminDashboard.classList.remove('opacity-100');
+            setTimeout(() => { if (adminDashboard) adminDashboard.classList.add('hidden'); document.body.style.overflow = 'auto'; }, 300);
+        }
+
+async function handleEmailAuth(event) {
+    event.preventDefault(); // यह पेज को रिफ्रेश होने से 100% रोकेगा
+    
+    const emailInput = document.getElementById('email').value.trim();
+    const passwordInput = document.getElementById('password').value.trim();
+    
+    // अब कोड सीधे ID से बटन पकड़ेगा, तो कभी क्रैश नहीं होगा
+    const submitBtn = document.getElementById('login-submit-btn'); 
+    
+    // एडमिन पैनल चेक
+    if (emailInput === 'netajijhadustore@gmail.com' && passwordInput === '9650335512') {
+        closeLogin();
+        localStorage.setItem('isLoggedIn', 'true'); 
+        localStorage.setItem('isAdmin', 'true');
+        updateHeaderToAdmin(); 
+        openAdmin(); 
+        return;
+    }
+
+    submitBtn.innerText = "Processing...";
+    submitBtn.disabled = true;
+
+    try {
+        // Firebase Login
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(emailInput, passwordInput);
+        loginSuccess(userCredential.user);
+        
+    } catch (error) {
+        // Firebase Signup (अगर अकाउंट नहीं है तो नया बना देगा)
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            try {
+                const newCredential = await firebase.auth().createUserWithEmailAndPassword(emailInput, passwordInput);
+                loginSuccess(newCredential.user);
+            } catch (signUpError) {
+                alert("❌ Signup Error: " + signUpError.message);
+            }
+        } else if (error.code === 'auth/wrong-password') {
+            alert("❌ Galat Password! Kripya dobara check karein.");
+        } else {
+            alert("❌ Error: " + error.message);
+        }
+    } finally {
+        submitBtn.innerHTML = `Sign In / Sign Up <i class="fas fa-arrow-right"></i>`;
+        submitBtn.disabled = false;
+    }
+}
+
+function loginSuccess(user) {
+    closeLogin();
+    
+    // ईमेल के @ से पहले वाले हिस्से को नाम की तरह यूज़ करेंगे
+    const displayName = user.displayName || user.email.split('@')[0];
+    
+    localStorage.setItem('isLoggedIn', 'true'); 
+    localStorage.setItem('isAdmin', 'false');
+    localStorage.setItem('userName', displayName); 
+    
+    updateHeaderToProfile(displayName); 
+    openProfile();
+    alert("✅ Authentication Successful!");
+}
+
+        function handleLogout() {
+            if (confirm("Are you sure you want to log out?")) {
+                localStorage.removeItem('isLoggedIn'); localStorage.removeItem('isAdmin');
+                closeAdmin(); closeProfile();
+                const authIcon = document.getElementById('auth-icon'); const authText = document.getElementById('auth-text'); const authBtn = document.getElementById('auth-btn');
+                if (authIcon && authText && authBtn) {
+                    authIcon.innerHTML = '<i class="far fa-user text-[1.35rem]"></i>';
+                    authText.innerText = 'Login'; authText.classList.remove('text-brand-green');
+                    authBtn.setAttribute('onclick', 'openLogin()');
+                }
+            }
+        }
+
+        function updateHeaderToProfile(userName) {
+            const authIcon = document.getElementById('auth-icon'); const authText = document.getElementById('auth-text'); const authBtn = document.getElementById('auth-btn');
+            if (authIcon && authText && authBtn) {
+                authIcon.innerHTML = `<div class="w-7 h-7 bg-brand-green rounded-full flex items-center justify-center text-black font-bold text-xs shadow-lg">${userName.charAt(0).toUpperCase()}</div>`;
+                authText.innerText = 'Profile'; authText.classList.add('text-brand-green');
+                authBtn.setAttribute('onclick', 'openProfile()');
+            }
+        }
+
+        function updateHeaderToAdmin() {
+            const authIcon = document.getElementById('auth-icon'); const authText = document.getElementById('auth-text'); const authBtn = document.getElementById('auth-btn');
+            if (authIcon && authText && authBtn) {
+                authIcon.innerHTML = `<div class="w-7 h-7 bg-brand-green rounded-full flex items-center justify-center text-black shadow-lg"><i class="fas fa-shield-alt text-xs"></i></div>`;
+                authText.innerText = 'Admin Panel'; authText.classList.add('text-brand-green');
+                authBtn.setAttribute('onclick', 'openAdmin()');
+            }
+        }
+          let insightChartInstance = null;
+
+        function renderInsights() {
+            let allTime = 0;
+            let monthly = 0;
+            let udhar = 0;
+            let profit = 0;
+            let dailySales = {};
+
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+
+            adminBills.forEach(bill => {
+                allTime += bill.grandTotal;
+                
+                // Track Daily Sales for Best Day
+                if(!dailySales[bill.date]) dailySales[bill.date] = 0;
+                dailySales[bill.date] += bill.grandTotal;
+
+                // Profit vs Udhar
+                if (bill.payStatus === 'Paid') {
+                    profit += bill.grandTotal;
+                } else {
+                    udhar += bill.grandTotal;
+                }
+
+                // Monthly calculation (Using bill ID as timestamp)
+                const billDate = new Date(parseInt(bill.id));
+                if (billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear) {
+                    monthly += bill.grandTotal;
+                }
+            });
+
+            // Find Best Day
+            let bestDay = 'No Sales Yet';
+            let maxSale = 0;
+            for (const [day, sale] of Object.entries(dailySales)) {
+                if (sale > maxSale) {
+                    maxSale = sale;
+                    bestDay = `${day} (₹${sale})`;
+                }
+            }
+
+            // Update Text UI
+            if(document.getElementById('insight-all-time')) document.getElementById('insight-all-time').innerText = `₹${allTime}`;
+            if(document.getElementById('insight-monthly')) document.getElementById('insight-monthly').innerText = `₹${monthly}`;
+            if(document.getElementById('insight-udhar')) document.getElementById('insight-udhar').innerText = `₹${udhar}`;
+            if(document.getElementById('insight-profit')) document.getElementById('insight-profit').innerText = `₹${profit}`;
+            if(document.getElementById('insight-udhar-list')) document.getElementById('insight-udhar-list').innerText = `₹${udhar}`;
+            if(document.getElementById('insight-best-day')) document.getElementById('insight-best-day').innerText = bestDay;
+
+            // Render Chart.js Pie Chart
+            const ctx = document.getElementById('insightsChart');
+            if(ctx) {
+                if(insightChartInstance) insightChartInstance.destroy();
+                
+                // Only render if there's some data, else show empty doughnut
+                let dataValues = (profit === 0 && udhar === 0) ? [1] : [profit, udhar];
+                let bgColors = (profit === 0 && udhar === 0) ? ['#1f2937'] : ['#16a34a', '#ef4444'];
+                let labels = (profit === 0 && udhar === 0) ? ['No Sales'] : ['Paid (Received)', 'Unpaid (Udhar)'];
+
+                insightChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: dataValues,
+                            backgroundColor: bgColors,
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        }
+                // -----------------------------------------
+        // COUNTING ANIMATION FOR STATS SECTION
+        // -----------------------------------------
+        function initCounters() {
+            const statsSection = document.getElementById('stats');
+            if (!statsSection) return;
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        startCounting();
+                        observer.disconnect(); // Ensure it runs only once
+                    }
+                });
+            }, { threshold: 0.5 }); // Start when 50% of the section is visible
+
+            observer.observe(statsSection);
+        }
+
+        function startCounting() {
+            const duration = 2000; // Animation ka time (2000ms = 2 seconds)
+
+            // For whole numbers (like 10000, 15, 100)
+            document.querySelectorAll('.counter').forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-target'));
+                let startTime = null;
+
+                const updateCount = (currentTime) => {
+                    if (!startTime) startTime = currentTime;
+                    const progress = Math.min((currentTime - startTime) / duration, 1);
+                    
+                    const currentValue = Math.floor(progress * target);
+                    counter.innerText = currentValue.toLocaleString('en-IN'); // Indian comma format
+
+                    if (progress < 1) {
+                        window.requestAnimationFrame(updateCount);
+                    } else {
+                        counter.innerText = target.toLocaleString('en-IN');
+                    }
+                };
+                window.requestAnimationFrame(updateCount);
+            });
+
+            // For decimal numbers (like 4.9 or 5.0)
+            document.querySelectorAll('.counter-float').forEach(counter => {
+                const target = parseFloat(counter.getAttribute('data-target'));
+                let startTime = null;
+
+                const updateFloatCount = (currentTime) => {
+                    if (!startTime) startTime = currentTime;
+                    const progress = Math.min((currentTime - startTime) / duration, 1);
+                    
+                    const currentValue = (progress * target).toFixed(1);
+                    counter.innerText = currentValue;
+
+                    if (progress < 1) {
+                        window.requestAnimationFrame(updateFloatCount);
+                    } else {
+                        counter.innerText = target.toFixed(1);
+                    }
+                };
+                window.requestAnimationFrame(updateFloatCount);
+            });
+        }
+
+        // Add initCounters to the window load event
+        window.addEventListener('DOMContentLoaded', () => {
+            initCounters(); // Initialize counting animation listener
+        });
+
+
+            // -----------------------------------------
+        // SLIDE-IN ANIMATION FOR FEATURE BOXES
+        // -----------------------------------------
+        function initBoxAnimations() {
+            const boxes = document.querySelectorAll('.feature-box');
+            
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Remove hiding classes, add showing classes
+                        entry.target.classList.remove('opacity-0', 'translate-y-16');
+                        entry.target.classList.add('opacity-100', 'translate-y-0');
+                        obs.unobserve(entry.target); // Animate only once
+                    }
+                });
+            }, { 
+                threshold: 0.15 // Triggers when 15% of the box is visible
+            });
+
+            boxes.forEach(box => observer.observe(box));
+        }
+
+        // Add this to your existing DOMContentLoaded event
+        window.addEventListener('DOMContentLoaded', () => {
+            // Your other init functions...
+            initBoxAnimations(); 
+        });
+        // -----------------------------------------
+        // REVIEWS MODAL LOGIC
+        // -----------------------------------------
+        const reviewModal = document.getElementById('review-modal');
+
+        function openReviewModal() {
+            closeAllModals(); // Close other modals if open
+            if(overlay) overlay.classList.remove('hidden');
+            if(reviewModal) reviewModal.classList.remove('hidden');
+            
+            // Set default 5 stars UI
+            setRating(5);
+
+            setTimeout(() => { 
+                if(overlay) overlay.classList.add('opacity-100'); 
+                if(reviewModal) reviewModal.classList.add('opacity-100'); 
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeReviewModal() {
+            if(reviewModal) reviewModal.classList.remove('opacity-100');
+            if(overlay) overlay.classList.remove('opacity-100');
+            setTimeout(() => { 
+                if(reviewModal) reviewModal.classList.add('hidden'); 
+                if(overlay) overlay.classList.add('hidden');
+                document.body.style.overflow = 'auto'; 
+            }, 300);
+        }
+
+        // Add this to your existing closeAllModals() function if you want it to close on overlay click
+        // if (reviewModal) reviewModal.classList.remove('opacity-100');
+        // setTimeout(() => { if (reviewModal) reviewModal.classList.add('hidden'); }, 300);
+
+        function setRating(rating) {
+            document.getElementById('review-rating-value').value = rating;
+            const stars = document.querySelectorAll('#star-rating-selector i');
+            stars.forEach((star, index) => {
+                if(index < rating) {
+                    star.classList.remove('text-gray-600');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-600');
+                }
+            });
+        }
+
+        
+
+let visibleReviewsCount = 3;
+function renderReviews() {
+    const grid = document.getElementById('reviews-grid');
+    if (!grid) return;
+    
+    // --- SAFE RATING CALCULATION (0.3 BUG FIX) ---
+    if (allReviews.length > 0) {
+        let totalStars = 0;
+        allReviews.forEach(rev => {
+            // Agar localStorage me rating corrupt hai, toh usko default 5 maan lega
+            let safeRating = Number(rev.rating) || 5; 
+            totalStars += safeRating;
+        });
+        
+        // Exact average nikalna
+        let avgRating = (totalStars / allReviews.length).toFixed(1); 
+        
+        // 1. Stats Section Update (Upar wala 0.3 fix karne ke liye)
+        const statAvg = document.getElementById('stat-avg-rating');
+        if (statAvg) {
+            statAvg.setAttribute('data-target', avgRating);
+            statAvg.innerText = avgRating; // Direct assign taki animation glitch na kare
+        }
+        
+        // 2. Reviews Section Update (Niche wala 4.9 sync karne ke liye)
+        const reviewAvg = document.getElementById('review-avg-rating');
+        if (reviewAvg) {
+            reviewAvg.innerText = avgRating;
+        }
+    }
+    // ----------------------------------------------
+
+    let html = '';
+    const reviewsToShow = allReviews.slice(0, visibleReviewsCount);
+    
+    reviewsToShow.forEach(rev => {
+        const initials = rev.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        let safeStarCount = Number(rev.rating) || 5; // Yahan bhi safe rating
+        
+        let starsHtml = '';
+        for(let i = 0; i < 5; i++) { 
+            starsHtml += `<i class="fas fa-star ${i < safeStarCount ? 'text-yellow-400' : 'text-gray-600'}"></i>`; 
+        }
+        
+        html += `
+        <div class="bg-black/40 border border-white/5 rounded-2xl p-6 shadow-xl relative backdrop-blur-sm group hover:border-white/10 transition-colors animate-fade-in-up">
+            <div class="flex justify-between items-start mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-brand-green/20 text-brand-green flex items-center justify-center font-bold text-sm border border-brand-green/30">${initials}</div>
+                    <div>
+                        <h4 class="text-white font-semibold text-sm tracking-wide">${rev.name}</h4>
+                        <p class="text-gray-500 text-[11px]">${rev.location} • ${rev.date}</p>
+                    </div>
+                </div>
+                ${rev.verified ? '<i class="fas fa-check-circle text-brand-green text-sm opacity-90" title="Verified Buyer"></i>' : ''}
+            </div>
+            <div class="flex text-[11px] mb-3 gap-0.5">${starsHtml}</div>
+            <p class="text-gray-300 text-sm italic leading-relaxed relative z-10">
+                <i class="fas fa-quote-left text-gray-700/50 text-2xl absolute -top-2 -left-1 -z-10"></i>
+                "${rev.text}"
+            </p>
+        </div>`;
+    });
+    
+    grid.innerHTML = html;
+    
+    // Toggle Button Logic (More / Show Less)
+    const toggleBtn = document.getElementById('load-more-reviews-btn');
+    if (toggleBtn) {
+        if (allReviews.length > 3) {
+            toggleBtn.classList.remove('hidden');
+            if (visibleReviewsCount >= allReviews.length) {
+                toggleBtn.innerHTML = `Show Less <i class="fas fa-chevron-up ml-1 text-xs"></i>`;
+            } else {
+                toggleBtn.innerHTML = `More Reviews <i class="fas fa-chevron-down ml-1 text-xs"></i>`;
+            }
+        } else {
+            toggleBtn.classList.add('hidden');
+        }
+    }
+}
+
+
+
+function toggleReviews() {
+    if (visibleReviewsCount >= allReviews.length) {
+        // Show Less par click kiya (wapas 3 kardo aur section ke top par scroll kardo)
+        visibleReviewsCount = 3; 
+        document.getElementById('reviews').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        // More Reviews par click kiya (saare dikha do)
+        visibleReviewsCount = allReviews.length; 
+    }
+    renderReviews();
+}
+
+// --- LIVE SEARCH FUNCTION ---
+function searchProducts() {
+    const searchInput = document.getElementById('product-search').value.toLowerCase();
+    const productCards = document.querySelectorAll('#shop-product-grid > div');
+    
+    productCards.forEach(card => {
+        // Card ke andar ki heading (h3) me se naam nikalna
+        const productName = card.querySelector('h3') ? card.querySelector('h3').innerText.toLowerCase() : '';
+        
+        // Agar search kiye hue akshar match karte hain, toh card dikhao warna hide kardo
+        if (productName.includes(searchInput)) {
+            card.style.display = 'flex'; // Card ka default display flex hai
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+   async function submitReview(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('review-name').value;
+    const text = document.getElementById('review-text').value;
+    const rating = document.getElementById('review-rating-value').value;
+    const dateObj = new Date();
+    const monthYear = dateObj.toLocaleString('default', { month: 'long' }) + ' ' + dateObj.getFullYear();
+
+    const newReview = {
+        name: name,
+        location: "India", 
+        date: monthYear,
+        rating: parseInt(rating),
+        text: text,
+        verified: false,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        const docRef = await db.collection('reviews').add(newReview);
+        newReview.id = docRef.id;
+        allReviews.unshift(newReview);
+        renderReviews();
+        
+        document.getElementById('submit-review-form').reset();
+        setRating(5);
+        closeReviewModal();
+        alert("Thank you! Your review has been saved.");
+    } catch (error) {
+        alert("Failed to submit review. Try again.");
+    }
+}
+
+    </script>
+
+</body>
+</html>
