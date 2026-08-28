@@ -669,16 +669,53 @@
             
             <h3 class="text-xl font-bold text-white mb-6"><i class="fas fa-map-marker-alt text-brand-green mr-2"></i> Saved Addresses</h3>
             
-            <div class="text-center py-8 bg-brand-dark rounded-xl border border-gray-800 mb-5">
-                <i class="fas fa-map-pin text-3xl text-gray-700 mb-3"></i>
-                <p class="text-gray-400 text-sm">You haven't saved any addresses yet.</p>
+            <!-- Address List Area -->
+            <div id="address-list-container">
+                <div class="text-center py-8 bg-brand-dark rounded-xl border border-gray-800 mb-5">
+                    <i class="fas fa-map-pin text-3xl text-gray-700 mb-3"></i>
+                    <p class="text-gray-400 text-sm">You haven't saved any addresses yet.</p>
+                </div>
+            </div>
+
+            <!-- Add New Address Form (Combined: Auto GPS + Manual) -->
+            <div id="add-address-form" class="hidden flex flex-col gap-4 mb-2">
+
+                <!-- Option 1: Auto GPS (Fastest) -->
+                <div class="bg-blue-500/5 border border-blue-500/20 p-4 rounded-xl mb-1">
+                    <p class="text-[10px] text-blue-400 mb-2.5 font-bold tracking-widest text-center uppercase">Fastest Way</p>
+                    <button id="gps-detect-btn" type="button" onclick="getLocationFromGoogle()" class="w-full bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 py-3 rounded-lg text-sm font-bold transition flex justify-center items-center gap-2 shadow-sm">
+                        <i class="fas fa-crosshairs text-lg"></i> Auto-Detect via Google Maps
+                    </button>
+                </div>
+
+                <div class="relative flex py-1 items-center">
+                    <div class="flex-grow border-t border-gray-800"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-500 text-[10px] font-bold uppercase tracking-widest">OR ENTER MANUALLY</span>
+                    <div class="flex-grow border-t border-gray-800"></div>
+                </div>
+
+                <!-- Option 2: Manual Entry Box -->
+                <div>
+                    <label class="text-xs text-gray-400 mb-1.5 block font-medium">Complete Address *</label>
+                    <textarea id="new-address-text" rows="3" placeholder="Flat No, Building, Street, Landmark, City, Pincode..." class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green shadow-inner transition"></textarea>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="mt-2">
+                    <button type="button" onclick="saveNewAddress()" class="w-full bg-brand-green hover:bg-brand-greenhover text-black py-3.5 rounded-lg text-sm font-bold transition shadow-lg flex items-center justify-center gap-2">
+                        <i class="fas fa-save"></i> <span id="save-addr-btn-text">Save Address</span>
+                    </button>
+                    <button type="button" onclick="cancelAddAddress()" class="w-full text-gray-400 text-xs font-semibold hover:text-white transition mt-4">Cancel</button>
+                </div>
             </div>
             
-            <button class="w-full bg-brand-dark border border-brand-green/50 text-brand-green py-3.5 rounded-lg text-sm font-bold hover:bg-brand-green hover:text-black transition flex justify-center items-center gap-2">
+            <!-- Show Form Button -->
+            <button id="show-add-address-btn" onclick="showAddAddressForm()" class="w-full bg-brand-dark border border-brand-green/50 text-brand-green py-3.5 rounded-lg text-sm font-bold hover:bg-brand-green hover:text-black transition flex justify-center items-center gap-2 shadow-lg">
                 <i class="fas fa-plus"></i> Add New Address
             </button>
         </div>
     </div>
+
 
     <!-- USER PROFILE DASHBOARD -->
     <div id="profile-dashboard" class="fixed inset-0 bg-brand-dark z-[80] hidden opacity-0 transition-opacity duration-300 overflow-y-auto custom-scrollbar">
@@ -2417,6 +2454,159 @@ function closeSavedAddresses() {
     const modal = document.getElementById('saved-addresses-modal');
     modal.classList.remove('opacity-100');
     setTimeout(() => modal.classList.add('hidden'), 300);
+}
+// ==========================================
+// 📍 SAVED ADDRESS & GOOGLE MAPS LOGIC
+// ==========================================
+
+function openSavedAddresses() {
+    const modal = document.getElementById('saved-addresses-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+    loadSavedAddressFromDB(); // पॉपअप खुलते ही एड्रेस लोड होगा
+}
+
+function closeSavedAddresses() {
+    const modal = document.getElementById('saved-addresses-modal');
+    modal.classList.remove('opacity-100');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+function showAddAddressForm() {
+    document.getElementById('address-list-container').classList.add('hidden');
+    document.getElementById('show-add-address-btn').classList.add('hidden');
+    document.getElementById('add-address-form').classList.remove('hidden');
+}
+
+function cancelAddAddress() {
+    document.getElementById('add-address-form').classList.add('hidden');
+    document.getElementById('address-list-container').classList.remove('hidden');
+    // अगर लिस्ट में एड्रेस नहीं है, तो "+ Add" बटन वापस दिखाएं
+    if(!document.getElementById('address-list-container').innerHTML.includes('text-brand-green')) {
+        document.getElementById('show-add-address-btn').classList.remove('hidden');
+    }
+}
+
+// 📍 Google Maps GPS Detector
+function getLocationFromGoogle() {
+    const btn = document.getElementById('gps-detect-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin text-lg"></i> Detecting GPS...`;
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+                
+                const addressBox = document.getElementById('new-address-text');
+                if(addressBox.value.trim() !== '') {
+                    addressBox.value += `\n\n📍 Location: ${mapLink}`;
+                } else {
+                    addressBox.value = `📍 Location: ${mapLink}\n(Please type your House/Flat no. above)`;
+                }
+
+                // बटन को हरा करके सक्सेस मैसेज दिखाएं
+                btn.innerHTML = `<i class="fas fa-check-circle text-green-500 text-lg"></i> Location Added to Box!`;
+                btn.className = "w-full bg-green-500/10 border border-green-500/30 text-green-400 py-3 rounded-lg text-sm font-bold transition flex justify-center items-center gap-2 shadow-sm";
+
+                // 3 सेकंड बाद बटन को वापस नीले रंग का कर दें
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.className = "w-full bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 py-3 rounded-lg text-sm font-bold transition flex justify-center items-center gap-2 shadow-sm";
+                }, 3000);
+            },
+            (error) => {
+                alert("⚠️ Please allow 'Location' permission in your browser to detect GPS.");
+                btn.innerHTML = originalText;
+            },
+            { enableHighAccuracy: true }
+        );
+    } else {
+        alert("Geolocation is not supported by your browser.");
+        btn.innerHTML = originalText;
+    }
+}
+
+// 💾 Firebase Save
+async function saveNewAddress() {
+    const addrText = document.getElementById('new-address-text').value.trim();
+    if(!addrText) return alert("Please type your complete address or detect location!");
+
+    const currentUser = firebase.auth().currentUser;
+    if(!currentUser) {
+        alert("Please log in to save your address.");
+        closeSavedAddresses();
+        openLogin();
+        return;
+    }
+
+    const btnText = document.getElementById('save-addr-btn-text');
+    const originalText = btnText.innerText;
+    btnText.innerText = "Saving...";
+
+    try {
+        await db.collection("users").doc(currentUser.uid).set({
+            savedAddress: addrText
+        }, { merge: true });
+
+        alert("✅ Address Saved Successfully!");
+        btnText.innerText = originalText;
+        loadSavedAddressFromDB(); // सेव होते ही फॉर्म बंद करके एड्रेस दिखाएं
+    } catch (error) {
+        alert("Error saving address: " + error.message);
+        btnText.innerText = originalText;
+    }
+}
+
+// 📥 Firebase Load
+async function loadSavedAddressFromDB() {
+    const currentUser = firebase.auth().currentUser;
+    if(!currentUser) return;
+
+    try {
+        const doc = await db.collection("users").doc(currentUser.uid).get();
+        const listContainer = document.getElementById('address-list-container');
+        const addBtn = document.getElementById('show-add-address-btn');
+        const formArea = document.getElementById('add-address-form');
+
+        formArea.classList.add('hidden'); // शुरू में फॉर्म छुपाएं
+
+        if(doc.exists && doc.data().savedAddress) {
+            const savedAddr = doc.data().savedAddress;
+            listContainer.innerHTML = `
+                <div class="bg-brand-dark p-5 rounded-xl border border-brand-green/40 mb-5 relative group shadow-inner">
+                    <div class="flex items-start gap-4">
+                        <i class="fas fa-map-marker-alt text-brand-green mt-1 text-lg drop-shadow-md"></i>
+                        <p class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed font-medium">${savedAddr}</p>
+                    </div>
+                    <button onclick="showAddAddressForm()" class="absolute -top-3 -right-3 bg-gray-800 border border-gray-700 hover:bg-brand-green text-gray-400 hover:text-black transition w-8 h-8 rounded-full flex items-center justify-center shadow-lg" title="Edit Address"><i class="fas fa-pen text-xs"></i></button>
+                </div>
+            `;
+            listContainer.classList.remove('hidden');
+            addBtn.classList.add('hidden');
+            
+            // Edit के लिए टेक्स्टबॉक्स में पुराना डेटा डाल दें
+            document.getElementById('new-address-text').value = savedAddr;
+            document.getElementById('save-addr-btn-text').innerText = "Update Address";
+            
+        } else {
+            listContainer.innerHTML = `
+                <div class="text-center py-8 bg-brand-dark rounded-xl border border-gray-800 mb-5 shadow-inner">
+                    <i class="fas fa-map-pin text-3xl text-gray-700 mb-3"></i>
+                    <p class="text-gray-400 text-sm">You haven't saved any addresses yet.</p>
+                </div>
+            `;
+            listContainer.classList.remove('hidden');
+            addBtn.classList.remove('hidden');
+            
+            document.getElementById('new-address-text').value = '';
+            document.getElementById('save-addr-btn-text').innerText = "Save Address";
+        }
+    } catch(err) {
+        console.error("Error loading address:", err);
+    }
 }
 
     </script>
