@@ -981,6 +981,27 @@
                 </div>
             
             </div>
+                        <!-- MANAGE CUSTOMERS SECTION -->
+            <div class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-white"><i class="fas fa-users text-brand-green mr-2"></i> Manage Customers</h3>
+                    <button onclick="openAddCustomerModal()" class="bg-brand-card border border-gray-700 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1 transition">
+                        <i class="fas fa-user-plus"></i> Add New
+                    </button>
+                </div>
+                
+                <!-- Search Customer -->
+                <div class="relative mb-4">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm"></i>
+                    <input type="text" id="admin-search-customer" onkeyup="renderAdminCustomers()" placeholder="Search by Name or Phone..." class="w-full bg-[#0b1115] border border-gray-700 rounded-lg pl-9 pr-3 py-2.5 text-white text-sm focus:border-brand-green outline-none transition shadow-inner">
+                </div>
+
+                <!-- Customer List -->
+                <div id="admin-customers-list" class="flex flex-col gap-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                    <p class="text-gray-500 text-sm italic py-4 text-center">Loading customers...</p>
+                </div>
+            </div>
+            
             <!-- Manage Reviews Section (New) -->
             <div class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8">
                 <h3 class="text-lg font-bold text-white mb-6"><i class="fas fa-star text-brand-green mr-2"></i> Manage Reviews</h3>
@@ -1016,15 +1037,20 @@
             </div>
             
             <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
-                <!-- Customer Details -->
-                <div class="grid grid-cols-2 gap-4 mb-6">
+                            <!-- Customer Details (With Auto-Suggest) -->
+                <div class="grid grid-cols-2 gap-4 mb-6 relative" id="bill-customer-fields">
                     <div>
                         <label class="text-xs text-gray-400 mb-1.5 block font-medium">Customer Name *</label>
-                        <input type="text" id="bill-cust-name" placeholder="e.g. Satyam" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none transition">
+                        <input type="text" id="bill-cust-name" oninput="showCustomerSuggestions()" autocomplete="off" placeholder="e.g. Satyam" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none transition">
                     </div>
                     <div>
                         <label class="text-xs text-gray-400 mb-1.5 block font-medium">WhatsApp No. *</label>
-                        <input type="number" id="bill-cust-phone" placeholder="91xxxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none transition">
+                        <input type="number" id="bill-cust-phone" oninput="showCustomerSuggestions()" autocomplete="off" placeholder="91xxxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none transition">
+                    </div>
+                    
+                    <!-- Smart Suggestion Dropdown Box -->
+                    <div id="customer-suggestion-box" class="absolute top-[72px] left-0 w-full bg-[#111820] border border-brand-green/50 rounded-lg shadow-2xl z-50 hidden max-h-40 overflow-y-auto custom-scrollbar divide-y divide-gray-800">
+                        <!-- JS se suggestions yahan aayenge -->
                     </div>
                 </div>
 
@@ -1153,6 +1179,44 @@
         </div>
     </div>
 
+    <!-- 1. ADD NEW CUSTOMER MODAL (MANUAL) -->
+    <div id="add-customer-modal" class="fixed inset-0 bg-brand-dark/95 z-[100] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-gray-800 rounded-xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-brand-dark">
+                <h3 class="text-lg font-bold text-white"><i class="fas fa-user-plus text-brand-green mr-2"></i> Add Customer</h3>
+                <button onclick="closeAddCustomerModal()" class="text-gray-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full bg-gray-800"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">Full Name *</label>
+                        <input type="text" id="new-cust-name" placeholder="Customer Name" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1 block">WhatsApp No. *</label>
+                        <input type="number" id="new-cust-phone" placeholder="91xxxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none">
+                    </div>
+                    <button onclick="saveManualCustomer()" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-3.5 rounded-lg mt-2 transition text-sm flex justify-center items-center gap-2 shadow-lg">
+                        Save Customer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CUSTOMER DETAILED INSIGHTS MODAL -->
+    <div id="customer-insights-modal" class="fixed inset-0 bg-brand-dark/95 z-[110] hidden opacity-0 transition-opacity duration-300 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-brand-card border border-gray-800 rounded-xl w-full max-w-lg shadow-2xl flex flex-col max-h-[95vh] overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-brand-dark shrink-0">
+                <h3 class="text-lg font-bold text-white"><i class="fas fa-id-card text-brand-green mr-2"></i> Customer Profile</h3>
+                <button onclick="closeCustomerInsights()" class="text-gray-400 hover:text-white transition w-8 h-8 flex items-center justify-center rounded-full bg-gray-800"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto custom-scrollbar" id="customer-insights-content">
+                <!-- JS se details aayengi -->
+            </div>
+        </div>
+    </div>
 
     <!-- FULLY INTEGRATED JAVASCRIPT -->
     <script>
@@ -1290,43 +1354,28 @@ async function fetchFirebaseData() {
 
         
 
-        // New Feature: Resend Full Bill Data
-        function resendBill(id) {
+  // ==========================================
+// ADMIN PANEL: RESEND BILL VIA WHATSAPP (Original Prefilled Message Restored)
+// ==========================================
+function resendBill(id) {
+    if (window.event) window.event.stopPropagation(); 
+
     const bill = adminBills.find(b => b.id === id);
-    if(!bill) return;
+    if (!bill) return alert("Order not found!");
 
-    let displayStatus = bill.payStatus === 'Paid' ? 'Paid ✅' : 'Pending';
+    let phone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : "";
+    if (phone.length === 10) {
+        phone = "91" + phone; // India country code agar 10 digit ka number hai
+    }
 
-    let msg = `*NETAJI JHADU STORE*%0A%0A`;
-    msg += `_Quality You Trust, Cleanliness You Deserve_%0A%0A`;
-    msg += `*ORDER INVOICE*%0A%0A`;
-    
-    msg += `*Customer Details*%0A`;
-    msg += `━━━━━━━━━━━━━━━━━━━━%0A`;
-    msg += `Name: ${bill.customerName}%0A`;
-    msg += `Phone: ${bill.customerPhone}%0A%0A`;
-    
-    msg += `Order Date: ${bill.date}%0A%0A`;
-    
-    msg += `*ORDER SUMMARY*%0A%0A`;
-    msg += `Product | Qty. | Rate | Amount%0A`;
-    
-    bill.items.forEach(item => { 
-        msg += `${item.name} | ${item.qty} | ₹${item.price} | ₹${item.total}%0A`; 
-    });
-    
-    msg += `%0A━━━━━━━━━━━━━━━━━━━━%0A%0A`;
-    msg += `*TOTAL AMOUNT: ₹${bill.grandTotal}*%0A%0A`;
-    
-    msg += `Payment Mode: ${bill.payMode}%0A`;
-    msg += `Payment Status: ${displayStatus}%0A%0A`;
-    
-    msg += `━━━━━━━━━━━━━━━━━━━━%0A%0A`;
-    msg += `“Thank you for choosing Netaji Jhadu Store — We value your trust!”`;
+    const customerName = bill.customerName || "Customer";
 
-    window.open(`https://wa.me/91${bill.customerPhone}?text=${msg}`, '_blank');
+    // Wahi pehla wala classic aur professional prefilled message
+    const message = `Hello ${customerName}, Here Is Your Order Receipt\n\nThank you for choosing Netaji Jhadu Store!\nPlease find your order receipt attached with this message.\n\nQuality You Trust, Cleanliness You Deserve.`;
+
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
 }
-
 
         // Unpaid = None Logic
         function handlePaymentStatusChange() {
@@ -3399,66 +3448,45 @@ function closeAdminOrderDetails() {
     modal.classList.remove('opacity-100');
     setTimeout(() => modal.classList.add('hidden'), 300);
 }
-// BILL IMAGE GENERATOR & WHATSAPP REDIRECT
+// ==========================================
+// ADMIN PANEL: CLEAN IMAGE DOWNLOAD (No WhatsApp Redirection)
+// ==========================================
 function downloadBillImage(id) {
-    // Ye line galti se card ka popup khulne se rokegi
+    // Ye line card par click hone se rokti hai
     if (window.event) window.event.stopPropagation(); 
 
     const bill = adminBills.find(b => b.id === id);
-    if(!bill) return;
+    if (!bill) return alert("Order not found!");
 
-    // Data fill karna template mein
-    document.getElementById('receipt-name').innerText = bill.customerName;
-    document.getElementById('receipt-phone').innerText = bill.customerPhone;
-    document.getElementById('receipt-date').innerText = bill.date;
-    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
-    document.getElementById('receipt-paymode').innerText = bill.payMode || 'N/A';
-    
-    let displayStatus = bill.payStatus.includes('Paid') ? 'Paid ✅' : 'Pending';
-    document.getElementById('receipt-paystatus').innerText = displayStatus;
+    // Pehle bill details modal ko kholenge taki canvas capture ho sake
+    if (typeof viewAdminOrderDetails === 'function') {
+        viewAdminOrderDetails(id);
+    }
 
-    // Items list banayein
-    let itemsHtml = '';
-    bill.items.forEach(item => {
-        itemsHtml += `
-            <tr class="border-b border-dashed border-gray-200">
-                <td class="py-1.5 pr-2 truncate max-w-[150px]">${item.name}</td>
-                <td class="py-1.5 text-center">${item.qty}</td>
-                <td class="py-1.5 text-right">₹${item.price}</td>
-                <td class="py-1.5 text-right font-semibold">₹${item.total}</td>
-            </tr>
-        `;
-    });
-    document.getElementById('receipt-items').innerHTML = itemsHtml;
-
-    // HTML ko Image mein convert karein
-    const container = document.getElementById('receipt-container');
-    
-    // Thoda delay taki DOM update ho jaye
+    // Thoda sa gap dekar html2canvas se image download karwayenge
     setTimeout(() => {
-        html2canvas(container, {
-            scale: 2, 
-            backgroundColor: "#ffffff"
-        }).then(canvas => {
-            // 1. Image Download Karega
-            let link = document.createElement('a');
-            link.download = `NetajiJhadu_Bill_${bill.customerName}.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-            
-            // 2. WhatsApp par Redirect (Download ke 1 second baad taki browser atke nahi)
-            setTimeout(() => {
-                let msg = `Hello ${bill.customerName}, Here Is Your Order Receipt
+        // Invoice container ka element dhoondhna
+        const invoiceElement = document.getElementById('invoice-preview-container') || document.querySelector('.invoice-box') || document.getElementById('billModal');
+        
+        if (!invoiceElement) {
+            alert("Please open the bill details first to download image.");
+            return;
+        }
 
-Thank you for choosing Netaji Jhadu Store!
-Please find your order receipt attached with this message.
-
-Quality You Trust, Cleanliness You Deserve. `;
-                window.open(`https://wa.me/91${bill.customerPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-            }, 1000); 
-            
-        });
-    }, 100);
+        if (typeof html2canvas !== 'undefined') {
+            html2canvas(invoiceElement, { scale: 2, useCORS: true, backgroundColor: '#0b1115' }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Netaji_Bill_${bill.id.substring(0, 8).toUpperCase()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                console.error("Canvas Error:", err);
+                alert("Failed to generate image.");
+            });
+        } else {
+            alert("html2canvas library is missing!");
+        }
+    }, 400);
 }
 
 // Baki dono buttons (Text Bill aur Delete) dabane par card popup na khule, uske liye ye fix:
@@ -4861,7 +4889,7 @@ async function updateDeliveryStatus(id) {
     }
 }
 // ==========================================
-// ADMIN PANEL: RECENT BILLS CARDS (Text Bill Replaced with Save CSV)
+// ADMIN PANEL: RECENT BILLS CARDS (Separate Download & WhatsApp Send Buttons)
 // ==========================================
 function renderAdminBills() {
     const list = document.getElementById('admin-bills-list');
@@ -4988,16 +5016,26 @@ function renderAdminBills() {
                 </div>
             </div>
             
-            <div class="flex justify-end gap-2.5 mt-2 pt-4 border-t border-gray-800/70">
-                <button onclick="downloadBillImage('${bill.id}')" class="flex-1 bg-brand-green/10 text-brand-green border border-brand-green/30 hover:bg-brand-green hover:text-black transition-all px-3 py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-1.5 shadow-sm">
-                    <i class="fas fa-image text-sm"></i> Image
+            <!-- BUTTONS ROW: Download Icon + WhatsApp Send Button + CSV + Delete -->
+            <div class="flex justify-end gap-1.5 mt-2 pt-4 border-t border-gray-800/70">
+                <!-- 1. Sirf Download Karne ke liye -->
+                <button onclick="downloadBillImage('${bill.id}')" class="bg-brand-green/10 text-brand-green border border-brand-green/30 hover:bg-brand-green hover:text-black transition-all px-2.5 py-2 rounded-lg text-xs flex items-center justify-center shadow-sm" title="Download Image Only">
+                    <i class="fas fa-download text-xs"></i>
                 </button>
-                <!-- YAHAN TEXT BILL HATA KAR SAVE CSV LAGA DIYA HAI -->
-                <button onclick="downloadBillCSV('${bill.id}')" class="flex-1 bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500 hover:text-white transition-all px-3 py-2.5 rounded-lg text-xs font-semibold flex justify-center items-center gap-1.5 shadow-sm">
-                    <i class="fas fa-file-csv text-sm"></i> Save CSV
+                
+                <!-- 2. WhatsApp par Bhejne ke liye -->
+                <button onclick="resendBill('${bill.id}')" class="bg-green-600/10 text-green-400 border border-green-600/30 hover:bg-green-600 hover:text-white transition-all px-2.5 py-2 rounded-lg text-xs flex items-center justify-center shadow-sm" title="Send via WhatsApp">
+                    <i class="fab fa-whatsapp text-xs"></i>
                 </button>
-                <button onclick="deleteBill('${bill.id}')" class="bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500 hover:text-white transition-all px-4 py-2.5 rounded-lg flex items-center justify-center shadow-sm">
-                    <i class="fas fa-trash-alt text-sm"></i>
+
+                <!-- 3. CSV (Excel) Export -->
+                <button onclick="downloadBillCSV('${bill.id}')" class="flex-1 bg-blue-500/10 text-blue-400 border border-blue-500/30 hover:bg-blue-500 hover:text-white transition-all px-2 py-2 rounded-lg text-[10px] font-semibold flex items-center justify-center gap-1 shadow-sm" title="Save CSV">
+                    <i class="fas fa-file-csv text-xs"></i> CSV
+                </button>
+
+                <!-- 4. Delete Order -->
+                <button onclick="deleteBill('${bill.id}')" class="bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500 hover:text-white transition-all px-2.5 py-2 rounded-lg flex items-center justify-center shadow-sm" title="Delete Order">
+                    <i class="fas fa-trash-alt text-xs"></i>
                 </button>
             </div>
         </div>`;
@@ -5233,11 +5271,7 @@ function downloadBillImage(id) {
             link.href = canvas.toDataURL("image/png");
             link.click();
             
-            // 2. WhatsApp par Redirect (Download ke 1 second baad taki browser atke nahi)
-            setTimeout(() => {
-                let msg = `Hello ${bill.customerName}, here is your order receipt from Netaji Jhadu Store. Please find the attached image.`;
-                window.open(`https://wa.me/91${bill.customerPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-            }, 1000); 
+         
         });
     }, 100);
 }
@@ -5533,6 +5567,480 @@ function downloadBillCSV(id) {
     document.body.removeChild(link);
 }
 
+// ==========================================
+// ADMIN CRM: CUSTOMER MANAGEMENT & INSIGHTS
+// ==========================================
+let allCustomersMap = {};
+let allCustomersArray = [];
+
+// Admin panel khulte hi bills se customers ka data banayega
+const originalOpenAdmin = openAdmin;
+openAdmin = function() {
+    originalOpenAdmin();
+    processCustomerData();
+};
+
+async function processCustomerData() {
+    allCustomersMap = {};
+    
+    // 1. Purane sabhi bills se data extract karna
+    adminBills.forEach(bill => {
+        let phone = bill.customerPhone ? bill.customerPhone.trim() : "Unknown";
+        if(phone === "" || phone === "Unknown") return;
+        
+        if(!allCustomersMap[phone]) {
+            allCustomersMap[phone] = {
+                name: bill.customerName,
+                phone: phone,
+                totalSpent: 0,
+                orders: []
+            };
+        }
+        allCustomersMap[phone].orders.push(bill);
+        allCustomersMap[phone].totalSpent += bill.grandTotal;
+    });
+
+    // 2. Firebase se Manual Customers load karna (Jo bina bill ke banaye gaye hain)
+    try {
+        const snap = await db.collection('customers').get();
+        snap.forEach(doc => {
+            let data = doc.data();
+            if(!allCustomersMap[data.phone]) {
+                allCustomersMap[data.phone] = {
+                    name: data.name,
+                    phone: data.phone,
+                    totalSpent: 0,
+                    orders: [],
+                    isManual: true
+                };
+            }
+        });
+    } catch(e) { console.error("Error loading manual customers", e); }
+
+    // Convert object to Array and sort by Total Spent (Highest value customers on top)
+    allCustomersArray = Object.values(allCustomersMap).sort((a, b) => b.totalSpent - a.totalSpent);
+    renderAdminCustomers();
+}
+
+// -----------------------------------------
+// RENDER CUSTOMERS LIST (With Delete Button)
+// -----------------------------------------
+function renderAdminCustomers() {
+    const list = document.getElementById('admin-customers-list');
+    const searchInput = document.getElementById('admin-search-customer');
+    if(!list) return;
+
+    let searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    
+    let filteredCustomers = allCustomersArray.filter(c => {
+        return c.name.toLowerCase().includes(searchTerm) || c.phone.includes(searchTerm);
+    });
+
+    if (filteredCustomers.length === 0) {
+        list.innerHTML = `<p class="text-gray-500 text-sm italic py-4 text-center">No customers found.</p>`;
+        return;
+    }
+
+    let html = '';
+    filteredCustomers.forEach(cust => {
+        let initials = cust.name.substring(0, 2).toUpperCase();
+        let ordersCount = cust.orders.length;
+        
+        html += `
+        <div class="bg-[#0b1115] border border-gray-800 rounded-xl p-3 flex justify-between items-center hover:border-brand-green/50 transition group">
+            
+            <!-- Left Side (Clickable to view profile) -->
+            <div onclick="viewCustomerInsights('${cust.phone}')" class="flex items-center gap-3 flex-1 cursor-pointer">
+                <div class="w-10 h-10 bg-brand-green/10 text-brand-green rounded-full flex items-center justify-center font-bold border border-brand-green/20 shrink-0">${initials}</div>
+                <div>
+                    <h4 class="text-white font-semibold text-sm group-hover:text-brand-green transition">${cust.name}</h4>
+                    <p class="text-gray-400 text-[11px] mt-0.5"><i class="fab fa-whatsapp text-gray-500 mr-1"></i> ${cust.phone}</p>
+                </div>
+            </div>
+            
+            <!-- Right Side (Stats & Delete Button) -->
+            <div class="flex items-center gap-4 shrink-0">
+                <div class="text-right cursor-pointer" onclick="viewCustomerInsights('${cust.phone}')">
+                    <p class="text-brand-green font-bold text-sm">₹${cust.totalSpent}</p>
+                    <p class="text-gray-500 text-[10px] mt-0.5">${ordersCount} Orders <i class="fas fa-chevron-right text-[9px] ml-1"></i></p>
+                </div>
+                
+                <!-- 🗑️ NAYA DELETE BUTTON -->
+                <button onclick="deleteCustomer('${cust.phone}')" class="text-gray-500 hover:text-red-500 transition bg-gray-800 hover:bg-red-500/10 w-8 h-8 rounded flex items-center justify-center border border-transparent hover:border-red-500/30" title="Delete Customer">
+                    <i class="fas fa-trash-alt text-xs"></i>
+                </button>
+            </div>
+            
+        </div>`;
+    });
+    list.innerHTML = html;
+}
+
+// -----------------------------------------
+// CUSTOMER INSIGHTS MODAL (With All-Time & Month Filter)
+// -----------------------------------------
+function viewCustomerInsights(phone, filterMonth = 'all') {
+    const cust = allCustomersMap[phone];
+    if(!cust) return;
+
+    const content = document.getElementById('customer-insights-content');
+    
+    let filteredOrders = cust.orders;
+    let selectedYear = null;
+    let selectedMonth = null;
+    
+    // Labels jo filter ke hisaab se change honge
+    let periodLabel = "LIFETIME SPENT";
+    let ordersLabel = "TOTAL ORDERS";
+
+    // 1. FILTERING LOGIC
+    if (filterMonth !== 'all') {
+        const parts = filterMonth.split('-');
+        if (parts.length === 2) {
+            selectedYear = parseInt(parts[0]);
+            selectedMonth = parseInt(parts[1]) - 1; // JS mein mahine 0 se shuru hote hain
+            
+            periodLabel = "MONTHLY SPENT";
+            ordersLabel = "MONTHLY ORDERS";
+
+            filteredOrders = cust.orders.filter(order => {
+                let billDateObj = null;
+                // Date nikalne ka solid logic
+                if (order.timestamp && typeof order.timestamp.toDate === 'function') {
+                    billDateObj = order.timestamp.toDate();
+                } else if (order.timestamp && order.timestamp.seconds) {
+                    billDateObj = new Date(order.timestamp.seconds * 1000);
+                } else {
+                    let dParts = order.date.split('/');
+                    if(dParts.length === 3) billDateObj = new Date(dParts[2], dParts[1] - 1, dParts[0]);
+                    else billDateObj = new Date(order.date);
+                }
+
+                if (billDateObj && !isNaN(billDateObj)) {
+                    return billDateObj.getFullYear() === selectedYear && billDateObj.getMonth() === selectedMonth;
+                }
+                return false;
+            });
+        }
+    }
+
+    // 2. NAYE STATS CALCULATE KARNA (Filter hone ke baad)
+    let displayTotalSpent = filteredOrders.reduce((sum, order) => sum + order.grandTotal, 0);
+    let displayTotalOrders = filteredOrders.length;
+
+    // 3. ORDERS SORTING (Naye orders sabse upar)
+    filteredOrders.sort((a, b) => b.timestamp - a.timestamp);
+
+    // 4. ORDERS HTML GENERATE KARNA
+    let ordersHtml = '';
+    if(filteredOrders.length === 0) {
+        ordersHtml = `<p class="text-center text-gray-500 text-sm py-8 bg-brand-dark rounded-lg border border-gray-800">No orders found for this period.</p>`;
+    } else {
+        filteredOrders.forEach(order => {
+            let isPaid = order.payStatus && order.payStatus.includes('Paid');
+            let payColor = isPaid ? 'text-green-400' : 'text-red-400';
+            let itemsText = order.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+
+            // Reminder Button (Sirf Unpaid)
+            let reminderBtn = !isPaid ? `
+                <button onclick="sendPaymentReminder('${order.id}')" class="text-[10px] bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-1 rounded transition flex items-center gap-1" title="Send Payment Reminder">
+                    <i class="fab fa-whatsapp"></i> Reminder
+                </button>
+            ` : '';
+
+            ordersHtml += `
+            <div class="bg-[#0b1115] p-3 rounded-lg border border-gray-800 mb-3 shadow-inner">
+                <div class="flex justify-between items-start mb-2 border-b border-gray-800/50 pb-2">
+                    <div>
+                        <p class="text-white font-semibold text-xs">${order.date}</p>
+                        <p class="text-gray-500 text-[9px] mt-0.5 font-mono">#${order.id.substring(0,8).toUpperCase()}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-brand-green font-bold text-sm">₹${order.grandTotal}</p>
+                        <p class="text-[10px] ${payColor} font-bold mt-0.5">${order.payStatus}</p>
+                    </div>
+                </div>
+                
+                <p class="text-gray-400 text-[11px] leading-relaxed line-clamp-2 mb-2"><span class="text-gray-500 font-semibold">Items:</span> ${itemsText}</p>
+                
+                <!-- Buttons Row -->
+                <div class="flex justify-end gap-1.5 pt-1">
+                    ${reminderBtn}
+                    <!-- Download Bill Icon -->
+                    <button onclick="downloadInvoiceOnly('${order.id}')" class="text-[10px] bg-brand-green/10 hover:bg-brand-green hover:text-black text-brand-green border border-brand-green/30 px-2.5 py-1 rounded transition flex items-center justify-center shadow-sm" title="Download Bill Image">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>`;
+        });
+    }
+
+    // 5. MAIN MODAL HTML (Jisme naya Filter Bar lagaya hai)
+    content.innerHTML = `
+        <!-- Profile Header -->
+        <div class="flex items-center gap-4 mb-5">
+            <div class="w-14 h-14 bg-brand-green rounded-full flex items-center justify-center text-black text-2xl font-bold shadow-[0_0_15px_rgba(22,163,74,0.3)]">
+                ${cust.name.charAt(0).toUpperCase()}
+            </div>
+            <div>
+                <h2 class="text-lg font-bold text-white">${cust.name}</h2>
+                <div class="flex gap-2 mt-1.5">
+                    <a href="https://wa.me/91${cust.phone}" target="_blank" class="text-[11px] bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-1 rounded flex items-center gap-1 hover:bg-green-500/20 transition"><i class="fab fa-whatsapp"></i> Chat</a>
+                    <a href="tel:+91${cust.phone}" class="text-[11px] bg-blue-500/10 text-blue-400 border border-blue-500/30 px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-500/20 transition"><i class="fas fa-phone-alt"></i> Call</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- NAYA FILTER UI BAR -->
+        <div class="flex justify-between items-center mb-4 bg-brand-dark p-2 rounded-lg border border-gray-800 shadow-inner">
+            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider pl-1">Select Period</p>
+            <div class="flex gap-2">
+                <!-- All Time Button -->
+                <button onclick="viewCustomerInsights('${cust.phone}', 'all')" class="${filterMonth === 'all' ? 'bg-brand-green text-black' : 'bg-gray-800 text-gray-400 hover:text-white'} px-3 py-1 rounded text-[10px] font-bold transition">All Time</button>
+                
+                <!-- Month Picker (Calendar) -->
+                <input type="month" onchange="if(this.value) viewCustomerInsights('${cust.phone}', this.value)" value="${filterMonth !== 'all' ? filterMonth : ''}" class="${filterMonth !== 'all' ? 'bg-brand-green/20 text-brand-green border-brand-green/50' : 'bg-gray-800 text-gray-400 border-gray-700'} border rounded px-2 py-1 text-[10px] font-bold outline-none cursor-pointer" style="color-scheme: dark;">
+            </div>
+        </div>
+
+        <!-- Dynamic Value Cards (Filter ke hisaab se change honge) -->
+        <div class="grid grid-cols-2 gap-3 mb-5">
+            <div class="bg-brand-card border border-brand-green/20 rounded-xl p-3 text-center relative overflow-hidden">
+                <div class="absolute -right-3 -top-3 text-brand-green/5 text-5xl"><i class="fas fa-wallet"></i></div>
+                <p class="text-gray-400 text-[9px] uppercase font-bold tracking-wider mb-1 relative z-10">${periodLabel}</p>
+                <p class="text-xl font-bold text-brand-green relative z-10">₹${displayTotalSpent}</p>
+            </div>
+            <div class="bg-brand-card border border-gray-700 rounded-xl p-3 text-center relative overflow-hidden">
+                <div class="absolute -right-3 -top-3 text-white/5 text-5xl"><i class="fas fa-shopping-bag"></i></div>
+                <p class="text-gray-400 text-[9px] uppercase font-bold tracking-wider mb-1 relative z-10">${ordersLabel}</p>
+                <p class="text-xl font-bold text-white relative z-10">${displayTotalOrders}</p>
+            </div>
+        </div>
+
+        <!-- Order History List -->
+        <div>
+            <h4 class="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold border-b border-gray-800 pb-2">Order History</h4>
+            <div class="max-h-64 overflow-y-auto custom-scrollbar pr-1">
+                ${ordersHtml}
+            </div>
+        </div>
+    `;
+
+    const modal = document.getElementById('customer-insights-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+function closeCustomerInsights() {
+    const modal = document.getElementById('customer-insights-modal');
+    modal.classList.remove('opacity-100');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+// -----------------------------------------
+// MANUAL CUSTOMER ADD
+// -----------------------------------------
+function openAddCustomerModal() {
+    document.getElementById('new-cust-name').value = '';
+    document.getElementById('new-cust-phone').value = '';
+    const modal = document.getElementById('add-customer-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+function closeAddCustomerModal() {
+    const modal = document.getElementById('add-customer-modal');
+    modal.classList.remove('opacity-100');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+async function saveManualCustomer() {
+    const name = document.getElementById('new-cust-name').value.trim();
+    const phone = document.getElementById('new-cust-phone').value.trim();
+
+    if(!name || !phone) return alert("Please enter Name and Phone!");
+    
+    // Agar bill me pehle se hai toh warn kar do
+    if(allCustomersMap[phone]) {
+        alert("This customer already exists in your records!");
+        return;
+    }
+
+    try {
+        const newCust = {
+            name: name,
+            phone: phone,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        await db.collection('customers').add(newCust);
+        alert("✅ Customer Added Successfully!");
+        
+        closeAddCustomerModal();
+        processCustomerData(); // Reload customers
+        
+    } catch(e) {
+        alert("❌ Error: " + e.message);
+    }
+}
+// -----------------------------------------
+// WHATSAPP PAYMENT REMINDER (Direct UPI Number & Shop Visit)
+// -----------------------------------------
+function sendPaymentReminder(orderId) {
+    const bill = adminBills.find(b => b.id === orderId);
+    if(!bill) return alert("Order not found!");
+
+    let name = bill.customerName;
+    let phone = bill.customerPhone ? bill.customerPhone.replace(/[^0-9]/g, '') : "";
+    if (phone.length === 10) phone = "91" + phone;
+
+    let itemsText = bill.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+    let billAmount = bill.grandTotal;
+    let dateStr = bill.date;
+
+    let totalCustomerUdhar = adminBills
+        .filter(b => b.customerPhone === bill.customerPhone && (!b.payStatus || !b.payStatus.includes('Paid')))
+        .reduce((sum, b) => sum + b.grandTotal, 0);
+
+    let daysPassed = 0;
+    let billDateObj = null;
+
+    if (bill.timestamp && typeof bill.timestamp.toDate === 'function') {
+        billDateObj = bill.timestamp.toDate();
+    } else if (bill.timestamp && bill.timestamp.seconds) {
+        billDateObj = new Date(bill.timestamp.seconds * 1000);
+    } else {
+        let parts = bill.date.split('/');
+        if(parts.length === 3) billDateObj = new Date(parts[2], parts[1] - 1, parts[0]);
+        else billDateObj = new Date(bill.date);
+    }
+
+    let daysText = "";
+    if (billDateObj && !isNaN(billDateObj)) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const orderDate = new Date(billDateObj);
+        orderDate.setHours(0, 0, 0, 0);
+        
+        const diffTime = today - orderDate;
+        daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (daysPassed === 0) daysText = "(आज ही)";
+        else if (daysPassed === 1) daysText = "(कल)";
+        else daysText = `(${daysPassed} दिन पहले)`;
+    }
+
+    let message = `नमस्ते ${name} जी,\n\nनेताजी झाड़ू स्टोर से आपका एक पिछला हिसाब (उधार) बाकी है।\n\nसामान: ${itemsText}\nकब लिया था: ${dateStr} ${daysText}\nइस बिल का उधार: ₹${billAmount}`;
+
+    if (totalCustomerUdhar > billAmount) {
+        message += `\n\nआपका कुल बाकी उधार: ₹${totalCustomerUdhar}`;
+    }
+
+    // यहाँ अपनी दुकान का पेमेंट वाला नंबर डाल सकते हो
+    const shopNumber = "8750900635";
+
+    message += `\n\nपेमेंट कैसे करें?`;
+    message += `\n आप हमारे नंबर ${shopNumber} पर सीधा UPI (PhonePe, GPay, Paytm) कर सकते हैं।`;
+    message += `\n या फिर आप हमारी दुकान पर आकर भी नकद (Cash) दे सकते हैं।`;
+
+    message += `\n\nकृपया समय निकालकर इस बकाया राशि का भुगतान करें।\n\nधन्यवाद!\n- नेताजी झाड़ू स्टोर`;
+
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+}
+// ==========================================
+// AUTO-SUGGEST CUSTOMER IN NEW INVOICE
+// ==========================================
+function showCustomerSuggestions() {
+    const nameInput = document.getElementById('bill-cust-name').value.toLowerCase().trim();
+    const phoneInput = document.getElementById('bill-cust-phone').value.trim();
+    const suggestionBox = document.getElementById('customer-suggestion-box');
+    
+    // Agar dono box khali hain, toh suggestion box band kar do
+    if (nameInput === '' && phoneInput === '') {
+        suggestionBox.classList.add('hidden');
+        return;
+    }
+
+    // Saved customers mein se match dhoondhna
+    let matches = allCustomersArray.filter(c => {
+        let matchName = c.name.toLowerCase().includes(nameInput);
+        let matchPhone = c.phone.includes(phoneInput);
+        
+        if (nameInput && phoneInput) return matchName && matchPhone;
+        if (nameInput) return matchName;
+        if (phoneInput) return matchPhone;
+        return false;
+    });
+
+    // Agar koi match nahi mila
+    if (matches.length === 0) {
+        suggestionBox.classList.add('hidden');
+        return;
+    }
+
+    // Match milne par dropdown banana
+    let html = '';
+    matches.forEach(cust => {
+        html += `
+        <div onclick="selectCustomerSuggestion('${cust.name}', '${cust.phone}')" class="px-4 py-3 hover:bg-brand-green/20 cursor-pointer transition flex justify-between items-center group">
+            <span class="text-white text-sm font-semibold group-hover:text-brand-green transition"><i class="fas fa-user text-gray-500 text-xs mr-2"></i>${cust.name}</span>
+            <span class="text-gray-400 text-xs"><i class="fab fa-whatsapp text-brand-green mr-1"></i> ${cust.phone}</span>
+        </div>`;
+    });
+    
+    suggestionBox.innerHTML = html;
+    suggestionBox.classList.remove('hidden');
+}
+
+// Dropdown mein se select karne par automatic fill karna
+function selectCustomerSuggestion(name, phone) {
+    document.getElementById('bill-cust-name').value = name;
+    document.getElementById('bill-cust-phone').value = phone;
+    document.getElementById('customer-suggestion-box').classList.add('hidden');
+}
+
+// Box ke bahar click karne par dropdown band karna
+document.addEventListener('click', function(e) {
+    const suggestionBox = document.getElementById('customer-suggestion-box');
+    if (suggestionBox && !e.target.closest('#bill-customer-fields')) {
+        suggestionBox.classList.add('hidden');
+    }
+});
+// -----------------------------------------
+// DELETE CUSTOMER LOGIC
+// -----------------------------------------
+async function deleteCustomer(phone) {
+    // Ye line card ka profile popup khulne se rokegi jab tum delete dabaoge
+    if (window.event) window.event.stopPropagation(); 
+
+    const cust = allCustomersMap[phone];
+    if (!cust) return;
+
+    // Security Check: Agar customer ke naam par bill hai, toh delete hone se rokna
+    if (cust.orders && cust.orders.length > 0) {
+        alert("⚠️ आप इस कस्टमर को डिलीट नहीं कर सकते क्योंकि इनके नाम पर बिल बने हुए हैं।\n\nकृपया पहले 'Billing System' में जाकर इनके बिल डिलीट करें, फिर ये नाम यहाँ से अपने आप हट जाएगा।");
+        return;
+    }
+
+    if (confirm(`क्या आप सच में ${cust.name} को डिलीट करना चाहते हैं?`)) {
+        try {
+            // Firebase Database se delete karna (Manual customers ke liye)
+            const snapshot = await db.collection('customers').where('phone', '==', phone).get();
+            if (!snapshot.empty) {
+                snapshot.forEach(doc => doc.ref.delete());
+            }
+
+            // Local list se hatana taki bina refresh kiye UI update ho jaye
+            delete allCustomersMap[phone];
+            allCustomersArray = allCustomersArray.filter(c => c.phone !== phone);
+            
+            renderAdminCustomers(); 
+            alert("✅ कस्टमर सफलतापूर्वक डिलीट हो गया!");
+        } catch(e) {
+            alert("❌ Error: " + e.message);
+        }
+    }
+}
 
     </script>
 <!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION -->
