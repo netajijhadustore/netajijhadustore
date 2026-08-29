@@ -151,9 +151,10 @@
                     <button onclick="document.getElementById('shop').scrollIntoView()" class="bg-brand-green hover:bg-brand-greenhover text-black font-bold py-4 px-8 rounded-xl text-base flex items-center justify-center gap-2 transition-all">
                         Shop Collection <i class="fas fa-arrow-right"></i>
                     </button>
-                    <button onclick="window.open('https://wa.me/918750900635', '_blank')" class="bg-brand-card hover:bg-gray-800 text-white font-semibold py-4 px-8 rounded-xl text-base flex items-center justify-center gap-2 transition-all border border-gray-700">
-                        <i class="fab fa-whatsapp text-brand-green text-lg"></i> Order via WhatsApp
-                    </button>
+                    <button onclick="window.open('https://wa.me/+918750900635?text=Hi%20Netaji%20Jhadu%20Store,%20I%20want%20to%20place%20an%20order!', '_blank')" class="w-full sm:w-auto bg-gray-800 hover:bg-gray-700 text-white py-3 px-8 rounded-xl text-base flex items-center justify-center gap-2 transition-all border border-gray-700">
+    <i class="fab fa-whatsapp text-brand-green text-lg"></i> Order via WhatsApp
+</button>
+
                 </div>
 
                 <div class="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 text-xs sm:text-sm text-gray-400 font-medium">
@@ -886,10 +887,12 @@
                     <p id="admin-total-products" class="text-2xl font-bold text-white">0</p>
                 </div>
             </div>
-            <!-- DETAILED INSIGHTS SECTION -->
-            <div class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8 shadow-lg">
-                <h3 class="text-lg font-bold text-white mb-4"><i class="fas fa-chart-pie text-brand-green mr-2"></i> Detailed Insights</h3>
-                
+            <!-- NAYA INSIGHTS HEADER WITH MONTH PICKER -->
+<div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-3">
+    <h3 class="text-lg font-bold text-white"><i class="fas fa-chart-pie text-brand-green mr-2"></i> Insights</h3>
+    <input type="month" id="insight-month-picker" onchange="renderInsights()" class="bg-brand-dark border border-brand-green/30 rounded px-2 py-1.5 text-white text-xs outline-none focus:border-brand-green cursor-pointer shadow-inner" style="color-scheme: dark;">
+</div>
+
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="bg-[#0e141a] rounded-lg p-3 border border-gray-800">
                         <p class="text-[10px] text-gray-500 uppercase font-bold">All-Time Sale</p>
@@ -4417,6 +4420,961 @@ async function cancelUserOrder(orderId) {
 
     } catch (error) {
         alert("❌ Error cancelling order: " + error.message);
+    }
+}
+// ==========================================
+// 1. ADMIN SIDE: ORDER DETAILS (Payment Toggle Added)
+// ==========================================
+function viewAdminOrderDetails(id) {
+    const order = adminBills.find(b => b.id === id);
+    if (!order) return;
+
+    let itemsHtml = '';
+    order.items.forEach(item => {
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemsHtml += `<div class="flex justify-between text-sm text-gray-300 mb-1 border-b border-gray-800/50 pb-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
+    });
+
+    // Formatting Address (Open Map Button)
+    let formattedAddress = "";
+    if (order.address) {
+        formattedAddress = order.address
+            .replace(/(https?:\/\/[^\s]+)/g, '<br><a href="$1" target="_blank" class="text-blue-400 font-bold hover:underline inline-flex items-center gap-1.5 bg-blue-500/10 px-3 py-1.5 rounded mt-2 mb-1 shadow-sm"><i class="fas fa-location-arrow"></i> Open Map</a>')
+            .replace(/🔗/g, "");
+    }
+    let addressHtml = formattedAddress ? `<div class="mt-4 bg-[#0b1115] p-3 rounded-lg border border-gray-800"><p class="text-xs text-gray-500 mb-1 uppercase font-bold tracking-wider">Delivery Address</p><div class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">${formattedAddress}</div></div>` : '';
+    
+    let currentDelivery = order.deliveryStatus || 'Processing';
+    
+    // PAYMENT STATUS TOGGLE LOGIC
+    let isPaid = order.payStatus && order.payStatus.includes('Paid');
+    let nextStatus = isPaid ? 'Unpaid' : 'Paid';
+    let statusColor = isPaid ? 'text-green-400' : 'text-red-400';
+    let toggleBtnClass = isPaid 
+        ? 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20' 
+        : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20';
+
+    const content = document.getElementById('admin-order-details-content');
+    content.innerHTML = `
+        <div class="flex justify-between items-center mb-4">
+            <div class="min-w-0 pr-2">
+                <p class="text-xs text-gray-500">Order ID</p>
+                <p class="text-sm text-white font-mono bg-gray-800 px-2 py-0.5 rounded mt-0.5 truncate">#${order.id}</p>
+            </div>
+            <div class="text-right shrink-0">
+                <p class="text-xs text-gray-500">Date</p>
+                <p class="text-sm text-white font-semibold mt-0.5">${order.date}</p>
+            </div>
+        </div>
+
+        <div class="bg-brand-green/10 p-3 rounded-lg border border-brand-green/30 mb-4">
+            <p class="text-[10px] text-brand-green mb-1.5 uppercase font-bold tracking-wider">Update Delivery Status</p>
+            <div class="flex gap-2 w-full items-stretch">
+                <input type="text" id="admin-delivery-status-${order.id}" value="${currentDelivery}" placeholder="e.g. Delivery in 2 days" class="flex-1 min-w-0 bg-brand-dark border border-brand-green/50 rounded px-2 py-2 text-white text-sm outline-none">
+                <button onclick="updateDeliveryStatus('${order.id}')" class="shrink-0 bg-brand-green text-black px-3 py-2 rounded font-bold text-sm shadow-md hover:bg-brand-greenhover transition">Update</button>
+            </div>
+        </div>
+
+        <div class="bg-[#0b1115] p-3 rounded-lg border border-gray-800 mb-4">
+            <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Customer Details</p>
+            <p class="text-sm text-white font-semibold"><i class="fas fa-user text-brand-green mr-2"></i> ${order.customerName}</p>
+            <p class="text-sm text-gray-400 mt-1.5"><i class="fab fa-whatsapp text-brand-green mr-2"></i> ${order.customerPhone}</p>
+        </div>
+
+        ${addressHtml}
+
+        <div class="mt-4 mb-2 bg-[#0b1115] p-3 rounded-lg border border-gray-800">
+            <p class="text-xs text-gray-500 mb-3 uppercase font-bold tracking-wider border-b border-gray-800 pb-2">Items Ordered</p>
+            ${itemsHtml}
+            <div class="mt-3 pt-2 flex justify-between items-center">
+                <span class="text-gray-400 text-sm">Grand Total</span>
+                <span class="text-brand-green font-bold text-xl">₹${order.grandTotal}</span>
+            </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3">
+            <!-- UPDATED PAYMENT STATUS BOX WITH BUTTON -->
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center flex flex-col justify-between items-center">
+                <div class="w-full">
+                    <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status</p>
+                    <p class="text-sm font-semibold mt-1 ${statusColor}">${order.payStatus || 'Unpaid'}</p>
+                </div>
+                <button onclick="toggleAdminPaymentStatus('${order.id}', '${nextStatus}')" class="mt-2.5 w-full text-[10px] border px-2 py-1.5 rounded transition font-bold uppercase tracking-wider ${toggleBtnClass}">
+                    Mark as ${nextStatus}
+                </button>
+            </div>
+
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center flex flex-col justify-center items-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider w-full">Payment Mode</p>
+                <p class="text-[11px] text-white font-semibold mt-1 w-full text-center leading-tight">${order.payMode || 'N/A'}</p>
+            </div>
+        </div>
+    `;
+
+    const modal = document.getElementById('admin-order-details-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+// ==========================================
+// 2. ADMIN SIDE: FIREBASE UPDATE LOGIC
+// ==========================================
+async function toggleAdminPaymentStatus(orderId, newStatus) {
+    if (!confirm(`Are you sure you want to mark this order as ${newStatus}?`)) return;
+
+    try {
+        // Firebase me update
+        await db.collection('bills').doc(orderId).update({
+            payStatus: newStatus
+        });
+        
+        // Local Data Array me Update
+        if (typeof adminBills !== 'undefined') {
+            let order = adminBills.find(b => b.id === orderId);
+            if (order) order.payStatus = newStatus;
+            
+            // List aur Insight charts bhi automatically update ho jayenge
+            if (typeof renderAdminBills === 'function') renderAdminBills(); 
+            
+            // Pura modal reload karega naye button ke sath
+            viewAdminOrderDetails(orderId); 
+        }
+        
+    } catch(e) {
+        alert("❌ Error updating status: " + e.message);
+    }
+}
+// ==========================================
+// 1. ADMIN SIDE: ORDER DETAILS (Dropdown & Calendar Added)
+// ==========================================
+function viewAdminOrderDetails(id) {
+    const order = adminBills.find(b => b.id === id);
+    if (!order) return;
+
+    let itemsHtml = '';
+    order.items.forEach(item => {
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemsHtml += `<div class="flex justify-between text-sm text-gray-300 mb-1 border-b border-gray-800/50 pb-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
+    });
+
+    let formattedAddress = "";
+    if (order.address) {
+        formattedAddress = order.address
+            .replace(/(https?:\/\/[^\s]+)/g, '<br><a href="$1" target="_blank" class="text-blue-400 font-bold hover:underline inline-flex items-center gap-1.5 bg-blue-500/10 px-3 py-1.5 rounded mt-2 mb-1 shadow-sm"><i class="fas fa-location-arrow"></i> Open Map</a>')
+            .replace(/🔗/g, "");
+    }
+    let addressHtml = formattedAddress ? `<div class="mt-4 bg-[#0b1115] p-3 rounded-lg border border-gray-800"><p class="text-xs text-gray-500 mb-1 uppercase font-bold tracking-wider">Delivery Address</p><div class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">${formattedAddress}</div></div>` : '';
+    
+    let currentDelivery = order.deliveryStatus || 'Processing';
+    
+    let isPaid = order.payStatus && order.payStatus.includes('Paid');
+    let nextStatus = isPaid ? 'Unpaid' : 'Paid';
+    let statusColor = isPaid ? 'text-green-400' : 'text-red-400';
+    let toggleBtnClass = isPaid 
+        ? 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20' 
+        : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20';
+
+    const content = document.getElementById('admin-order-details-content');
+    content.innerHTML = `
+        <div class="flex justify-between items-center mb-4">
+            <div class="min-w-0 pr-2">
+                <p class="text-xs text-gray-500">Order ID</p>
+                <p class="text-sm text-white font-mono bg-gray-800 px-2 py-0.5 rounded mt-0.5 truncate">#${order.id}</p>
+            </div>
+            <div class="text-right shrink-0">
+                <p class="text-xs text-gray-500">Date</p>
+                <p class="text-sm text-white font-semibold mt-0.5">${order.date}</p>
+            </div>
+        </div>
+
+        <!-- NAYA DROPDOWN AUR CALENDAR LOGIC YAHAN HAI -->
+        <div class="bg-brand-green/10 p-3 rounded-lg border border-brand-green/30 mb-4">
+            <p class="text-[10px] text-brand-green mb-1.5 uppercase font-bold tracking-wider">Update Delivery Status</p>
+            <div class="flex flex-col gap-2 w-full">
+                <div class="flex gap-2 w-full items-stretch">
+                    <select id="admin-delivery-select-${order.id}" onchange="toggleDateField('${order.id}')" class="flex-1 min-w-0 bg-brand-dark border border-brand-green/50 rounded px-2 py-2 text-white text-sm outline-none cursor-pointer">
+                        <option value="Processing" ${currentDelivery === 'Processing' ? 'selected' : ''}>Processing</option>
+                        <option value="Delivered" ${currentDelivery === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                        <option value="Cancelled" ${currentDelivery === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                        <option value="Custom" ${currentDelivery.includes('Delivery') ? 'selected' : ''}>Select on Calendar...</option>
+                    </select>
+                    <button onclick="updateDeliveryStatus('${order.id}')" class="shrink-0 bg-brand-green text-black px-3 py-2 rounded font-bold text-sm shadow-md hover:bg-brand-greenhover transition">Update</button>
+                </div>
+                <!-- Ye date box sirf tab dikhega jab 'Select on Calendar' chuna jayega -->
+                <input type="date" id="admin-delivery-date-${order.id}" class="${currentDelivery.includes('Delivery') ? 'block' : 'hidden'} w-full bg-brand-dark border border-brand-green/50 rounded px-2 py-2 text-gray-400 text-sm outline-none cursor-pointer">
+            </div>
+        </div>
+
+        <div class="bg-[#0b1115] p-3 rounded-lg border border-gray-800 mb-4">
+            <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Customer Details</p>
+            <p class="text-sm text-white font-semibold"><i class="fas fa-user text-brand-green mr-2"></i> ${order.customerName}</p>
+            <p class="text-sm text-gray-400 mt-1.5"><i class="fab fa-whatsapp text-brand-green mr-2"></i> ${order.customerPhone}</p>
+        </div>
+
+        ${addressHtml}
+
+        <div class="mt-4 mb-2 bg-[#0b1115] p-3 rounded-lg border border-gray-800">
+            <p class="text-xs text-gray-500 mb-3 uppercase font-bold tracking-wider border-b border-gray-800 pb-2">Items Ordered</p>
+            ${itemsHtml}
+            <div class="mt-3 pt-2 flex justify-between items-center">
+                <span class="text-gray-400 text-sm">Grand Total</span>
+                <span class="text-brand-green font-bold text-xl">₹${order.grandTotal}</span>
+            </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3">
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center flex flex-col justify-between items-center">
+                <div class="w-full">
+                    <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status</p>
+                    <p class="text-sm font-semibold mt-1 ${statusColor}">${order.payStatus || 'Unpaid'}</p>
+                </div>
+                <button onclick="toggleAdminPaymentStatus('${order.id}', '${nextStatus}')" class="mt-2.5 w-full text-[10px] border px-2 py-1.5 rounded transition font-bold uppercase tracking-wider ${toggleBtnClass}">
+                    Mark as ${nextStatus}
+                </button>
+            </div>
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center flex flex-col justify-center items-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider w-full">Payment Mode</p>
+                <p class="text-[11px] text-white font-semibold mt-1 w-full text-center leading-tight">${order.payMode || 'N/A'}</p>
+            </div>
+        </div>
+    `;
+
+    const modal = document.getElementById('admin-order-details-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+// ==========================================
+// 2. TOGGLE CALENDAR VISIBILITY
+// ==========================================
+function toggleDateField(id) {
+    let select = document.getElementById(`admin-delivery-select-${id}`);
+    let dateInput = document.getElementById(`admin-delivery-date-${id}`);
+    
+    if (select.value === 'Custom') {
+        dateInput.classList.remove('hidden');
+        dateInput.classList.add('block');
+    } else {
+        dateInput.classList.add('hidden');
+        dateInput.classList.remove('block');
+    }
+}
+
+// ==========================================
+// 3. SAVE STATUS TO FIREBASE (Dropdown & Date Logic)
+// ==========================================
+async function updateDeliveryStatus(id) {
+    let select = document.getElementById(`admin-delivery-select-${id}`);
+    let dateInput = document.getElementById(`admin-delivery-date-${id}`);
+    let newStatus = select.value;
+
+    // Agar Calendar select kiya hai, toh date nikal kar format karo
+    if (newStatus === 'Custom') {
+        if (!dateInput.value) return alert("⚠️ Please select a date from the calendar!");
+        
+        let d = new Date(dateInput.value);
+        let formattedDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); // ex: 15 Sep 2026
+        newStatus = `Delivery by ${formattedDate}`;
+    }
+    
+    try {
+        await db.collection('bills').doc(id).update({ deliveryStatus: newStatus });
+        
+        // Admin ke local array mein update karo taki turant dikhe
+        if (typeof adminBills !== 'undefined') {
+            let order = adminBills.find(b => b.id === id);
+            if(order) order.deliveryStatus = newStatus;
+        }
+        
+        alert(`✅ Status Updated to: ${newStatus}`);
+    } catch(e) { 
+        alert("❌ Error: " + e.message); 
+    }
+}
+// ==========================================
+// 1. ADMIN SIDE: ORDER DETAILS (Dropdown & Calendar Fixed)
+// ==========================================
+function viewAdminOrderDetails(id) {
+    const order = adminBills.find(b => b.id === id);
+    if (!order) return;
+
+    let itemsHtml = '';
+    order.items.forEach(item => {
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemsHtml += `<div class="flex justify-between text-sm text-gray-300 mb-1 border-b border-gray-800/50 pb-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
+    });
+
+    let formattedAddress = "";
+    if (order.address) {
+        formattedAddress = order.address
+            .replace(/(https?:\/\/[^\s]+)/g, '<br><a href="$1" target="_blank" class="text-blue-400 font-bold hover:underline inline-flex items-center gap-1.5 bg-blue-500/10 px-3 py-1.5 rounded mt-2 mb-1 shadow-sm"><i class="fas fa-location-arrow"></i> Open Map</a>')
+            .replace(/🔗/g, "");
+    }
+    let addressHtml = formattedAddress ? `<div class="mt-4 bg-[#0b1115] p-3 rounded-lg border border-gray-800"><p class="text-xs text-gray-500 mb-1 uppercase font-bold tracking-wider">Delivery Address</p><div class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">${formattedAddress}</div></div>` : '';
+    
+    // Status Logic
+    let currentDelivery = order.deliveryStatus || 'Processing';
+    let isCustomDate = currentDelivery.includes('Delivery by'); // Check if it's a calendar date
+    
+    let isPaid = order.payStatus && order.payStatus.includes('Paid');
+    let nextStatus = isPaid ? 'Unpaid' : 'Paid';
+    let statusColor = isPaid ? 'text-green-400' : 'text-red-400';
+    let toggleBtnClass = isPaid 
+        ? 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20' 
+        : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20';
+
+    const content = document.getElementById('admin-order-details-content');
+    content.innerHTML = `
+        <div class="flex justify-between items-center mb-4">
+            <div class="min-w-0 pr-2">
+                <p class="text-xs text-gray-500">Order ID</p>
+                <p class="text-sm text-white font-mono bg-gray-800 px-2 py-0.5 rounded mt-0.5 truncate">#${order.id}</p>
+            </div>
+            <div class="text-right shrink-0">
+                <p class="text-xs text-gray-500">Date</p>
+                <p class="text-sm text-white font-semibold mt-0.5">${order.date}</p>
+            </div>
+        </div>
+
+        <!-- FIXED DROPDOWN & CALENDAR BOX -->
+        <div class="bg-brand-green/10 p-3 rounded-lg border border-brand-green/30 mb-4">
+            <p class="text-[10px] text-brand-green mb-1.5 uppercase font-bold tracking-wider">Current Status: <span class="text-white">${currentDelivery}</span></p>
+            <div class="flex flex-col gap-2 w-full">
+                <div class="flex gap-2 w-full items-stretch">
+                    <select id="admin-delivery-select-${order.id}" onchange="toggleDateField('${order.id}')" class="flex-1 min-w-0 bg-brand-dark border border-brand-green/50 rounded px-2 py-2 text-white text-sm outline-none cursor-pointer">
+                        <option value="Processing" ${currentDelivery === 'Processing' ? 'selected' : ''}>Processing</option>
+                        <option value="Delivered" ${currentDelivery === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                        <option value="Cancelled" ${currentDelivery === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                        <!-- Agar pehle se koi date save hai, toh wo yahan khud select ho jayegi -->
+                        ${isCustomDate ? `<option value="${currentDelivery}" selected>${currentDelivery}</option>` : ''}
+                        <option value="Custom">📅 Pick New Date...</option>
+                    </select>
+                    <button onclick="updateDeliveryStatus('${order.id}')" class="shrink-0 bg-brand-green text-black px-3 py-2 rounded font-bold text-sm shadow-md hover:bg-brand-greenhover transition">Update</button>
+                </div>
+                <!-- FIXED: 'color-scheme: dark;' ki wajah se ab date white color me proper dikhegi -->
+                <input type="date" id="admin-delivery-date-${order.id}" style="color-scheme: dark;" class="hidden w-full bg-brand-dark border border-brand-green/50 rounded px-2 py-2 text-white text-sm outline-none cursor-pointer">
+            </div>
+        </div>
+
+        <div class="bg-[#0b1115] p-3 rounded-lg border border-gray-800 mb-4">
+            <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Customer Details</p>
+            <p class="text-sm text-white font-semibold"><i class="fas fa-user text-brand-green mr-2"></i> ${order.customerName}</p>
+            <p class="text-sm text-gray-400 mt-1.5"><i class="fab fa-whatsapp text-brand-green mr-2"></i> ${order.customerPhone}</p>
+        </div>
+
+        ${addressHtml}
+
+        <div class="mt-4 mb-2 bg-[#0b1115] p-3 rounded-lg border border-gray-800">
+            <p class="text-xs text-gray-500 mb-3 uppercase font-bold tracking-wider border-b border-gray-800 pb-2">Items Ordered</p>
+            ${itemsHtml}
+            <div class="mt-3 pt-2 flex justify-between items-center">
+                <span class="text-gray-400 text-sm">Grand Total</span>
+                <span class="text-brand-green font-bold text-xl">₹${order.grandTotal}</span>
+            </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3">
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center flex flex-col justify-between items-center">
+                <div class="w-full">
+                    <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status</p>
+                    <p class="text-sm font-semibold mt-1 ${statusColor}">${order.payStatus || 'Unpaid'}</p>
+                </div>
+                <button onclick="toggleAdminPaymentStatus('${order.id}', '${nextStatus}')" class="mt-2.5 w-full text-[10px] border px-2 py-1.5 rounded transition font-bold uppercase tracking-wider ${toggleBtnClass}">
+                    Mark as ${nextStatus}
+                </button>
+            </div>
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center flex flex-col justify-center items-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider w-full">Payment Mode</p>
+                <p class="text-[11px] text-white font-semibold mt-1 w-full text-center leading-tight">${order.payMode || 'N/A'}</p>
+            </div>
+        </div>
+    `;
+
+    const modal = document.getElementById('admin-order-details-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+// ==========================================
+// 2. TOGGLE CALENDAR VISIBILITY
+// ==========================================
+function toggleDateField(id) {
+    let select = document.getElementById(`admin-delivery-select-${id}`);
+    let dateInput = document.getElementById(`admin-delivery-date-${id}`);
+    
+    if (select.value === 'Custom') {
+        dateInput.classList.remove('hidden');
+        dateInput.classList.add('block');
+    } else {
+        dateInput.classList.add('hidden');
+        dateInput.classList.remove('block');
+    }
+}
+
+// ==========================================
+// 3. SAVE STATUS TO FIREBASE (Dropdown & Date Logic)
+// ==========================================
+async function updateDeliveryStatus(id) {
+    let select = document.getElementById(`admin-delivery-select-${id}`);
+    let dateInput = document.getElementById(`admin-delivery-date-${id}`);
+    let newStatus = select.value;
+
+    if (newStatus === 'Custom') {
+        if (!dateInput.value) return alert("⚠️ Please select a date from the calendar!");
+        
+        let d = new Date(dateInput.value);
+        let formattedDate = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); 
+        newStatus = `Delivery by ${formattedDate}`;
+    }
+    
+    try {
+        await db.collection('bills').doc(id).update({ deliveryStatus: newStatus });
+        
+        if (typeof adminBills !== 'undefined') {
+            let order = adminBills.find(b => b.id === id);
+            if(order) order.deliveryStatus = newStatus;
+        }
+        
+        alert(`✅ Status Updated to: ${newStatus}`);
+        viewAdminOrderDetails(id); // Reload karega taki Update hote hi naya status uper likha aa jaye
+    } catch(e) { 
+        alert("❌ Error: " + e.message); 
+    }
+}
+// ==========================================
+// 1. ADMIN PANEL: RECENT BILLS CARDS (Colored Borders & Big Buttons)
+// ==========================================
+function renderAdminBills() {
+    const list = document.getElementById('admin-bills-list');
+    const totalCount = document.getElementById('admin-total-orders');
+    if(!list || !totalCount) return;
+
+    totalCount.innerText = adminBills.length;
+    
+    if (adminBills.length === 0) {
+        list.innerHTML = `<p class="text-gray-500 text-sm italic py-4 text-center">No bills generated yet.</p>`;
+        return;
+    }
+
+    let html = '';
+    [...adminBills].reverse().forEach(bill => {
+        let payStatus = bill.payStatus || 'Unpaid';
+        let payMode = bill.payMode || 'Cash (Offline)';
+
+        let payBadge = payStatus.includes('Paid') 
+            ? `<span class="bg-green-500/10 text-green-400 border border-green-500/30 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase font-bold tracking-wider">PAID</span>`
+            : `<span class="bg-red-500/10 text-red-400 border border-red-500/30 text-[9px] px-1.5 py-0.5 rounded ml-2 uppercase font-bold tracking-wider">UNPAID</span>`;
+        
+        let modeIcon = payMode.includes('UPI') ? `<i class="fas fa-qrcode text-[10px] mr-1 text-gray-400"></i>` : `<i class="fas fa-money-bill-wave text-[10px] mr-1 text-gray-400"></i>`;
+
+        // ==========================================
+        // DYNAMIC COLOR & STATUS LOGIC
+        // ==========================================
+        let dStatus = bill.deliveryStatus || 'Processing';
+        let borderClass = "border-gray-700 hover:border-gray-500"; 
+        let statusTextHtml = `<span class="text-gray-400 bg-gray-800/50 px-2 py-0.5 rounded text-[10px] font-semibold"><i class="fas fa-spinner fa-spin mr-1"></i> Processing</span>`;
+        
+        if (dStatus === 'Delivered') {
+            borderClass = "border-green-500/60 shadow-[0_0_10px_rgba(34,197,94,0.1)]";
+            statusTextHtml = `<span class="text-green-400 bg-green-500/10 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-check-circle mr-1"></i> Delivered</span>`;
+        } else if (dStatus === 'Cancelled') {
+            borderClass = "border-red-500/60 shadow-[0_0_10px_rgba(239,68,68,0.1)]";
+            statusTextHtml = `<span class="text-red-400 bg-red-500/10 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-times-circle mr-1"></i> Cancelled</span>`;
+        } else if (dStatus.includes('Delivery by')) {
+            borderClass = "border-blue-500/60 shadow-[0_0_10px_rgba(59,130,246,0.1)]";
+            let shortDate = dStatus.replace('Delivery by ', '');
+            statusTextHtml = `<span class="text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded text-[10px] font-bold"><i class="fas fa-calendar-alt mr-1"></i> ${shortDate}</span>`;
+        }
+
+        html += `
+        <div class="bg-[#0e141a] border ${borderClass} rounded-xl p-4 flex flex-col transition-all duration-300">
+            
+            <!-- ORDER DETAILS AREA (Clickable) -->
+            <div class="flex justify-between items-start mb-3 cursor-pointer" onclick="viewAdminOrderDetails('${bill.id}')" title="Click to view full details">
+                <div>
+                    <p class="text-white font-semibold text-sm flex items-center">${bill.customerName} ${payBadge}</p>
+                    <p class="text-gray-400 text-xs mt-1.5 flex items-center gap-2">
+                        <span>${bill.items.length} Items</span>
+                        <span class="text-gray-600">•</span>
+                        <span class="flex items-center">${modeIcon} ${payMode}</span>
+                    </p>
+                    <div class="mt-2.5 flex items-center">
+                        ${statusTextHtml}
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-brand-green font-bold text-lg">₹${bill.grandTotal}</p>
+                    <p class="text-[10px] text-blue-400 mt-1.5 hover:underline">View Details <i class="fas fa-chevron-right text-[8px] ml-0.5"></i></p>
+                </div>
+            </div>
+            
+            <!-- ACTION BUTTONS AREA (Bigger & Cleaner) -->
+            <div class="flex justify-end gap-2.5 mt-2 pt-4 border-t border-gray-800/70">
+                <button onclick="downloadBillImage('${bill.id}')" class="flex-1 bg-brand-green/10 text-brand-green border border-brand-green/30 hover:bg-brand-green hover:text-black transition-all px-3 py-2.5 rounded-lg text-xs font-bold flex justify-center items-center gap-1.5 shadow-sm">
+                    <i class="fas fa-image text-sm"></i> Save Image
+                </button>
+                <button onclick="resendBill('${bill.id}')" class="flex-1 bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-600 hover:text-white transition-all px-3 py-2.5 rounded-lg text-xs font-semibold flex justify-center items-center gap-1.5 shadow-sm">
+                    <i class="fab fa-whatsapp text-brand-green text-sm"></i> Text Bill
+                </button>
+                <button onclick="deleteBill('${bill.id}')" class="bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500 hover:text-white transition-all px-4 py-2.5 rounded-lg flex items-center justify-center shadow-sm">
+                    <i class="fas fa-trash-alt text-sm"></i>
+                </button>
+            </div>
+        </div>`;
+    });
+    list.innerHTML = html;
+    
+    if (typeof renderInsights === 'function') renderInsights(); 
+}
+// ==========================================
+// 1. USER SIDE: MY ORDERS (Invoice Button & Pay Button Logic)
+// ==========================================
+async function openMyOrders() {
+    const modal = document.getElementById('my-orders-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+    
+    let container = document.getElementById('my-orders-list-container');
+    let user = firebase.auth().currentUser;
+    
+    if(!user) {
+        return container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><p class="text-gray-400 text-sm font-semibold">Please log in to track your orders.</p></div>`;
+    }
+    
+    container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><i class="fas fa-spinner fa-spin text-4xl text-brand-green mb-3"></i><p class="text-gray-400 text-sm font-semibold">Loading your orders...</p></div>`;
+
+    try {
+        let snap = await db.collection('bills').where('userId', '==', user.uid).get();
+        if(snap.empty) {
+            return container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><i class="fas fa-receipt text-4xl text-gray-700 mb-3"></i><p class="text-gray-400 text-sm font-semibold">No recent orders found.</p></div>`;
+        }
+
+        let orders = [];
+        snap.forEach(doc => orders.push({id: doc.id, ...doc.data()}));
+        orders.sort((a, b) => b.timestamp - a.timestamp); 
+
+        let html = '';
+        orders.forEach(order => {
+            let isPaid = order.payStatus.includes('Paid');
+            let deliveryStatus = order.deliveryStatus || 'Processing';
+            let isCancelled = deliveryStatus.toLowerCase() === 'cancelled';
+            let isDelivered = deliveryStatus.toUpperCase() === 'DELIVERED'; // Check for Delivered
+            
+            let statusBadge = isPaid 
+                ? `<span class="bg-green-500/10 text-green-400 border border-green-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Paid</span>`
+                : `<span class="bg-red-500/10 text-red-400 border border-red-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Unpaid</span>`;
+                
+            let deliveryBgColor = isCancelled ? 'bg-red-500/10 border-red-500/20' : (isDelivered ? 'bg-green-500/10 border-green-500/20' : 'bg-brand-green/10 border-brand-green/20');
+            let deliveryTextColor = isCancelled ? 'text-red-400' : (isDelivered ? 'text-green-400' : 'text-brand-green');
+            let deliveryIcon = isCancelled ? 'fa-times-circle text-red-400' : (isDelivered ? 'fa-check-circle text-green-400' : 'fa-truck text-brand-green');
+            let deliveryTextWhite = isCancelled ? 'text-red-300' : 'text-white';
+
+            let itemsList = '';
+            if(order.items && Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    let itemTotal = item.total || (item.price * item.qty);
+                    itemsList += `<div class="flex justify-between text-xs text-gray-400 mt-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
+                });
+            }
+
+            let formattedAddress = "";
+            if (order.address) {
+                formattedAddress = order.address
+                    .replace(/(https?:\/\/[^\s]+)/g, '<br><a href="$1" target="_blank" class="text-blue-400 font-bold hover:underline inline-flex items-center gap-1.5 bg-blue-500/10 px-3 py-1.5 rounded mt-2 mb-1 shadow-sm"><i class="fas fa-location-arrow"></i> Open Map</a>')
+                    .replace(/🔗/g, "");
+            }
+            let addressHtml = formattedAddress ? `<div class="mt-2 p-3 bg-[#0b1115] rounded border border-gray-800 text-xs text-gray-400 whitespace-pre-wrap">${formattedAddress}</div>` : '';
+            
+            // PAY NOW BUTTON (HIDE IF CANCELLED, DELIVERED, OR PAID)
+            let payBtnHtml = (!isPaid && !isCancelled && !isDelivered) ? `
+                <button onclick="payFromMyOrders('${order.id}', ${order.grandTotal}, '${order.customerName}', '${order.customerPhone}')" class="w-full mt-3 bg-brand-green hover:bg-brand-greenhover text-black font-bold py-2.5 rounded-lg text-sm flex justify-center items-center gap-2 transition shadow-lg">
+                    <i class="fas fa-qrcode"></i> Pay ₹${order.grandTotal} Now
+                </button>
+            ` : '';
+
+            // CANCEL BUTTON (ONLY SHOW IF PROCESSING)
+            let cancelBtnHtml = (deliveryStatus === 'Processing') ? `
+                <button onclick="cancelUserOrder('${order.id}')" class="w-full mt-2 bg-red-500/5 hover:bg-red-500/10 border border-red-500/30 text-red-400 font-semibold py-2 rounded-lg text-xs transition flex justify-center items-center gap-1.5">
+                    <i class="fas fa-times"></i> Cancel Order
+                </button>
+            ` : '';
+
+            // NEW: DOWNLOAD INVOICE BUTTON (ONLY SHOW IF DELIVERED)
+            let invoiceBtnHtml = isDelivered ? `
+                <button onclick="downloadUserInvoice('${order.id}')" class="mt-2 bg-gray-800 border border-gray-700 hover:text-white text-gray-300 transition-all px-3 py-1.5 rounded text-[10px] font-bold flex items-center gap-1.5 shadow-sm">
+                    <i class="fas fa-file-download text-brand-green"></i> Download Invoice
+                </button>
+            ` : '';
+
+            html += `
+            <div class="bg-brand-dark border border-gray-700 rounded-xl p-4 mb-3 shadow-sm">
+                <div class="flex justify-between items-start mb-2 border-b border-gray-800 pb-2">
+                    <div>
+                        <p class="text-white font-semibold text-sm">Order on ${order.date}</p>
+                        <p class="text-gray-500 text-[10px] mt-0.5">ID: #${order.id.substring(0, 8).toUpperCase()}</p>
+                        ${invoiceBtnHtml}
+                    </div>
+                    ${statusBadge}
+                </div>
+                
+                <div class="${deliveryBgColor} border rounded p-2 mb-3 flex items-center gap-2">
+                    <i class="fas ${deliveryIcon} text-xs"></i>
+                    <span class="text-xs ${deliveryTextColor} font-medium">Status: <span class="${deliveryTextWhite}">${deliveryStatus}</span></span>
+                </div>
+
+                <div class="mb-2">
+                    ${itemsList}
+                </div>
+                
+                ${addressHtml}
+                
+                <div class="flex justify-between items-center border-t border-gray-800 pt-2 mt-2">
+                    <span class="text-xs text-gray-400">Total Amount</span>
+                    <span class="text-brand-green font-bold text-base">₹${order.grandTotal}</span>
+                </div>
+                ${payBtnHtml}
+                ${cancelBtnHtml}
+            </div>`;
+        });
+        
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-red-500/30"><p class="text-red-400 text-sm">Error: ${e.message}</p></div>`;
+    }
+}
+
+// ==========================================
+// 2. USER SIDE: DOWNLOAD INVOICE FUNCTION
+// ==========================================
+async function downloadUserInvoice(orderId) {
+    try {
+        // Database se bill ki detail laana
+        const doc = await db.collection('bills').doc(orderId).get();
+        if(!doc.exists) return alert("Order not found!");
+        const bill = {id: doc.id, ...doc.data()};
+
+        // Hidden HTML template mein data bharna (Jaise admin side mein hota hai)
+        document.getElementById('receipt-name').innerText = bill.customerName;
+        document.getElementById('receipt-phone').innerText = bill.customerPhone;
+        document.getElementById('receipt-date').innerText = bill.date;
+        document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
+        document.getElementById('receipt-paymode').innerText = bill.payMode || 'N/A';
+        
+        let displayStatus = (bill.payStatus && bill.payStatus.includes('Paid')) ? 'Paid ✅' : 'Pending';
+        document.getElementById('receipt-paystatus').innerText = displayStatus;
+
+        let itemsHtml = '';
+        bill.items.forEach(item => {
+            let itemTotal = item.total ? item.total : (item.price * item.qty);
+            itemsHtml += `
+                <tr class="border-b border-dashed border-gray-200">
+                    <td class="py-1.5 pr-2 truncate max-w-[150px]">${item.name}</td>
+                    <td class="py-1.5 text-center">${item.qty}</td>
+                    <td class="py-1.5 text-right">₹${item.price}</td>
+                    <td class="py-1.5 text-right font-semibold">₹${itemTotal}</td>
+                </tr>
+            `;
+        });
+        document.getElementById('receipt-items').innerHTML = itemsHtml;
+
+        const container = document.getElementById('receipt-container');
+        
+        // Image Create aur Download
+        setTimeout(() => {
+            html2canvas(container, {
+                scale: 2, 
+                backgroundColor: "#ffffff"
+            }).then(canvas => {
+                let link = document.createElement('a');
+                link.download = `NetajiJhadu_Invoice_${bill.id.substring(0,8)}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        }, 100);
+
+    } catch (error) {
+        alert("❌ Error generating invoice: " + error.message);
+    }
+}
+// ==========================================
+// ADMIN SIDE: BILL IMAGE GENERATOR FIX (Undefined Bug Resolved)
+// ==========================================
+function downloadBillImage(id) {
+    // Ye line galti se card ka popup khulne se rokegi
+    if (window.event) window.event.stopPropagation(); 
+
+    const bill = adminBills.find(b => b.id === id);
+    if(!bill) return;
+
+    // Data fill karna template mein
+    document.getElementById('receipt-name').innerText = bill.customerName;
+    document.getElementById('receipt-phone').innerText = bill.customerPhone;
+    document.getElementById('receipt-date').innerText = bill.date;
+    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
+    document.getElementById('receipt-paymode').innerText = bill.payMode || 'N/A';
+    
+    let displayStatus = bill.payStatus.includes('Paid') ? 'Paid ✅' : 'Pending';
+    document.getElementById('receipt-paystatus').innerText = displayStatus;
+
+    // Items list banayein
+    let itemsHtml = '';
+    bill.items.forEach(item => {
+        // YAHAN FIX KIYA HAI: Agar total nahi milega toh (price * qty) khud nikal lega
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        
+        itemsHtml += `
+            <tr class="border-b border-dashed border-gray-200">
+                <td class="py-1.5 pr-2 truncate max-w-[150px]">${item.name}</td>
+                <td class="py-1.5 text-center">${item.qty}</td>
+                <td class="py-1.5 text-right">₹${item.price}</td>
+                <td class="py-1.5 text-right font-semibold">₹${itemTotal}</td>
+            </tr>
+        `;
+    });
+    document.getElementById('receipt-items').innerHTML = itemsHtml;
+
+    const container = document.getElementById('receipt-container');
+    
+    // Thoda delay taki DOM update ho jaye
+    setTimeout(() => {
+        html2canvas(container, {
+            scale: 2, 
+            backgroundColor: "#ffffff"
+        }).then(canvas => {
+            // 1. Image Download Karega
+            let link = document.createElement('a');
+            link.download = `NetajiJhadu_Bill_${bill.customerName}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+            
+            // 2. WhatsApp par Redirect (Download ke 1 second baad taki browser atke nahi)
+            setTimeout(() => {
+                let msg = `Hello ${bill.customerName}, here is your order receipt from Netaji Jhadu Store. Please find the attached image.`;
+                window.open(`https://wa.me/91${bill.customerPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+            }, 1000); 
+        });
+    }, 100);
+}
+// ==========================================
+// ADMIN SIDE: INSIGHTS & MONTHLY SALE FIX
+// ==========================================
+function renderInsights() {
+    let allTime = 0;
+    let monthly = 0;
+    let udhar = 0;
+    let profit = 0;
+    let dailySales = {};
+
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    adminBills.forEach(bill => {
+        allTime += bill.grandTotal;
+        
+        // Track Daily Sales for Best Day
+        if(!dailySales[bill.date]) dailySales[bill.date] = 0;
+        dailySales[bill.date] += bill.grandTotal;
+
+        // Profit vs Udhar (Payment status ke hisaab se)
+        if (bill.payStatus && bill.payStatus.includes('Paid')) {
+            profit += bill.grandTotal;
+        } else {
+            udhar += bill.grandTotal;
+        }
+
+        // FIX: Firebase alphanumeric ID ki jagah asali timestamp ya date check karna
+        let billDate;
+        if (bill.timestamp && typeof bill.timestamp.toDate === 'function') {
+            billDate = bill.timestamp.toDate();
+        } else if (bill.timestamp && bill.timestamp.seconds) {
+            billDate = new Date(bill.timestamp.seconds * 1000);
+        } else {
+            // Agar timestamp na mile toh DD/MM/YYYY text se date banana
+            let parts = bill.date.split('/');
+            if(parts.length === 3) {
+                billDate = new Date(parts[2], parts[1] - 1, parts[0]);
+            } else {
+                billDate = new Date(bill.date);
+            }
+        }
+
+        // Check if the order is from the current month & year
+        if (billDate && !isNaN(billDate) && billDate.getMonth() === currentMonth && billDate.getFullYear() === currentYear) {
+            monthly += bill.grandTotal;
+        }
+    });
+
+    // Find Best Day
+    let bestDay = 'No Sales Yet';
+    let maxSale = 0;
+    for (const [day, sale] of Object.entries(dailySales)) {
+        if (sale > maxSale) {
+            maxSale = sale;
+            bestDay = `${day} (₹${sale})`;
+        }
+    }
+
+    // Update Text UI
+    if(document.getElementById('insight-all-time')) document.getElementById('insight-all-time').innerText = `₹${allTime}`;
+    if(document.getElementById('insight-monthly')) document.getElementById('insight-monthly').innerText = `₹${monthly}`;
+    if(document.getElementById('insight-udhar')) document.getElementById('insight-udhar').innerText = `₹${udhar}`;
+    if(document.getElementById('insight-profit')) document.getElementById('insight-profit').innerText = `₹${profit}`;
+    if(document.getElementById('insight-udhar-list')) document.getElementById('insight-udhar-list').innerText = `₹${udhar}`;
+    if(document.getElementById('insight-best-day')) document.getElementById('insight-best-day').innerText = bestDay;
+
+    // Render Chart.js Pie Chart
+    const ctx = document.getElementById('insightsChart');
+    if(ctx) {
+        // Purana chart destroy karna zaruri hai warna hover par glitch karta hai
+        if(typeof insightChartInstance !== 'undefined' && insightChartInstance) {
+            insightChartInstance.destroy();
+        }
+        
+        // Agar no sales hain toh grey ring dikhayega
+        let dataValues = (profit === 0 && udhar === 0) ? [1] : [profit, udhar];
+        let bgColors = (profit === 0 && udhar === 0) ? ['#1f2937'] : ['#16a34a', '#ef4444'];
+        let labels = (profit === 0 && udhar === 0) ? ['No Sales'] : ['Paid (Received)', 'Unpaid (Udhar)'];
+
+        insightChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: bgColors,
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+}
+// ==========================================
+// ADMIN SIDE: DYNAMIC MONTHLY INSIGHTS (Cancelled Order Fix)
+// ==========================================
+function renderInsights() {
+    let allTimeSale = 0;
+    let allTimeUdhar = 0; 
+    
+    let monthSale = 0;
+    let monthProfit = 0;
+    let monthUdhar = 0;
+    let dailySales = {};
+
+    // 1. Get Selected Month from Picker
+    const monthPicker = document.getElementById('insight-month-picker');
+    let selectedYear = new Date().getFullYear();
+    let selectedMonth = new Date().getMonth(); 
+    
+    if (monthPicker && monthPicker.value) {
+        const parts = monthPicker.value.split('-'); 
+        selectedYear = parseInt(parts[0]);
+        selectedMonth = parseInt(parts[1]) - 1; 
+    } else if (monthPicker) {
+        let m = (selectedMonth + 1).toString().padStart(2, '0');
+        monthPicker.value = `${selectedYear}-${m}`;
+    }
+
+    // 2. Calculate Stats
+    adminBills.forEach(bill => {
+        // MAGIC FIX: Agar order Cancelled hai, toh use kisi bhi calculation mein mat lo!
+        let isCancelled = bill.deliveryStatus && bill.deliveryStatus.toLowerCase() === 'cancelled';
+        if (isCancelled) return; // Is bill ko yahi chhod do, aage math mein mat jodo
+
+        // ALL-TIME calculations
+        allTimeSale += bill.grandTotal;
+        if (!bill.payStatus || !bill.payStatus.includes('Paid')) {
+            allTimeUdhar += bill.grandTotal;
+        }
+
+        // DATE Parsing for Firebase & Local Formats
+        let billDate;
+        if (bill.timestamp && typeof bill.timestamp.toDate === 'function') {
+            billDate = bill.timestamp.toDate();
+        } else if (bill.timestamp && bill.timestamp.seconds) {
+            billDate = new Date(bill.timestamp.seconds * 1000);
+        } else {
+            let parts = bill.date.split('/');
+            if(parts.length === 3) billDate = new Date(parts[2], parts[1] - 1, parts[0]);
+            else billDate = new Date(bill.date);
+        }
+
+        // MONTH-SPECIFIC calculations
+        if (billDate && !isNaN(billDate) && billDate.getMonth() === selectedMonth && billDate.getFullYear() === selectedYear) {
+            monthSale += bill.grandTotal;
+            
+            if (bill.payStatus && bill.payStatus.includes('Paid')) {
+                monthProfit += bill.grandTotal;
+            } else {
+                monthUdhar += bill.grandTotal;
+            }
+
+            if(!dailySales[bill.date]) dailySales[bill.date] = 0;
+            dailySales[bill.date] += bill.grandTotal;
+        }
+    });
+
+    // 3. Find Best Day for selected month
+    let bestDay = '-';
+    let maxSale = 0;
+    for (const [day, sale] of Object.entries(dailySales)) {
+        if (sale > maxSale) {
+            maxSale = sale;
+            bestDay = `${day} (₹${sale})`;
+        }
+    }
+
+    // 4. Update UI Text
+    if(document.getElementById('insight-all-time')) document.getElementById('insight-all-time').innerText = `₹${allTimeSale}`;
+    if(document.getElementById('insight-monthly')) document.getElementById('insight-monthly').innerText = `₹${monthSale}`;
+    if(document.getElementById('insight-udhar')) document.getElementById('insight-udhar').innerText = `₹${allTimeUdhar}`; 
+    if(document.getElementById('insight-profit')) document.getElementById('insight-profit').innerText = `₹${monthProfit}`;
+    if(document.getElementById('insight-udhar-list')) document.getElementById('insight-udhar-list').innerText = `₹${monthUdhar}`;
+    if(document.getElementById('insight-best-day')) document.getElementById('insight-best-day').innerText = bestDay;
+
+    const monthLabel = document.querySelector('#insight-monthly').previousElementSibling;
+    if (monthLabel) {
+        const dateObj = new Date(selectedYear, selectedMonth);
+        monthLabel.innerText = `${dateObj.toLocaleString('default', { month: 'short' }).toUpperCase()} SALE`;
+    }
+
+    // 5. Update Chart (For Selected Month Only)
+    const ctx = document.getElementById('insightsChart');
+    if(ctx) {
+        if(typeof insightChartInstance !== 'undefined' && insightChartInstance) {
+            insightChartInstance.destroy(); 
+        }
+        
+        let dataValues = (monthProfit === 0 && monthUdhar === 0) ? [1] : [monthProfit, monthUdhar];
+        let bgColors = (monthProfit === 0 && monthUdhar === 0) ? ['#1f2937'] : ['#16a34a', '#ef4444'];
+        let labels = (monthProfit === 0 && monthUdhar === 0) ? ['No Sales'] : ['Paid (Received)', 'Unpaid (Udhar)'];
+
+        insightChartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: bgColors,
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: { legend: { display: false } }
+            }
+        });
     }
 }
 
