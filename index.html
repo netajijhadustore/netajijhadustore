@@ -581,17 +581,27 @@
                     <input type="tel" id="checkout-phone" placeholder="91xxxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green">
                 </div>
 
-                <!-- Delivery Address Upar Aa Gaya -->
-                <div class="mt-1">
-                    <div class="flex justify-between items-end mb-1.5">
-                        <label class="text-xs text-gray-400 block font-medium">Delivery Address *</label>
-                        <button type="button" onclick="getCheckoutLocation()" class="text-[10px] text-blue-400 font-bold bg-blue-500/10 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500/20 transition flex items-center gap-1 shadow-sm">
-                            <i class="fas fa-crosshairs"></i> Auto Detect GPS
-                        </button>
-                    </div>
-                    <textarea id="checkout-address" rows="3" placeholder="Enter your full address or detect location..." class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green transition resize-none"></textarea>
-                </div>
-                
+            <!-- NAYA DELIVERY ADDRESS BLOCK (Compulsory Fields ke sath) -->
+<div class="mt-1 mb-2">
+    <div class="flex justify-between items-end mb-1.5">
+        <label class="text-xs text-gray-400 block font-medium">Delivery Address *</label>
+        <button type="button" onclick="getCheckoutLocation()" class="text-[10px] text-blue-400 font-bold bg-blue-500/10 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500/20 transition flex items-center gap-1 shadow-sm">
+            <i class="fas fa-crosshairs"></i> Auto Detect Area
+        </button>
+    </div>
+    
+    <div class="flex flex-col gap-2">
+        <input type="text" id="checkout-house" placeholder="House / Flat No. (Compulsory) *" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-brand-green transition" required>
+        
+        <input type="text" id="checkout-landmark" placeholder="Landmark (Near XYZ) (Compulsory) *" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-brand-green transition" required>
+        
+        <textarea id="checkout-address" rows="2" placeholder="Area, Street, City, Pincode..." class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-brand-green transition resize-none" required></textarea>
+        
+        <!-- Ye link ko hide karke save rakhega -->
+        <input type="hidden" id="checkout-maplink"> 
+    </div>
+</div>
+
                 <!-- Payment Method Niche Chala Gaya (Pichla sr-only fix applied) -->
                 <div class="mt-1">
                     <label class="text-xs text-gray-400 mb-2 block">Payment Method</label>
@@ -727,37 +737,50 @@
                 </div>
             </div>
 
-            <!-- Add New Address Form (Combined: Auto GPS + Manual) -->
-            <div id="add-address-form" class="hidden flex flex-col gap-4 mb-2">
+    <!-- NAYA ADD ADDRESS FORM (Full Details ke sath) -->
+<div id="add-address-form" class="hidden flex flex-col gap-4 mb-2">
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label class="text-xs text-gray-400 mb-1 block">Full Name *</label>
+            <input type="text" id="saved-name" placeholder="Your Name" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none">
+        </div>
+        <div>
+            <label class="text-xs text-gray-400 mb-1 block">Phone No. *</label>
+            <input type="tel" id="saved-phone" placeholder="91xxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none">
+        </div>
+    </div>
 
-                <!-- Option 1: Auto GPS (Fastest) -->
-                <div class="bg-blue-500/5 border border-blue-500/20 p-4 rounded-xl mb-1">
-                    <p class="text-[10px] text-blue-400 mb-2.5 font-bold tracking-widest text-center uppercase">Fastest Way</p>
-                    <button id="gps-detect-btn" type="button" onclick="getLocationFromGoogle()" class="w-full bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 py-3 rounded-lg text-sm font-bold transition flex justify-center items-center gap-2 shadow-sm">
-                        <i class="fas fa-crosshairs text-lg"></i> Auto-Detect via Google Maps
-                    </button>
-                </div>
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label class="text-xs text-gray-400 mb-1 block">House/Flat No. *</label>
+            <input type="text" id="saved-house" placeholder="House No." class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none">
+        </div>
+        <div>
+            <label class="text-xs text-gray-400 mb-1 block">Landmark *</label>
+            <input type="text" id="saved-landmark" placeholder="Near XYZ" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none">
+        </div>
+    </div>
 
-                <div class="relative flex py-1 items-center">
-                    <div class="flex-grow border-t border-gray-800"></div>
-                    <span class="flex-shrink-0 mx-4 text-gray-500 text-[10px] font-bold uppercase tracking-widest">OR ENTER MANUALLY</span>
-                    <div class="flex-grow border-t border-gray-800"></div>
-                </div>
+    <div>
+        <div class="flex justify-between items-end mb-1.5">
+            <label class="text-xs text-gray-400 block font-medium">Area / City *</label>
+            <button type="button" id="gps-detect-btn" onclick="getLocationFromGoogle()" class="text-[10px] text-blue-400 font-bold bg-blue-500/10 border border-blue-500/30 px-2 py-1 rounded hover:bg-blue-500/20 transition flex items-center gap-1 shadow-sm">
+                <i class="fas fa-crosshairs"></i> Detect Area
+            </button>
+        </div>
+        <textarea id="saved-area" rows="2" placeholder="Area, Street, City, Pincode..." class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none resize-none"></textarea>
+        <!-- Ye link hidden rahega -->
+        <input type="hidden" id="saved-maplink">
+    </div>
+    
+    <div class="mt-1">
+        <button type="button" onclick="saveNewAddress()" class="w-full bg-brand-green hover:bg-brand-greenhover text-black py-3.5 rounded-lg text-sm font-bold transition shadow-lg flex items-center justify-center gap-2">
+            <i class="fas fa-save"></i> <span id="save-addr-btn-text">Save Details</span>
+        </button>
+        <button type="button" onclick="cancelAddAddress()" class="w-full text-gray-400 text-xs font-semibold hover:text-white transition mt-4">Cancel</button>
+    </div>
+</div>
 
-                <!-- Option 2: Manual Entry Box -->
-                <div>
-                    <label class="text-xs text-gray-400 mb-1.5 block font-medium">Complete Address *</label>
-                    <textarea id="new-address-text" rows="3" placeholder="Flat No, Building, Street, Landmark, City, Pincode..." class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-brand-green shadow-inner transition"></textarea>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="mt-2">
-                    <button type="button" onclick="saveNewAddress()" class="w-full bg-brand-green hover:bg-brand-greenhover text-black py-3.5 rounded-lg text-sm font-bold transition shadow-lg flex items-center justify-center gap-2">
-                        <i class="fas fa-save"></i> <span id="save-addr-btn-text">Save Address</span>
-                    </button>
-                    <button type="button" onclick="cancelAddAddress()" class="w-full text-gray-400 text-xs font-semibold hover:text-white transition mt-4">Cancel</button>
-                </div>
-            </div>
             
             <!-- Show Form Button -->
             <button id="show-add-address-btn" onclick="showAddAddressForm()" class="w-full bg-brand-dark border border-brand-green/50 text-brand-green py-3.5 rounded-lg text-sm font-bold hover:bg-brand-green hover:text-black transition flex justify-center items-center gap-2 shadow-lg">
@@ -2825,11 +2848,14 @@ async function fillCheckoutAddress() {
     }
 }
 
-// Checkout me Live GPS Location nikalne ke liye
+// ==========================================
+// 1. NAYA GPS FETCH LOGIC (Hidden Link)
+// ==========================================
 function getCheckoutLocation() {
     const addrInput = document.getElementById('checkout-address');
+    const mapLinkInput = document.getElementById('checkout-maplink');
     const originalPh = addrInput.placeholder;
-    addrInput.placeholder = "Fetching exact address, please wait...";
+    addrInput.placeholder = "Fetching exact area, please wait...";
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -2837,24 +2863,19 @@ function getCheckoutLocation() {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+                
+                // Link background me save kar li, user ko nahi dikhegi
+                mapLinkInput.value = mapLink; 
 
                 try {
-                    // Free API se asali location ka naam nikalna
                     let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
                     let data = await res.json();
-                    let readableAddress = data.display_name || "Detected Location";
-
-                    let finalStr = `📍 ${readableAddress}\n🔗 ${mapLink}\n(Please add your House/Flat no. above)`;
-
-                    if(addrInput.value.trim() !== '' && !addrInput.value.includes('maps?q=')) {
-                        addrInput.value += `\n\n${finalStr}`;
-                    } else {
-                        addrInput.value = finalStr;
-                    }
+                    let readableAddress = data.display_name || "Detected Area";
+                    addrInput.value = readableAddress; // Sirf Area ka naam daalega
                 } catch(e) {
-                    addrInput.value = `📍 GPS Location\n🔗 ${mapLink}\n(Please add your House/Flat no. above)`;
+                    addrInput.value = `📍 GPS Location Detected`;
                 }
-                addrInput.placeholder = "Enter your full address or detect location...";
+                addrInput.placeholder = "Area, City, Pincode...";
             },
             (error) => {
                 alert("⚠️ GPS Detect nahi ho paya. Kripya phone ki Location/GPS ON karein.");
@@ -2867,6 +2888,7 @@ function getCheckoutLocation() {
         addrInput.placeholder = originalPh;
     }
 }
+
 
 // --- BILL IMAGE GENERATOR ---
 function downloadBillImage(id) {
@@ -3860,6 +3882,541 @@ async function submitReview(event) {
     } finally {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
+    }
+}
+// ==========================================
+// 1. ADMIN SIDE: ORDER DETAILS (Map Button Fix)
+// ==========================================
+function viewAdminOrderDetails(id) {
+    const order = adminBills.find(b => b.id === id);
+    if (!order) return;
+
+    let itemsHtml = '';
+    order.items.forEach(item => {
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemsHtml += `<div class="flex justify-between text-sm text-gray-300 mb-1 border-b border-gray-800/50 pb-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
+    });
+
+    // MAGIC: Lambe link ko hara ke 'Open Map' button banayega
+    let formattedAddress = "";
+    if (order.address) {
+        formattedAddress = order.address
+            .replace(/(https?:\/\/[^\s]+)/g, '<br><a href="$1" target="_blank" class="text-blue-400 font-bold hover:underline inline-flex items-center gap-1.5 bg-blue-500/10 px-3 py-1.5 rounded mt-2 mb-1 shadow-sm"><i class="fas fa-location-arrow"></i> Open Map</a>')
+            .replace(/🔗/g, ""); // 🔗 Emoji hata dega
+    }
+
+    let addressHtml = formattedAddress ? `<div class="mt-4 bg-[#0b1115] p-3 rounded-lg border border-gray-800"><p class="text-xs text-gray-500 mb-1 uppercase font-bold tracking-wider">Delivery Address</p><div class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">${formattedAddress}</div></div>` : '';
+    let currentDelivery = order.deliveryStatus || 'Processing';
+
+    const content = document.getElementById('admin-order-details-content');
+    content.innerHTML = `
+        <div class="flex justify-between items-center mb-4">
+            <div class="min-w-0 pr-2">
+                <p class="text-xs text-gray-500">Order ID</p>
+                <p class="text-sm text-white font-mono bg-gray-800 px-2 py-0.5 rounded mt-0.5 truncate">#${order.id}</p>
+            </div>
+            <div class="text-right shrink-0">
+                <p class="text-xs text-gray-500">Date</p>
+                <p class="text-sm text-white font-semibold mt-0.5">${order.date}</p>
+            </div>
+        </div>
+
+        <div class="bg-brand-green/10 p-3 rounded-lg border border-brand-green/30 mb-4">
+            <p class="text-[10px] text-brand-green mb-1.5 uppercase font-bold tracking-wider">Update Delivery Status</p>
+            <div class="flex gap-2 w-full items-stretch">
+                <input type="text" id="admin-delivery-status-${order.id}" value="${currentDelivery}" placeholder="e.g. Delivery in 2 days" class="flex-1 min-w-0 bg-brand-dark border border-brand-green/50 rounded px-2 py-2 text-white text-sm outline-none">
+                <button onclick="updateDeliveryStatus('${order.id}')" class="shrink-0 bg-brand-green text-black px-3 py-2 rounded font-bold text-sm shadow-md hover:bg-brand-greenhover transition">Update</button>
+            </div>
+        </div>
+
+        <div class="bg-[#0b1115] p-3 rounded-lg border border-gray-800 mb-4">
+            <p class="text-xs text-gray-500 mb-2 uppercase font-bold tracking-wider">Customer Details</p>
+            <p class="text-sm text-white font-semibold"><i class="fas fa-user text-brand-green mr-2"></i> ${order.customerName}</p>
+            <p class="text-sm text-gray-400 mt-1.5"><i class="fab fa-whatsapp text-brand-green mr-2"></i> ${order.customerPhone}</p>
+        </div>
+
+        ${addressHtml}
+
+        <div class="mt-4 mb-2 bg-[#0b1115] p-3 rounded-lg border border-gray-800">
+            <p class="text-xs text-gray-500 mb-3 uppercase font-bold tracking-wider border-b border-gray-800 pb-2">Items Ordered</p>
+            ${itemsHtml}
+            <div class="mt-3 pt-2 flex justify-between items-center">
+                <span class="text-gray-400 text-sm">Grand Total</span>
+                <span class="text-brand-green font-bold text-xl">₹${order.grandTotal}</span>
+            </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3">
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Status</p>
+                <p class="text-sm font-semibold mt-1 ${order.payStatus.includes('Paid') ? 'text-green-400' : 'text-red-400'}">${order.payStatus || 'Unpaid'}</p>
+            </div>
+            <div class="bg-[#0b1115] p-2.5 rounded-lg border border-gray-800 text-center flex flex-col justify-center items-center">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider w-full">Payment Mode</p>
+                <p class="text-[11px] text-white font-semibold mt-1 w-full text-center leading-tight">${order.payMode || 'N/A'}</p>
+            </div>
+        </div>
+    `;
+
+    const modal = document.getElementById('admin-order-details-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+
+// ==========================================
+// 2. USER SIDE: MY ORDERS (Map Button Fix)
+// ==========================================
+async function openMyOrders() {
+    const modal = document.getElementById('my-orders-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+    
+    let container = document.getElementById('my-orders-list-container');
+    let user = firebase.auth().currentUser;
+    
+    if(!user) {
+        return container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><p class="text-gray-400 text-sm font-semibold">Please log in to track your orders.</p></div>`;
+    }
+    
+    container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><i class="fas fa-spinner fa-spin text-4xl text-brand-green mb-3"></i><p class="text-gray-400 text-sm font-semibold">Loading your orders...</p></div>`;
+
+    try {
+        let snap = await db.collection('bills').where('userId', '==', user.uid).get();
+        if(snap.empty) {
+            return container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><i class="fas fa-receipt text-4xl text-gray-700 mb-3"></i><p class="text-gray-400 text-sm font-semibold">No recent orders found.</p></div>`;
+        }
+
+        let orders = [];
+        snap.forEach(doc => orders.push({id: doc.id, ...doc.data()}));
+        orders.sort((a, b) => b.timestamp - a.timestamp); 
+
+        let html = '';
+        orders.forEach(order => {
+            let isPaid = order.payStatus.includes('Paid');
+            let statusBadge = isPaid 
+                ? `<span class="bg-green-500/10 text-green-400 border border-green-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Paid</span>`
+                : `<span class="bg-red-500/10 text-red-400 border border-red-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Unpaid</span>`;
+                
+            let itemsList = '';
+            if(order.items && Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    let itemTotal = item.total || (item.price * item.qty);
+                    itemsList += `<div class="flex justify-between text-xs text-gray-400 mt-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
+                });
+            }
+
+            // MAGIC: User ke My Orders mein bhi lamba link hide hoke button ban jayega
+            let formattedAddress = "";
+            if (order.address) {
+                formattedAddress = order.address
+                    .replace(/(https?:\/\/[^\s]+)/g, '<br><a href="$1" target="_blank" class="text-blue-400 font-bold hover:underline inline-flex items-center gap-1.5 bg-blue-500/10 px-3 py-1.5 rounded mt-2 mb-1 shadow-sm"><i class="fas fa-location-arrow"></i> Open Map</a>')
+                    .replace(/🔗/g, "");
+            }
+
+            let addressHtml = formattedAddress ? `<div class="mt-2 p-3 bg-[#0b1115] rounded border border-gray-800 text-xs text-gray-400 whitespace-pre-wrap">${formattedAddress}</div>` : '';
+            let deliveryStatus = order.deliveryStatus || 'Processing';
+            
+            let payBtnHtml = !isPaid ? `
+                <button onclick="payFromMyOrders('${order.id}', ${order.grandTotal}, '${order.customerName}', '${order.customerPhone}')" class="w-full mt-3 bg-brand-green hover:bg-brand-greenhover text-black font-bold py-2.5 rounded-lg text-sm flex justify-center items-center gap-2 transition shadow-lg">
+                    <i class="fas fa-qrcode"></i> Pay ₹${order.grandTotal} Now
+                </button>
+            ` : '';
+
+            html += `
+            <div class="bg-brand-dark border border-gray-700 rounded-xl p-4 mb-3 shadow-sm">
+                <div class="flex justify-between items-start mb-2 border-b border-gray-800 pb-2">
+                    <div>
+                        <p class="text-white font-semibold text-sm">Order on ${order.date}</p>
+                        <p class="text-gray-500 text-[10px] mt-0.5">ID: #${order.id.substring(0, 8).toUpperCase()}</p>
+                    </div>
+                    ${statusBadge}
+                </div>
+                
+                <div class="bg-brand-green/10 border border-brand-green/20 rounded p-2 mb-3 flex items-center gap-2">
+                    <i class="fas fa-truck text-brand-green text-xs"></i>
+                    <span class="text-xs text-brand-green font-medium">Status: <span class="text-white">${deliveryStatus}</span></span>
+                </div>
+
+                <div class="mb-2">
+                    ${itemsList}
+                </div>
+                
+                ${addressHtml}
+                
+                <div class="flex justify-between items-center border-t border-gray-800 pt-2 mt-2">
+                    <span class="text-xs text-gray-400">Total Amount</span>
+                    <span class="text-brand-green font-bold text-base">₹${order.grandTotal}</span>
+                </div>
+                ${payBtnHtml}
+            </div>`;
+        });
+        
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-red-500/30"><p class="text-red-400 text-sm">Error: ${e.message}</p></div>`;
+    }
+}
+// ==========================================
+// 2. CHECKOUT PROCESS (Compulsory Check & Address Combine)
+// ==========================================
+async function processCheckout() {
+    let itemsToCheckout = (typeof isDirectBuy !== 'undefined' && isDirectBuy) ? [directBuyItem] : cart;
+    if(!itemsToCheckout.length) return alert("⚠️ Your cart is empty!");
+
+    const name = document.getElementById('checkout-name').value.trim();
+    const phone = document.getElementById('checkout-phone').value.trim();
+    
+    // Naye address boxes
+    const house = document.getElementById('checkout-house').value.trim();
+    const landmark = document.getElementById('checkout-landmark').value.trim();
+    const area = document.getElementById('checkout-address').value.trim();
+    const maplink = document.getElementById('checkout-maplink').value.trim();
+
+    // COMPULSORY CHECK
+    if(!name || !phone || !house || !landmark || !area) {
+        return alert("⚠️ Kripya apni saari details (Name, Phone, House No, Landmark, Area) zarur bharein!");
+    }
+
+    // Teeno address parts aur maplink ko ek sath jodna
+    let finalAddress = `🏠 ${house}, \n📍 Near: ${landmark}, \n🏙️ Area: ${area}`;
+    if(maplink) {
+        finalAddress += `\n🔗 ${maplink}`; // Ye hidden link database mein jayegi
+    }
+
+    const placeBtn = document.getElementById('place-order-btn');
+    if(placeBtn) { placeBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`; placeBtn.disabled = true; }
+
+    let totalAmt = itemsToCheckout.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    const paymentMethodEl = document.querySelector('input[name="payment-method"]:checked');
+    const paymentMethod = paymentMethodEl ? paymentMethodEl.value : "Pay Later (Cash)";
+
+    if (paymentMethod.includes('Pay Now')) {
+        if (typeof Razorpay === 'undefined') {
+            alert("⚠️ Razorpay load nahi hua. Kripya page refresh karein.");
+            if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
+            return; 
+        }
+        var options = {
+            "key": "rzp_live_TLl4cQ2FJnrsx6", 
+            "amount": totalAmt * 100, 
+            "currency": "INR",
+            "name": "Netaji Jhadu Store",
+            "description": "Order Payment",
+            "handler": function (response){
+                saveOrderToDatabase(name, phone, finalAddress, itemsToCheckout, totalAmt, paymentMethod, response.razorpay_payment_id);
+            },
+            "prefill": { "name": name, "contact": phone },
+            "theme": { "color": "#16a34a" }
+        };
+        var rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response){
+            alert("❌ Payment Failed!");
+            if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
+        });
+        rzp.open(); 
+    } else {
+        saveOrderToDatabase(name, phone, finalAddress, itemsToCheckout, totalAmt, paymentMethod, "N/A");
+    }
+}
+// ==========================================
+// 1. SAVED ADDRESS: GPS DETECT
+// ==========================================
+function getLocationFromGoogle() {
+    const btn = document.getElementById('gps-detect-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Fetching...`;
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                document.getElementById('saved-maplink').value = `https://www.google.com/maps?q=${lat},${lng}`;
+
+                try {
+                    let res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                    let data = await res.json();
+                    document.getElementById('saved-area').value = data.display_name || "Detected Area";
+                } catch(e) {
+                    document.getElementById('saved-area').value = `GPS Location Detected`;
+                }
+
+                btn.innerHTML = `<i class="fas fa-check-circle text-green-500"></i> Done`;
+                setTimeout(() => btn.innerHTML = originalText, 2000);
+            },
+            (error) => { alert("⚠️ Please allow 'Location' permission."); btn.innerHTML = originalText; },
+            { enableHighAccuracy: true }
+        );
+    }
+}
+
+// ==========================================
+// 2. SAVED ADDRESS: SAVE TO FIREBASE
+// ==========================================
+async function saveNewAddress() {
+    const name = document.getElementById('saved-name').value.trim();
+    const phone = document.getElementById('saved-phone').value.trim();
+    const house = document.getElementById('saved-house').value.trim();
+    const landmark = document.getElementById('saved-landmark').value.trim();
+    const area = document.getElementById('saved-area').value.trim();
+    const maplink = document.getElementById('saved-maplink').value.trim();
+
+    if(!name || !phone || !house || !landmark || !area) {
+        return alert("⚠️ Please fill all details (Name, Phone, House, Landmark, Area).");
+    }
+
+    const currentUser = firebase.auth().currentUser;
+    if(!currentUser) return alert("Please log in to save details.");
+
+    const btnText = document.getElementById('save-addr-btn-text');
+    const originalText = btnText.innerText;
+    btnText.innerText = "Saving...";
+
+    // Saara data ek structured format (Object) mein save hoga
+    const addressData = { name, phone, house, landmark, area, maplink };
+
+    try {
+        await db.collection("users").doc(currentUser.uid).set({
+            savedAddressData: addressData 
+        }, { merge: true });
+
+        alert("✅ Details Saved Successfully!");
+        btnText.innerText = originalText;
+        loadSavedAddressFromDB(); 
+    } catch (error) {
+        alert("Error saving details: " + error.message);
+        btnText.innerText = originalText;
+    }
+}
+
+// ==========================================
+// 3. SAVED ADDRESS: LOAD IN PROFILE
+// ==========================================
+async function loadSavedAddressFromDB() {
+    const currentUser = firebase.auth().currentUser;
+    if(!currentUser) return;
+
+    try {
+        const doc = await db.collection("users").doc(currentUser.uid).get();
+        const listContainer = document.getElementById('address-list-container');
+        const addBtn = document.getElementById('show-add-address-btn');
+        const formArea = document.getElementById('add-address-form');
+
+        formArea.classList.add('hidden'); 
+
+        if(doc.exists && doc.data().savedAddressData) {
+            const data = doc.data().savedAddressData;
+            
+            let linkHtml = data.maplink ? `<a href="${data.maplink}" target="_blank" class="text-blue-400 font-bold hover:underline inline-flex items-center gap-1.5 bg-blue-500/10 px-3 py-1.5 rounded mt-3 shadow-sm"><i class="fas fa-location-arrow"></i> Open Map</a>` : '';
+
+            listContainer.innerHTML = `
+                <div class="bg-brand-dark p-5 rounded-xl border border-brand-green/40 mb-5 relative group shadow-inner">
+                    <h4 class="text-white font-bold text-sm mb-3 pb-2 border-b border-gray-800"><i class="fas fa-user text-brand-green mr-2"></i> ${data.name} <span class="text-gray-400 font-normal text-xs ml-3"><i class="fab fa-whatsapp"></i> ${data.phone}</span></h4>
+                    <p class="text-sm text-gray-300 leading-relaxed">
+                        🏠 <span class="text-gray-500 text-xs">House:</span> ${data.house}<br>
+                        📍 <span class="text-gray-500 text-xs">Near:</span> ${data.landmark}<br>
+                        🏙️ <span class="text-gray-500 text-xs">Area:</span> ${data.area}
+                    </p>
+                    ${linkHtml}
+                    <button onclick="showAddAddressForm()" class="absolute top-4 right-4 bg-gray-800 border border-gray-700 hover:bg-brand-green text-gray-400 hover:text-black transition w-8 h-8 rounded-full flex items-center justify-center shadow-lg" title="Edit Address"><i class="fas fa-pen text-xs"></i></button>
+                </div>
+            `;
+            listContainer.classList.remove('hidden');
+            addBtn.classList.add('hidden');
+            
+            // Edit karne ke liye fields mein wapas data bhar do
+            document.getElementById('saved-name').value = data.name || '';
+            document.getElementById('saved-phone').value = data.phone || '';
+            document.getElementById('saved-house').value = data.house || '';
+            document.getElementById('saved-landmark').value = data.landmark || '';
+            document.getElementById('saved-area').value = data.area || '';
+            document.getElementById('saved-maplink').value = data.maplink || '';
+            
+            document.getElementById('save-addr-btn-text').innerText = "Update Details";
+            
+        } else {
+            listContainer.innerHTML = `
+                <div class="text-center py-8 bg-brand-dark rounded-xl border border-gray-800 mb-5 shadow-inner">
+                    <i class="fas fa-map-pin text-3xl text-gray-700 mb-3"></i>
+                    <p class="text-gray-400 text-sm">No details saved yet.</p>
+                </div>
+            `;
+            listContainer.classList.remove('hidden');
+            addBtn.classList.remove('hidden');
+            document.getElementById('save-addr-btn-text').innerText = "Save Details";
+            
+            // Clear boxes if new
+            document.getElementById('saved-name').value = '';
+            document.getElementById('saved-phone').value = '';
+            document.getElementById('saved-house').value = '';
+            document.getElementById('saved-landmark').value = '';
+            document.getElementById('saved-area').value = '';
+            document.getElementById('saved-maplink').value = '';
+        }
+    } catch(err) {
+        console.error("Error loading address:", err);
+    }
+}
+
+// ==========================================
+// 4. CHECKOUT AUTO-FILL MAGIIC
+// ==========================================
+async function fillCheckoutAddress() {
+    const currentUser = firebase.auth().currentUser;
+    if(!currentUser) return;
+    
+    try {
+        const doc = await db.collection("users").doc(currentUser.uid).get();
+        if(doc.exists && doc.data().savedAddressData) {
+            const data = doc.data().savedAddressData;
+            
+            // Auto fill all checkout inputs!
+            if(document.getElementById('checkout-name')) document.getElementById('checkout-name').value = data.name || '';
+            if(document.getElementById('checkout-phone')) document.getElementById('checkout-phone').value = data.phone || '';
+            if(document.getElementById('checkout-house')) document.getElementById('checkout-house').value = data.house || '';
+            if(document.getElementById('checkout-landmark')) document.getElementById('checkout-landmark').value = data.landmark || '';
+            if(document.getElementById('checkout-address')) document.getElementById('checkout-address').value = data.area || '';
+            if(document.getElementById('checkout-maplink')) document.getElementById('checkout-maplink').value = data.maplink || '';
+        }
+    } catch(e) {
+        console.error("Failed to auto-fill", e);
+    }
+}
+// ==========================================
+// 1. USER SIDE: MY ORDERS (With Cancel Logic)
+// ==========================================
+async function openMyOrders() {
+    const modal = document.getElementById('my-orders-modal');
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+    
+    let container = document.getElementById('my-orders-list-container');
+    let user = firebase.auth().currentUser;
+    
+    if(!user) {
+        return container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><p class="text-gray-400 text-sm font-semibold">Please log in to track your orders.</p></div>`;
+    }
+    
+    container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><i class="fas fa-spinner fa-spin text-4xl text-brand-green mb-3"></i><p class="text-gray-400 text-sm font-semibold">Loading your orders...</p></div>`;
+
+    try {
+        let snap = await db.collection('bills').where('userId', '==', user.uid).get();
+        if(snap.empty) {
+            return container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-gray-800"><i class="fas fa-receipt text-4xl text-gray-700 mb-3"></i><p class="text-gray-400 text-sm font-semibold">No recent orders found.</p></div>`;
+        }
+
+        let orders = [];
+        snap.forEach(doc => orders.push({id: doc.id, ...doc.data()}));
+        orders.sort((a, b) => b.timestamp - a.timestamp); 
+
+        let html = '';
+        orders.forEach(order => {
+            let isPaid = order.payStatus.includes('Paid');
+            let deliveryStatus = order.deliveryStatus || 'Processing';
+            let isCancelled = deliveryStatus.toLowerCase() === 'cancelled';
+            
+            // Payment Status Badge
+            let statusBadge = isPaid 
+                ? `<span class="bg-green-500/10 text-green-400 border border-green-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Paid</span>`
+                : `<span class="bg-red-500/10 text-red-400 border border-red-500/30 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">Unpaid</span>`;
+                
+            // Delivery Status Colors (Cancelled pe red, warna green)
+            let deliveryBgColor = isCancelled ? 'bg-red-500/10 border-red-500/20' : 'bg-brand-green/10 border-brand-green/20';
+            let deliveryTextColor = isCancelled ? 'text-red-400' : 'text-brand-green';
+            let deliveryIcon = isCancelled ? 'fa-times-circle text-red-400' : 'fa-truck text-brand-green';
+            let deliveryTextWhite = isCancelled ? 'text-red-300' : 'text-white';
+
+            let itemsList = '';
+            if(order.items && Array.isArray(order.items)) {
+                order.items.forEach(item => {
+                    let itemTotal = item.total || (item.price * item.qty);
+                    itemsList += `<div class="flex justify-between text-xs text-gray-400 mt-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
+                });
+            }
+
+            // Hide Long GPS Link visually
+            let formattedAddress = "";
+            if (order.address) {
+                formattedAddress = order.address
+                    .replace(/(https?:\/\/[^\s]+)/g, '<br><a href="$1" target="_blank" class="text-blue-400 font-bold hover:underline inline-flex items-center gap-1.5 bg-blue-500/10 px-3 py-1.5 rounded mt-2 mb-1 shadow-sm"><i class="fas fa-location-arrow"></i> Open Map</a>')
+                    .replace(/🔗/g, "");
+            }
+            let addressHtml = formattedAddress ? `<div class="mt-2 p-3 bg-[#0b1115] rounded border border-gray-800 text-xs text-gray-400 whitespace-pre-wrap">${formattedAddress}</div>` : '';
+            
+            // Pay Now Button (Hide if Cancelled or Paid)
+            let payBtnHtml = (!isPaid && !isCancelled) ? `
+                <button onclick="payFromMyOrders('${order.id}', ${order.grandTotal}, '${order.customerName}', '${order.customerPhone}')" class="w-full mt-3 bg-brand-green hover:bg-brand-greenhover text-black font-bold py-2.5 rounded-lg text-sm flex justify-center items-center gap-2 transition shadow-lg">
+                    <i class="fas fa-qrcode"></i> Pay ₹${order.grandTotal} Now
+                </button>
+            ` : '';
+
+            // Cancel Button (Only show if Processing)
+            let cancelBtnHtml = (deliveryStatus === 'Processing') ? `
+                <button onclick="cancelUserOrder('${order.id}')" class="w-full mt-2 bg-red-500/5 hover:bg-red-500/10 border border-red-500/30 text-red-400 font-semibold py-2 rounded-lg text-xs transition flex justify-center items-center gap-1.5">
+                    <i class="fas fa-times"></i> Cancel Order
+                </button>
+            ` : '';
+
+            html += `
+            <div class="bg-brand-dark border border-gray-700 rounded-xl p-4 mb-3 shadow-sm">
+                <div class="flex justify-between items-start mb-2 border-b border-gray-800 pb-2">
+                    <div>
+                        <p class="text-white font-semibold text-sm">Order on ${order.date}</p>
+                        <p class="text-gray-500 text-[10px] mt-0.5">ID: #${order.id.substring(0, 8).toUpperCase()}</p>
+                    </div>
+                    ${statusBadge}
+                </div>
+                
+                <div class="${deliveryBgColor} border rounded p-2 mb-3 flex items-center gap-2">
+                    <i class="fas ${deliveryIcon} text-xs"></i>
+                    <span class="text-xs ${deliveryTextColor} font-medium">Status: <span class="${deliveryTextWhite}">${deliveryStatus}</span></span>
+                </div>
+
+                <div class="mb-2">
+                    ${itemsList}
+                </div>
+                
+                ${addressHtml}
+                
+                <div class="flex justify-between items-center border-t border-gray-800 pt-2 mt-2">
+                    <span class="text-xs text-gray-400">Total Amount</span>
+                    <span class="text-brand-green font-bold text-base">₹${order.grandTotal}</span>
+                </div>
+                ${payBtnHtml}
+                ${cancelBtnHtml}
+            </div>`;
+        });
+        
+        container.innerHTML = html;
+    } catch(e) {
+        container.innerHTML = `<div class="text-center py-10 bg-brand-dark rounded-xl border border-red-500/30"><p class="text-red-400 text-sm">Error: ${e.message}</p></div>`;
+    }
+}
+
+// ==========================================
+// 2. USER SIDE: CANCEL ORDER FUNCTION
+// ==========================================
+async function cancelUserOrder(orderId) {
+    if(!confirm("Are you sure you want to cancel this order?")) return;
+
+    try {
+        // Firebase me update
+        await db.collection('bills').doc(orderId).update({
+            deliveryStatus: 'Cancelled'
+        });
+
+        // Agar Admin login hai, toh uski array me bhi update karo 
+        if (typeof adminBills !== 'undefined') {
+            let adminOrder = adminBills.find(b => b.id === orderId);
+            if (adminOrder) adminOrder.deliveryStatus = 'Cancelled';
+        }
+
+        alert("✅ Order cancelled successfully.");
+        openMyOrders(); // Page refresh kiye bina UI update karega
+
+    } catch (error) {
+        alert("❌ Error cancelling order: " + error.message);
     }
 }
 
