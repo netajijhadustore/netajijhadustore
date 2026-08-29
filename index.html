@@ -2709,24 +2709,31 @@ async function handleGoogleLogin() {
         const result = await firebase.auth().signInWithPopup(provider);
         const user = result.user;
         
-        // जादुई ट्रिक: यहाँ हम चेक कर रहे हैं कि लॉगिन करने वाला कौन है
+        // 1. सिस्टम को बताना कि लॉगिन हो गया है और यूज़र का नाम सेव करना
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('userName', user.displayName || 'User');
+        
+        // 2. जादुई ट्रिक: चेक करना कि मालिक (Admin) है या कस्टमर
         if (user.email === "netajijhadustore@gmail.com") {
-            // अगर ईमेल मैच हो गया, तो उसे Admin बना दो
+            // अगर मालिक है, तो Admin की पावर दे दो
             localStorage.setItem('isAdmin', 'true');
+            localStorage.setItem('userRole', 'admin');
         } else {
-            // कोई और है, तो उसे नार्मल यूज़र मानो
+            // अगर कोई और है, तो उसे नार्मल कस्टमर बनाओ
             localStorage.removeItem('isAdmin');
+            localStorage.setItem('userRole', 'customer');
         }
         
         if (typeof closeLogin === 'function') closeLogin();
         
-        // पेज को हल्का सा रिफ्रेश करेंगे ताकि Admin Panel का बटन सही से दिखने लगे
+        // 3. पेज को रिफ्रेश करना ताकि UI (एडमिन पैनल का बटन) दिखने लगे
         window.location.reload(); 
         
     } catch (error) {
         alert("❌ Google Login Failed: " + error.message);
     }
 }
+
 
 // -----------------------------------------
 // ADMIN REVIEWS MANAGEMENT
