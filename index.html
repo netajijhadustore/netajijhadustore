@@ -1681,8 +1681,15 @@ async function deleteBill(id) {
             </div>
         </div>`;
     });
+        // Product grid render hone ke baad
     grid.innerHTML = storeProducts.length === 0 ? `<div class="col-span-full text-center text-gray-500 py-10">Products are updating.</div>` : html;
+
+    // YAHAN AOS REFRESH ADD KAREIN
+    setTimeout(() => {
+        if (typeof AOS !== 'undefined') AOS.refresh();
+    }, 100);
 }
+
 
         function renderAdminProducts() {
             const list = document.getElementById('admin-product-list');
@@ -2606,9 +2613,9 @@ function renderReviews() {
             starsHtml += `<i class="fas fa-star ${i < safeStarCount ? 'text-yellow-400' : 'text-gray-600'}"></i>`; 
         }
         
-        // Added AOS scroll animation and Hover translation
+              // Puraani animate-fade-in-up class hata di gayi hai
         html += `
-        <div data-aos="zoom-in-up" data-aos-delay="${index * 100}" class="bg-black/40 border border-white/5 rounded-2xl p-6 shadow-xl relative backdrop-blur-sm group hover:border-brand-green/30 hover:-translate-y-2 transition-all duration-500 animate-fade-in-up">
+        <div data-aos="zoom-in-up" data-aos-delay="${index * 100}" class="bg-black/40 border border-white/5 rounded-2xl p-6 shadow-xl relative backdrop-blur-sm group hover:border-brand-green/30 hover:-translate-y-2 transition-all duration-500">
             <div class="flex justify-between items-start mb-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-brand-green/20 text-brand-green flex items-center justify-center font-bold text-sm border border-brand-green/30">${initials}</div>
@@ -2629,6 +2636,11 @@ function renderReviews() {
     
     grid.innerHTML = html;
     
+    // YAHAN AOS REFRESH ADD KIYA HAI - Taaki dynamic reviews animate ho sakein
+    setTimeout(() => {
+        if (typeof AOS !== 'undefined') AOS.refresh();
+    }, 100);
+    
     const toggleBtn = document.getElementById('load-more-reviews-btn');
     if (toggleBtn) {
         if (allReviews.length > 3) {
@@ -2643,6 +2655,7 @@ function renderReviews() {
         }
     }
 }
+
 function toggleReviews() {
     if (visibleReviewsCount >= allReviews.length) {
         // Show Less par click kiya (wapas 3 kardo aur section ke top par scroll kardo)
