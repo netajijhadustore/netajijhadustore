@@ -1309,34 +1309,48 @@ let directBuyItem = null; // Direct buy item ki detail save karne ke liye
     await fetchFirebaseData(); // डेटाबेस से डेटा लाने का कॉल
 });
 
+// ==========================================
+// SMART FIREBASE DATA LOADER (Error Proof)
+// ==========================================
 async function fetchFirebaseData() {
+    // 1. PUBLIC DATA: Products और Reviews (यह सबको दिखेगा, Guest को भी)
     try {
-        // Products लाएं
         const prodSnap = await db.collection('products').get();
         storeProducts = [];
         prodSnap.forEach(doc => storeProducts.push({ id: doc.id, ...doc.data() }));
+        renderShopProducts(); // प्रोडक्ट्स तुरंत स्क्रीन पर दिखाओ
+    } catch (error) { 
+        console.error("❌ Products Load Error:", error); 
+    }
 
-        // Bills लाएं (नए सबसे ऊपर)
-        const billSnap = await db.collection('bills').orderBy('timestamp', 'desc').get();
-        adminBills = [];
-        billSnap.forEach(doc => adminBills.push({ id: doc.id, ...doc.data() }));
-
-        // Reviews लाएं
+    try {
         const revSnap = await db.collection('reviews').orderBy('timestamp', 'desc').get();
         allReviews = [];
         revSnap.forEach(doc => allReviews.push({ id: doc.id, ...doc.data() }));
+        renderReviews(); // रिव्यु तुरंत दिखाओ
+    } catch (error) { 
+        console.error("❌ Reviews Load Error:", error); 
+    }
 
-        // UI रेंडर करें
-        renderShopProducts();
-        renderAdminProducts();
-        renderAdminBills();
-        renderAdminReviews();
-        renderReviews();
-    } catch (error) {
-        console.error("Firebase load error:", error);
+    // 2. SECURE ADMIN DATA: Bills, Customers, etc. (यह सिर्फ Admin लॉगिन होने पर ही मंगाया जाएगा)
+    if (localStorage.getItem('isAdmin') === 'true') {
+        try {
+            const billSnap = await db.collection('bills').orderBy('timestamp', 'desc').get();
+            adminBills = [];
+            billSnap.forEach(doc => adminBills.push({ id: doc.id, ...doc.data() }));
+            
+            renderAdminProducts();
+            renderAdminBills();
+            renderAdminReviews();
+            
+            // अगर Customer Data वाला फंक्शन है, तो उसे भी चलाओ
+            if(typeof processCustomerData === 'function') processCustomerData();
+            
+        } catch (error) { 
+            console.error("❌ Admin Data Load Error:", error); 
+        }
     }
 }
-
 
         // -----------------------------------------
         // 1. ADMIN BILLING SYSTEM (With Resend & Delete Fixed)
