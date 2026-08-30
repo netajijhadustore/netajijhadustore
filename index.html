@@ -12,16 +12,18 @@
     
     <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- AOS Animation CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
     <!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-<!-- Razorpay SDK -->
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-<!-- HTML2Canvas for Bill Image Generation -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Razorpay SDK & HTML2Canvas -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,12 +42,22 @@
                         }
                     },
                     animation: {
-                        'fade-in-up': 'fadeInUp 0.5s ease-out',
+                        'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
+                        'float': 'float 4s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate'
                     },
                     keyframes: {
                         fadeInUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
                             '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 10px rgba(22,163,74,0.1)' },
+                            '100%': { boxShadow: '0 0 30px rgba(22,163,74,0.5)' },
                         }
                     }
                 }
@@ -53,13 +65,13 @@
         }
     </script>
 
-        <style>
+    <style>
         body { 
             background-color: #0b1115; 
-            background-image: url('1000073429.png'); /* Aapki image yahan link ho gayi */
+            background-image: url('1000073429.png');
             background-size: cover; 
             background-position: center; 
-            background-attachment: fixed; /* Scroll karne par background fix rahega */
+            background-attachment: fixed;
             background-repeat: no-repeat;
             color: #e2e8f0; 
         }
@@ -72,16 +84,14 @@
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
-        /* Custom scrollbar for inner modals */
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
     </style>
     <!-- Chart.js for Pie Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-
 </head>
+
 <body class="antialiased overflow-x-hidden selection:bg-brand-green selection:text-black">
 
     <!-- HEADER / NAVIGATION -->
@@ -130,10 +140,10 @@
         </div>
     </header>
 
-    <!-- HERO SECTION -->
+       <!-- HERO SECTION -->
     <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-4 overflow-hidden">
         <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10">
-            <div class="text-center lg:text-left animate-fade-in-up">
+            <div class="text-center lg:text-left" data-aos="fade-right" data-aos-duration="1000">
                 <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-brand-green/30 bg-brand-green/10 text-brand-green text-xs font-bold mb-6">
                     <span>🇮🇳</span> PREMIUM INDIAN QUALITY
                 </div>
@@ -148,13 +158,12 @@
                 </p>
                 
                 <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
-                    <button onclick="document.getElementById('shop').scrollIntoView()" class="bg-brand-green hover:bg-brand-greenhover text-black font-bold py-4 px-8 rounded-xl text-base flex items-center justify-center gap-2 transition-all">
+                    <button onclick="document.getElementById('shop').scrollIntoView()" class="bg-brand-green hover:bg-brand-greenhover text-black font-bold py-4 px-8 rounded-xl text-base flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-brand-green/20">
                         Shop Collection <i class="fas fa-arrow-right"></i>
                     </button>
-                    <button onclick="window.open('https://wa.me/+918750900635?text=Hi%20Netaji%20Jhadu%20Store,%20I%20want%20to%20place%20an%20order!', '_blank')" class="w-full sm:w-auto bg-gray-800 hover:bg-gray-700 text-white py-3 px-8 rounded-xl text-base flex items-center justify-center gap-2 transition-all border border-gray-700">
-    <i class="fab fa-whatsapp text-brand-green text-lg"></i> Order via WhatsApp
-</button>
-
+                    <button onclick="window.open('https://wa.me/+918750900635?text=Hi%20Netaji%20Jhadu%20Store,%20I%20want%20to%20place%20an%20order!', '_blank')" class="w-full sm:w-auto bg-gray-800 hover:bg-gray-700 text-white py-3 px-8 rounded-xl text-base flex items-center justify-center gap-2 transition-all border border-gray-700 active:scale-95 hover:shadow-lg hover:shadow-white/5">
+                        <i class="fab fa-whatsapp text-brand-green text-lg"></i> Order via WhatsApp
+                    </button>
                 </div>
 
                 <div class="flex flex-wrap justify-center lg:justify-start gap-4 sm:gap-6 text-xs sm:text-sm text-gray-400 font-medium">
@@ -164,9 +173,10 @@
                 </div>
             </div>
 
-            <div class="relative w-full aspect-square max-w-md mx-auto lg:max-w-full hidden lg:block">
-                <div class="glass-card w-full h-full flex items-center justify-center relative overflow-hidden group border border-gray-800">
-                    <div class="text-center p-8">
+            <!-- Animated Image Box -->
+            <div class="relative w-full aspect-square max-w-md mx-auto lg:max-w-full hidden lg:block" data-aos="fade-left" data-aos-duration="1200">
+                <div class="glass-card w-full h-full flex items-center justify-center relative overflow-hidden group border border-gray-800 animate-float animate-glow">
+                    <div class="text-center p-8 transition-transform duration-500 group-hover:scale-110">
                         <i class="fas fa-images text-6xl text-gray-600 mb-4"></i>
                         <p class="text-gray-400 text-sm">Product Photography Placeholder</p>
                     </div>
@@ -174,6 +184,7 @@
             </div>
         </div>
     </section>
+
         <!-- STATS / COUNTING SECTION -->
     <section id="stats" class="py-12 sm:py-16 relative z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1628,17 +1639,18 @@ async function deleteBill(id) {
     if(!grid) return;
     
     let html = '';
-    storeProducts.forEach(p => {
+    storeProducts.forEach((p, index) => {
         let saveAmt = p.mrp > p.price ? p.mrp - p.price : 0;
         let imageElement = p.image ? `<img src="${p.image}" alt="${p.name}" class="w-full h-full object-contain p-2">` : `<i class="fas fa-broom text-6xl text-gray-600"></i>`;
         
+        // Added AOS scroll animation and Hover Float effect
         html += `
-        <div class="glass-card overflow-hidden group flex flex-col">
+        <div data-aos="fade-up" data-aos-delay="${index * 100}" class="glass-card overflow-hidden group flex flex-col hover:-translate-y-2 hover:shadow-[0_15px_40px_rgba(22,163,74,0.15)] transition-all duration-500 border border-gray-800 hover:border-brand-green/50">
             <div class="relative aspect-square bg-gray-800 cursor-pointer overflow-hidden flex items-center justify-center">
-                <div class="absolute inset-0 flex items-center justify-center bg-[#1a2228]">${imageElement}</div>
+                <div class="absolute inset-0 flex items-center justify-center bg-[#1a2228] transition-transform duration-700 group-hover:scale-110">${imageElement}</div>
                 ${p.tag ? `<div class="absolute top-3 left-3 flex gap-2"><span class="bg-brand-green text-black text-[10px] font-bold px-2.5 py-1 rounded-sm tracking-wide uppercase">${p.tag}</span></div>` : ''}
             </div>
-            <div class="p-6 flex-1 flex flex-col">
+            <div class="p-6 flex-1 flex flex-col z-10 bg-brand-card">
                 <div class="flex justify-between items-start mb-2">
                     <div><p class="text-brand-green text-[10px] font-bold uppercase tracking-wider mb-1">${p.category}</p><h3 class="text-xl font-bold text-white cursor-pointer hover:text-brand-green transition line-clamp-1">${p.name}</h3></div>
                 </div>
@@ -1650,22 +1662,19 @@ async function deleteBill(id) {
                 <div class="flex items-end gap-2 mb-6 mt-auto">
                     <span class="text-2xl font-bold text-white">₹${p.price}</span>
                     ${p.mrp ? `<span class="text-gray-500 line-through text-sm mb-1">₹${p.mrp}</span>` : ''}
-                    ${saveAmt ? `<span class="text-brand-green text-xs font-bold mb-1.5 ml-1">Save ₹${saveAmt}</span>` : ''}
+                    ${saveAmt ? `<span class="text-brand-green text-xs font-bold mb-1.5 ml-1 animate-pulse">Save ₹${saveAmt}</span>` : ''}
                 </div>
                 <div class="grid grid-cols-1 gap-3">
                     <div class="flex items-center justify-between border border-gray-700 rounded-lg overflow-hidden h-11 bg-brand-dark">
                         <button onclick="updateQtyInput('qty-${p.id}', -1)" class="px-4 text-gray-400 hover:text-white hover:bg-gray-800 h-full transition w-1/3"><i class="fas fa-minus text-xs"></i></button>
-                        
-                        <!-- YAHAN CHANGES HUE HAIN (readonly hataya aur onchange lagaya) -->
                         <input type="number" id="qty-${p.id}" value="1" min="1" class="w-1/3 text-center bg-transparent text-white font-semibold text-sm outline-none" onchange="validateQtyInput('qty-${p.id}')" onkeyup="if(event.key === 'Enter') this.blur();">
-                        
                         <button onclick="updateQtyInput('qty-${p.id}', 1)" class="px-4 text-gray-400 hover:text-white hover:bg-gray-800 h-full transition w-1/3"><i class="fas fa-plus text-xs"></i></button>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="addToCartFromStore('${p.name}', ${p.price}, 'qty-${p.id}')" class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2.5 rounded-lg text-sm transition">Add to Cart</button>
-                        <button onclick="buyNowFromStore('${p.name}', ${p.price}, 'qty-${p.id}')" class="bg-brand-green hover:bg-brand-greenhover text-black font-bold py-2.5 rounded-lg text-sm transition">Buy Now</button>
+                        <button onclick="addToCartFromStore('${p.name}', ${p.price}, 'qty-${p.id}')" class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2.5 rounded-lg text-sm transition active:scale-95">Add to Cart</button>
+                        <button onclick="buyNowFromStore('${p.name}', ${p.price}, 'qty-${p.id}')" class="bg-brand-green hover:bg-brand-greenhover text-black font-bold py-2.5 rounded-lg text-sm transition active:scale-95 hover:shadow-[0_0_15px_rgba(22,163,74,0.4)]">Buy Now</button>
                     </div>
-                    <button onclick="orderDirectWhatsApp('${p.name}', ${p.price}, 'qty-${p.id}')" class="w-full border border-gray-700 text-white hover:bg-gray-800 font-semibold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition mt-1">
+                    <button onclick="orderDirectWhatsApp('${p.name}', ${p.price}, 'qty-${p.id}')" class="w-full border border-gray-700 text-white hover:bg-gray-800 font-semibold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition mt-1 active:scale-95">
                         <i class="fab fa-whatsapp text-brand-green text-lg"></i> Order on WhatsApp
                     </button>
                 </div>
@@ -2564,55 +2573,42 @@ function renderReviews() {
     const grid = document.getElementById('reviews-grid');
     if (!grid) return;
     
-    // --- SAFE RATING CALCULATION (0.3 BUG FIX) ---
     if (allReviews.length > 0) {
         let totalStars = 0;
         allReviews.forEach(rev => {
-            // Agar localStorage me rating corrupt hai, toh usko default 5 maan lega
             let safeRating = Number(rev.rating) || 5; 
             totalStars += safeRating;
         });
-        
-        // Exact average nikalna
         let avgRating = (totalStars / allReviews.length).toFixed(1); 
         
-        // 1. Stats Section Update (Upar wala 0.3 fix karne ke liye)
         const statAvg = document.getElementById('stat-avg-rating');
         if (statAvg) {
             statAvg.setAttribute('data-target', avgRating);
-            statAvg.innerText = avgRating; // Direct assign taki animation glitch na kare
+            statAvg.innerText = avgRating; 
         }
         
-        // 2. Reviews Section Update (Niche wala 4.9 sync karne ke liye)
         const reviewAvg = document.getElementById('review-avg-rating');
-        if (reviewAvg) {
-            reviewAvg.innerText = avgRating;
-        }
+        if (reviewAvg) reviewAvg.innerText = avgRating;
     }
-    // ----------------------------------------------
 
     let html = '';
-        // जो 'featured' (Pin) हैं, उन्हें लिस्ट में सबसे ऊपर लाएं
     let sortedReviews = [...allReviews].sort((a, b) => {
-        let aFeatured = a.featured ? 1 : 0;
-        let bFeatured = b.featured ? 1 : 0;
-        return bFeatured - aFeatured;
+        return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
-    
     const reviewsToShow = sortedReviews.slice(0, visibleReviewsCount);
 
-    
-    reviewsToShow.forEach(rev => {
+    reviewsToShow.forEach((rev, index) => {
         const initials = rev.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        let safeStarCount = Number(rev.rating) || 5; // Yahan bhi safe rating
+        let safeStarCount = Number(rev.rating) || 5;
         
         let starsHtml = '';
         for(let i = 0; i < 5; i++) { 
             starsHtml += `<i class="fas fa-star ${i < safeStarCount ? 'text-yellow-400' : 'text-gray-600'}"></i>`; 
         }
         
+        // Added AOS scroll animation and Hover translation
         html += `
-        <div class="bg-black/40 border border-white/5 rounded-2xl p-6 shadow-xl relative backdrop-blur-sm group hover:border-white/10 transition-colors animate-fade-in-up">
+        <div data-aos="zoom-in-up" data-aos-delay="${index * 100}" class="bg-black/40 border border-white/5 rounded-2xl p-6 shadow-xl relative backdrop-blur-sm group hover:border-brand-green/30 hover:-translate-y-2 transition-all duration-500 animate-fade-in-up">
             <div class="flex justify-between items-start mb-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-brand-green/20 text-brand-green flex items-center justify-center font-bold text-sm border border-brand-green/30">${initials}</div>
@@ -2625,7 +2621,7 @@ function renderReviews() {
             </div>
             <div class="flex text-[11px] mb-3 gap-0.5">${starsHtml}</div>
             <p class="text-gray-300 text-sm italic leading-relaxed relative z-10">
-                <i class="fas fa-quote-left text-gray-700/50 text-2xl absolute -top-2 -left-1 -z-10"></i>
+                <i class="fas fa-quote-left text-gray-700/50 text-2xl absolute -top-2 -left-1 -z-10 group-hover:text-brand-green/20 transition-colors"></i>
                 "${rev.text}"
             </p>
         </div>`;
@@ -2633,7 +2629,6 @@ function renderReviews() {
     
     grid.innerHTML = html;
     
-    // Toggle Button Logic (More / Show Less)
     const toggleBtn = document.getElementById('load-more-reviews-btn');
     if (toggleBtn) {
         if (allReviews.length > 3) {
@@ -2648,9 +2643,6 @@ function renderReviews() {
         }
     }
 }
-
-
-
 function toggleReviews() {
     if (visibleReviewsCount >= allReviews.length) {
         // Show Less par click kiya (wapas 3 kardo aur section ke top par scroll kardo)
@@ -6478,6 +6470,20 @@ function downloadExcelCSV() {
         <p class="text-xs text-gray-500 mt-1">We value your trust!</p>
     </div>
 </div>
+    <!-- AOS Animation Init -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            AOS.init({
+                duration: 800,
+                once: true,
+                offset: 100,
+                easing: 'ease-out-cubic'
+            });
+        });
+    </script>
+</body>
+</html>
 
 </body>
 </html>
