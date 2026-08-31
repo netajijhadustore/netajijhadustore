@@ -3324,33 +3324,43 @@ function loginSuccess(user) {
     alert("✅ Login Successful! Welcome " + displayName);
 }
 // ✅ MISSING SAVE BILL FUNCTION
+// 2. Save Bill Only (Tracker auto-update ke sath)
 async function saveBillOnly() {
     const name = document.getElementById('bill-cust-name').value.trim();
     const phone = document.getElementById('bill-cust-phone').value.trim();
     const payStatus = document.getElementById('bill-pay-status').value;
     const payMode = document.getElementById('bill-pay-mode').value;
     
-    // SMART TARIKA: Sirf naam check karo, phone optional hai
+    // Naya data nikalna
+    let discount = parseInt(document.getElementById('bill-discount').value) || 0;
+    let delivery = parseInt(document.getElementById('bill-delivery').value) || 0;
+    let trackerId = document.getElementById('bill-tracker-select').value;
+    
     if(!name) return alert("Please enter Customer Name.");
     if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
     
-    // Agar phone khali hai toh "N/A" daal do
     let finalPhone = phone ? phone : "N/A";
-    
     const saveBtn = event.currentTarget;
     const originalText = saveBtn.innerHTML;
     saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1.5"></i> Saving...`;
     saveBtn.disabled = true;
     
-    let grandTotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
-    const dateObj = new Date();
-    const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    let itemTotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
+    let grandTotal = itemTotal - discount + delivery;
+    if(grandTotal < 0) grandTotal = 0;
+    
+    let amountForTracker = itemTotal - discount; 
+    
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
+    // Is naye object mein discount, delivery sab shamil hai
     const newBill = {
-        date: dateStr,
+        date: dateStr, 
         customerName: name, 
-        customerPhone: finalPhone, // Updated yahan
-        items: [...draftBillItems],
+        customerPhone: finalPhone, 
+        items: [...draftBillItems], 
+        discount: discount, 
+        delivery: delivery,
         grandTotal: grandTotal, 
         payStatus: payStatus, 
         payMode: payMode,
@@ -3362,14 +3372,121 @@ async function saveBillOnly() {
         newBill.id = docRef.id;
         adminBills.unshift(newBill);
         
+        // Agar Material Tracker select kiya hai toh usme amount update karega
+        if(trackerId && trackerId !== "none" && amountForTracker > 0) {
+            let batch = materialBatches.find(b => b.id === trackerId);
+            if(batch) {
+                batch.recovered += amountForTracker;
+                await db.collection('materialTracker').doc(trackerId).update({ recovered: batch.recovered });
+                if(typeof renderMaterialBatches === 'function') renderMaterialBatches(); 
+            }
+        }
+        
         closeCreateBillModal();
         renderAdminBills();
         alert("✅ Bill Saved Successfully!");
     } catch (error) {
         alert("❌ Error saving bill: " + error.message);
     } finally {
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText; saveBtn.disabled = false;
+    }
+}
+
+// 3. Save And Send WhatsApp
+async function saveAndSendBill() {
+    const name = document.getElementById('bill-cust-name').value.trim();
+    const phone = document.getElementById('bill-cust-phone').value.trim();
+    const payStatus = document.getElementById('bill-pay-status').value;
+    const payMode = document.getElementById('bill-pay-mode').value;
+    
+    let discount = parseInt(document.getElementById('bill-discount').value) || 0;
+    let delivery = parseInt(document.getElementById('bill-delivery').value) || 0;
+    let trackerId = document.getElementById('bill-tracker-select').value;
+
+    if(!name) return alert("Please enter Customer Name.");
+    if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
+    if(!phone) {
+        let confirmSave = confirm("आपने WhatsApp नंबर नहीं डाला है, इसलिए मैसेज सेंड नहीं हो सकता। \n\nक्या आप सिर्फ बिल सेव करना चाहते हैं?");
+        if(confirmSave) { saveBillOnly(); return; } else { return; }
+    }
+
+    let finalPhone = phone ? phone : "N/A";
+    const saveBtn = event.currentTarget;
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1.5"></i> Processing...`;
+    saveBtn.disabled = true;
+
+    let itemTotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
+    let grandTotal = itemTotal - discount + delivery;
+    if(grandTotal < 0) grandTotal = 0;
+    let amountForTracker = itemTotal - discount; 
+
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const newBill = {
+        date: dateStr, 
+        customerName: name, 
+        customerPhone: finalPhone, 
+        items: [...draftBillItems], 
+        discount: discount, 
+        delivery: delivery,
+        grandTotal: grandTotal, 
+        payStatus: payStatus, 
+        payMode: payMode,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    try {
+        const docRef = await db.collection('bills').add(newBill);
+        newBill.id = docRef.id;
+        adminBills.unshift(newBill);
+        
+        if(trackerId && trackerId !== "none" && amountForTracker > 0) {
+            let batch = materialBatches.find(b => b.id === trackerId);
+            if(batch) {
+                batch.recovered += amountForTracker;
+                await db.collection('materialTracker').doc(trackerId).update({ recovered: batch.recovered });
+                if(typeof renderMaterialBatches === 'function') renderMaterialBatches();
+            }
+        }
+        
+        let displayStatus = payStatus === 'Paid' ? 'Paid ✅' : 'Pending';
+
+        let msg = `*NETAJI JHADU STORE*%0A%0A`;
+        msg += `_Quality You Trust, Cleanliness You Deserve_%0A%0A`;
+        msg += `*ORDER INVOICE*%0A%0A`;
+        msg += `Name: ${name}%0A`;
+        msg += `Phone: ${phone}%0A`;
+        msg += `Date: ${dateStr}%0A%0A`;
+        
+        msg += `*ORDER SUMMARY*%0A`;
+        msg += `Product | Qty. | Rate | Amount%0A`;
+        draftBillItems.forEach(item => { 
+            msg += `${item.name} | ${item.qty} | ₹${item.price} | ₹${item.total}%0A`; 
+        });
+        
+        msg += `%0A━━━━━━━━━━━━━━━━━━━━%0A`;
+        
+        if(discount > 0 || delivery > 0) {
+            msg += `Item Total: ₹${itemTotal}%0A`;
+            if(discount > 0) msg += `Discount: -₹${discount}%0A`;
+            if(delivery > 0) msg += `Delivery Charge: +₹${delivery}%0A`;
+        }
+        
+        msg += `*GRAND TOTAL: ₹${grandTotal}*%0A`;
+        msg += `━━━━━━━━━━━━━━━━━━━━%0A%0A`;
+        
+        msg += `Payment Mode: ${payMode}%0A`;
+        msg += `Payment Status: ${displayStatus}%0A%0A`;
+        msg += `“Thank you for choosing Netaji Jhadu Store!”`;
+
+        window.open(`https://wa.me/91${phone}?text=${msg}`, '_blank');
+        closeCreateBillModal();
+        renderAdminBills();
+    } catch (error) {
+        alert("❌ Error: " + error.message);
+    } finally {
+        saveBtn.innerHTML = originalText; saveBtn.disabled = false;
     }
 }
 
