@@ -6478,8 +6478,9 @@ async function deleteCustomer(idKey) {
         }
     }
 }
+
 // ==========================================
-// 1. DOWNLOAD SMART REPORT (WITH PRINT PDF & SEARCH FILTER)
+// 1. DOWNLOAD SMART REPORT (BUG FIXED)
 // ==========================================
 function downloadSmartReportHTML() {
     const monthPicker = document.getElementById('insight-month-picker');
@@ -6896,7 +6897,7 @@ function downloadSmartReportHTML() {
                     }
                 }
             }
-        </script>
+        <\\/script>
     </body>
     </html>`;
 
@@ -6908,7 +6909,6 @@ function downloadSmartReportHTML() {
     link.click();
     document.body.removeChild(link);
 }
-
 
 
 // ==========================================
