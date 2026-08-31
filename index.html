@@ -3634,41 +3634,93 @@ function closeAdminOrderDetails() {
 // ADMIN PANEL: CLEAN IMAGE DOWNLOAD (No WhatsApp Redirection)
 // ==========================================
 function downloadBillImage(id) {
-    // Ye line card par click hone se rokti hai
+    // Ye line galti se card ka popup khulne se rokegi
     if (window.event) window.event.stopPropagation(); 
 
     const bill = adminBills.find(b => b.id === id);
-    if (!bill) return alert("Order not found!");
+    if(!bill) return;
 
-    // Pehle bill details modal ko kholenge taki canvas capture ho sake
-    if (typeof viewAdminOrderDetails === 'function') {
-        viewAdminOrderDetails(id);
+    // 1. Fill Text Data
+    document.getElementById('receipt-id').innerText = "#" + bill.id.substring(0, 8).toUpperCase();
+    document.getElementById('receipt-name').innerText = bill.customerName;
+    document.getElementById('receipt-phone').innerText = bill.customerPhone || 'N/A';
+    document.getElementById('receipt-date').innerText = bill.date;
+    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
+    document.getElementById('receipt-paymode').innerText = bill.payMode || 'N/A';
+    
+    let isPaid = bill.payStatus && bill.payStatus.includes('Paid');
+    let statusEl = document.getElementById('receipt-paystatus');
+    statusEl.innerText = isPaid ? 'PAID ✅' : 'PENDING';
+    statusEl.className = isPaid ? 'font-bold text-[#16a34a]' : 'font-bold text-red-500';
+
+    // 2. Fill Items
+    let itemsHtml = '';
+    bill.items.forEach(item => {
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemsHtml += `
+            <tr class="border-b border-gray-100 last:border-0">
+                <td class="py-2.5 px-3 font-semibold text-gray-800 truncate max-w-[200px]">${item.name}</td>
+                <td class="py-2.5 px-3 text-center font-medium">${item.qty}</td>
+                <td class="py-2.5 px-3 text-right text-gray-500">₹${item.price}</td>
+                <td class="py-2.5 px-3 text-right font-bold text-gray-900">₹${itemTotal}</td>
+            </tr>
+        `;
+    });
+    document.getElementById('receipt-items').innerHTML = itemsHtml;
+
+    // 3. Smart QR Code Logic (BULLETPROOF ONLOAD METHOD)
+    const qrContainer = document.getElementById('receipt-qr');
+    qrContainer.innerHTML = `<div class="text-[10px] text-gray-400 flex items-center justify-center h-full w-full">Loading...</div>`;
+    
+    let qrPayload = "";
+    if (isPaid) {
+        // Agar paid hai toh website par bhejo
+        qrPayload = "https://netajijhadustore.com"; 
+        document.getElementById('receipt-qr-title').innerText = "Visit Website";
+        document.getElementById('receipt-qr-desc').innerText = "Scan to shop more premium brooms";
+    } else {
+        // Agar unpaid hai toh UPI Payment Link
+        qrPayload = `upi://pay?pa=8750900635@paytm&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
+        document.getElementById('receipt-qr-title').innerText = "Scan to Pay";
+        document.getElementById('receipt-qr-desc').innerText = "Pay instantly using any UPI app";
     }
 
-    // Thoda sa gap dekar html2canvas se image download karwayenge
-    setTimeout(() => {
-        // Invoice container ka element dhoondhna
-        const invoiceElement = document.getElementById('invoice-preview-container') || document.querySelector('.invoice-box') || document.getElementById('billModal');
-        
-        if (!invoiceElement) {
-            alert("Please open the bill details first to download image.");
-            return;
-        }
+    // Use QuickChart API (Best for html2canvas)
+    const qrImgSrc = `https://quickchart.io/qr?text=${encodeURIComponent(qrPayload)}&size=120&margin=0`;
+    
+    const qrImg = new Image();
+    qrImg.crossOrigin = "Anonymous"; // Ye line CORS error theek karti hai
+    
+    // JADU YAHAN HAI: Jab QR code 100% aa jayega, tabhi bill download hoga
+    qrImg.onload = function() {
+        qrContainer.innerHTML = ''; // Loading text hatao
+        qrImg.className = "w-full h-full object-contain";
+        qrContainer.appendChild(qrImg); // QR code dikhao
 
-        if (typeof html2canvas !== 'undefined') {
-            html2canvas(invoiceElement, { scale: 2, useCORS: true, backgroundColor: '#0b1115' }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Netaji_Bill_${bill.id.substring(0, 8).toUpperCase()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            }).catch(err => {
-                console.error("Canvas Error:", err);
-                alert("Failed to generate image.");
-            });
-        } else {
-            alert("html2canvas library is missing!");
-        }
-    }, 400);
+        // 4. Download Image
+        const container = document.getElementById('receipt-container');
+        html2canvas(container, {
+            scale: 2, 
+            backgroundColor: "#ffffff",
+            useCORS: true,
+            allowTaint: true
+        }).then(canvas => {
+            let link = document.createElement('a');
+            link.download = `NetajiJhadu_Invoice_${bill.id.substring(0,8)}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        }).catch(err => {
+            console.error("Canvas Error:", err);
+            alert("Bill save karne me problem aayi.");
+        });
+    };
+
+    qrImg.onerror = function() {
+        alert("QR Code load nahi ho paya. Apna internet connection check karein.");
+    };
+
+    // Yahan se QR code image load hona shuru hoti hai
+    qrImg.src = qrImgSrc;
 }
 
 // Baki dono buttons (Text Bill aur Delete) dabane par card popup na khule, uske liye ye fix:
