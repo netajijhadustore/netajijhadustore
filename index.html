@@ -6480,7 +6480,7 @@ async function deleteCustomer(idKey) {
 }
 
 // ==========================================
-// 1. DOWNLOAD SMART REPORT (BUG FIXED)
+// 1. DOWNLOAD SMART REPORT (SEARCH BUG FIXED FOR MOBILE)
 // ==========================================
 function downloadSmartReportHTML() {
     const monthPicker = document.getElementById('insight-month-picker');
@@ -6558,11 +6558,11 @@ function downloadSmartReportHTML() {
             let dBadgeClass = dStatus.toLowerCase() === 'delivered' ? 'badge-blue' : (dStatus.toLowerCase() === 'cancelled' ? 'badge-red' : 'badge-gray');
 
             orderRows.push(`
-                <tr>
+                <tr class="order-row">
                     <td class="font-mono text-gray">#${bill.id.substring(0,8).toUpperCase()}</td>
                     <td style="white-space:nowrap;">${bill.date}</td>
-                    <td style="font-weight:600; color:#111827;">${bill.customerName}</td>
-                    <td class="text-gray">${bill.customerPhone || 'N/A'}</td>
+                    <td class="cust-name" style="font-weight:600; color:#111827;">${bill.customerName}</td>
+                    <td class="cust-phone text-gray">${bill.customerPhone || 'N/A'}</td>
                     <td class="text-gray" style="font-size:12px;">${itemsList}</td>
                     <td style="font-weight:700; color:#111827;">₹${bill.grandTotal}</td>
                     <td class="text-gray">${bill.payMode || "N/A"}</td>
@@ -6853,7 +6853,7 @@ function downloadSmartReportHTML() {
                     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                         <div class="search-box">
                             <i class="fas fa-search"></i>
-                            <input type="text" id="reportSearch" onkeyup="filterOrders()" placeholder="Search Name or Phone...">
+                            <input type="text" id="reportSearch" oninput="filterOrders()" placeholder="Search Name or Phone...">
                         </div>
                         <span class="badge badge-gray">${validOrdersCount} Records</span>
                     </div>
@@ -6865,7 +6865,7 @@ function downloadSmartReportHTML() {
                                 <th>Order ID</th><th>Date</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Pay Mode</th><th>Pay Status</th><th>Delivery</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="tableBody">
                             ${orderRows.length > 0 ? orderRows.join('') : '<tr><td colspan="9" style="text-align:center; padding:40px; color:#ef4444;"><i class="fas fa-box-open" style="font-size:24px; margin-bottom:10px; display:block;"></i>No orders found for this month.</td></tr>'}
                         </tbody>
                     </table>
@@ -6877,27 +6877,44 @@ function downloadSmartReportHTML() {
         <script>
             function filterOrders() {
                 let input = document.getElementById('reportSearch');
-                let filter = input.value.toLowerCase();
-                let table = document.getElementById('ordersTable');
-                let tr = table.getElementsByTagName('tr');
+                let filter = input.value.toLowerCase().trim();
+                let tbody = document.getElementById('tableBody');
+                let rows = tbody.getElementsByClassName('order-row');
+                let visibleCount = 0;
 
-                for (let i = 1; i < tr.length; i++) {
-                    let tdName = tr[i].getElementsByTagName('td')[2];
-                    let tdPhone = tr[i].getElementsByTagName('td')[3];
+                for (let i = 0; i < rows.length; i++) {
+                    let nameCol = rows[i].querySelector('.cust-name');
+                    let phoneCol = rows[i].querySelector('.cust-phone');
                     
-                    if (tdName || tdPhone) {
-                        let nameTxt = tdName.textContent || tdName.innerText;
-                        let phoneTxt = tdPhone.textContent || tdPhone.innerText;
+                    if (nameCol || phoneCol) {
+                        let nameTxt = nameCol.textContent || nameCol.innerText;
+                        let phoneTxt = phoneCol.textContent || phoneCol.innerText;
                         
-                        if (nameTxt.toLowerCase().indexOf(filter) > -1 || phoneTxt.toLowerCase().indexOf(filter) > -1) {
-                            tr[i].style.display = "";
+                        if (nameTxt.toLowerCase().includes(filter) || phoneTxt.toLowerCase().includes(filter)) {
+                            rows[i].style.display = "";
+                            visibleCount++;
                         } else {
-                            tr[i].style.display = "none";
+                            rows[i].style.display = "none";
                         }
                     }
                 }
+
+                // Handle "No matching results" row
+                let noResultRow = document.getElementById('no-search-results');
+                if (visibleCount === 0 && filter !== '') {
+                    if (!noResultRow) {
+                        noResultRow = document.createElement('tr');
+                        noResultRow.id = 'no-search-results';
+                        noResultRow.innerHTML = '<td colspan="9" style="text-align:center; padding:40px; color:#ef4444;"><i class="fas fa-search" style="font-size:24px; margin-bottom:10px; display:block;"></i>No matching orders found.</td>';
+                        tbody.appendChild(noResultRow);
+                    } else {
+                        noResultRow.style.display = "";
+                    }
+                } else if (noResultRow) {
+                    noResultRow.style.display = "none";
+                }
             }
-        <\\/script>
+        ${'<'}/script>
     </body>
     </html>`;
 
