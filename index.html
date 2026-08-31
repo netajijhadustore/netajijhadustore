@@ -5339,18 +5339,20 @@ async function openMyOrders() {
 // ==========================================
 async function downloadUserInvoice(orderId) {
     try {
+        // Database se bill ki detail laana
         const doc = await db.collection('bills').doc(orderId).get();
         if(!doc.exists) return alert("Order not found!");
         const bill = {id: doc.id, ...doc.data()};
 
+        // Hidden HTML template mein data bharna (Jaise admin side mein hota hai)
         document.getElementById('receipt-name').innerText = bill.customerName;
         document.getElementById('receipt-phone').innerText = bill.customerPhone;
         document.getElementById('receipt-date').innerText = bill.date;
         document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
         document.getElementById('receipt-paymode').innerText = bill.payMode || 'N/A';
         
-        let isPaid = (bill.payStatus && bill.payStatus.includes('Paid'));
-        document.getElementById('receipt-paystatus').innerText = isPaid ? 'Paid ✅' : 'Pending';
+        let displayStatus = (bill.payStatus && bill.payStatus.includes('Paid')) ? 'Paid ✅' : 'Pending';
+        document.getElementById('receipt-paystatus').innerText = displayStatus;
 
         let itemsHtml = '';
         bill.items.forEach(item => {
@@ -5366,63 +5368,51 @@ async function downloadUserInvoice(orderId) {
         });
         document.getElementById('receipt-items').innerHTML = itemsHtml;
 
-        // 🚀 DYNAMIC QR CODE LOGIC (Updated Alignment) 🚀
-        let qrImg = document.getElementById('receipt-qr-img');
-        let qrText = document.getElementById('receipt-qr-text');
-
-        if (isPaid) {
-            let websiteUrl = "https://netajijhadustore.github.io/netajijhadustore/"; // <-- Apna Link Yahan Daalo
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(websiteUrl)}`;
-            qrText.innerText = "Scan it to visit our website";
-            // 👇 Yahan text-right kar diya hai 👇
-            qrText.className = "text-[9px] font-bold uppercase tracking-widest text-right text-green-700";
-        } else {
-            let upiId = "8750900635@kotakbank"; // <-- Apna asli UPI ID yahan daalo
-            let upiLink = `upi://pay?pa=${upiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
-            qrText.innerText = "Scan it for complete payment";
-            // 👇 Yahan bhi text-right kar diya hai 👇
-            qrText.className = "text-[9px] font-bold uppercase tracking-widest text-right text-red-600";
-        }
-
         const container = document.getElementById('receipt-container');
         
+        // Image Create aur Download
         setTimeout(() => {
             html2canvas(container, {
                 scale: 2, 
-                backgroundColor: "#ffffff",
-                useCORS: true
+                backgroundColor: "#ffffff"
             }).then(canvas => {
                 let link = document.createElement('a');
                 link.download = `NetajiJhadu_Invoice_${bill.id.substring(0,8)}.png`;
                 link.href = canvas.toDataURL("image/png");
                 link.click();
             });
-        }, 600);
+        }, 100);
 
     } catch (error) {
         alert("❌ Error generating invoice: " + error.message);
     }
 }
-
+// ==========================================
+// ADMIN SIDE: BILL IMAGE GENERATOR FIX (Undefined Bug Resolved)
+// ==========================================
 function downloadBillImage(id) {
+    // Ye line galti se card ka popup khulne se rokegi
     if (window.event) window.event.stopPropagation(); 
 
     const bill = adminBills.find(b => b.id === id);
     if(!bill) return;
 
+    // Data fill karna template mein
     document.getElementById('receipt-name').innerText = bill.customerName;
     document.getElementById('receipt-phone').innerText = bill.customerPhone;
     document.getElementById('receipt-date').innerText = bill.date;
     document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
     document.getElementById('receipt-paymode').innerText = bill.payMode || 'N/A';
     
-    let isPaid = bill.payStatus.includes('Paid');
-    document.getElementById('receipt-paystatus').innerText = isPaid ? 'Paid ✅' : 'Pending';
+    let displayStatus = bill.payStatus.includes('Paid') ? 'Paid ✅' : 'Pending';
+    document.getElementById('receipt-paystatus').innerText = displayStatus;
 
+    // Items list banayein
     let itemsHtml = '';
     bill.items.forEach(item => {
+        // YAHAN FIX KIYA HAI: Agar total nahi milega toh (price * qty) khud nikal lega
         let itemTotal = item.total ? item.total : (item.price * item.qty);
+        
         itemsHtml += `
             <tr class="border-b border-dashed border-gray-200">
                 <td class="py-1.5 pr-2 truncate max-w-[150px]">${item.name}</td>
@@ -5434,42 +5424,24 @@ function downloadBillImage(id) {
     });
     document.getElementById('receipt-items').innerHTML = itemsHtml;
 
-    // 🚀 DYNAMIC QR CODE LOGIC (Updated Alignment) 🚀
-    let qrImg = document.getElementById('receipt-qr-img');
-    let qrText = document.getElementById('receipt-qr-text');
-
-    if (isPaid) {
-        let websiteUrl = "https://netajijhadustore.github.io/netajijhadustore/"; // <-- Apna Link Yahan Daalo
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(websiteUrl)}`;
-        qrText.innerText = "Scan it to visit our website";
-        // 👇 Yahan text-right kar diya hai 👇
-        qrText.className = "text-[9px] font-bold uppercase tracking-widest text-right text-green-700";
-    } else {
-        let upiId = "8750900635@kotakbank"; // <-- Apna asli UPI ID yahan daalo
-        let upiLink = `upi://pay?pa=${upiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
-        qrText.innerText = "Scan it for complete payment";
-        // 👇 Yahan bhi text-right kar diya hai 👇
-        qrText.className = "text-[9px] font-bold uppercase tracking-widest text-right text-red-600";
-    }
-
     const container = document.getElementById('receipt-container');
     
+    // Thoda delay taki DOM update ho jaye
     setTimeout(() => {
         html2canvas(container, {
             scale: 2, 
-            backgroundColor: "#ffffff",
-            useCORS: true 
+            backgroundColor: "#ffffff"
         }).then(canvas => {
+            // 1. Image Download Karega
             let link = document.createElement('a');
             link.download = `NetajiJhadu_Bill_${bill.customerName}.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
+            
+         
         });
-    }, 600);
+    }, 100);
 }
-
-
 // ==========================================
 // ADMIN SIDE: INSIGHTS & MONTHLY SALE FIX
 // ==========================================
@@ -6671,32 +6643,24 @@ function downloadExcelCSV() {
 
 
     </script>
-<!-- CLASSIC INVOICE TEMPLATE (PERFECT ALIGNMENT) -->
+<!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION -->
 <div id="receipt-container" class="fixed -left-[9999px] top-0 bg-white text-black w-[450px] p-8 font-sans border-2 border-gray-200">
-    
     <div class="text-center border-b-2 border-black pb-4 mb-4">
         <h1 class="text-3xl font-extrabold text-green-700 tracking-wider">NETAJI JHADU STORE</h1>
         <p class="text-sm font-semibold text-gray-600 mt-1">Quality You Trust, Cleanliness You Deserve</p>
     </div>
     
-    <h2 class="text-center text-xl font-bold bg-gray-200 py-2 mb-4 uppercase tracking-wider flex items-center justify-center">ORDER INVOICE</h2>
+    <!-- Yahan py-2 aur tracking-wider add kiya hai -->
+<h2 class="text-center text-xl font-bold bg-gray-200 py-2 mb-4 uppercase tracking-wider flex items-center justify-center">ORDER INVOICE</h2>
+
     
-    <!-- Customer Details (Left-Right Aligned) -->
     <div class="mb-4">
         <p class="text-sm font-bold border-b border-gray-300 mb-2 pb-1">Customer Details</p>
-        <div class="flex justify-between items-start text-sm">
-            <div>
-                <p class="mb-1"><strong>Name:</strong> <span id="receipt-name"></span></p>
-                <p class="mb-1"><strong>Phone:</strong> <span id="receipt-phone"></span></p>
-            </div>
-            <div class="text-right">
-                <p class="mb-1"><strong>Order Date:</strong></p>
-                <p class="font-medium"><span id="receipt-date"></span></p>
-            </div>
-        </div>
+        <p class="text-sm mb-1"><strong>Name:</strong> <span id="receipt-name"></span></p>
+        <p class="text-sm mb-1"><strong>Phone:</strong> <span id="receipt-phone"></span></p>
+        <p class="text-sm mb-1"><strong>Order Date:</strong> <span id="receipt-date"></span></p>
     </div>
     
-    <!-- Table -->
     <div class="mb-4">
         <p class="text-sm font-bold border-b border-gray-300 mb-2 pb-1">Order Summary</p>
         <table class="w-full text-sm mb-2 text-left">
@@ -6719,22 +6683,30 @@ function downloadExcelCSV() {
         <span class="font-extrabold text-2xl text-green-700" id="receipt-total"></span>
     </div>
     
-    <!-- Payment Info Left & QR Code Right -->
-    <div class="flex justify-between items-center mb-2">
-        
-        <div class="text-sm bg-gray-50 p-3 rounded border border-gray-200 w-1/2">
-            <p class="mb-1 text-gray-700"><strong>Payment Mode:</strong> <span id="receipt-paymode"></span></p>
-            <p class="mb-1 text-gray-700"><strong>Status:</strong> <span id="receipt-paystatus"></span></p>
-        </div>
-        
-        <div class="w-1/2 flex flex-col items-end pr-1">
-            <img id="receipt-qr-img" src="" crossorigin="anonymous" alt="QR Code" class="w-[85px] h-[85px] mb-1.5 p-1 border border-gray-300 rounded bg-white">
-            <!-- Text right aligned rakha hai taki photo ke niche perfect set ho -->
-            <p id="receipt-qr-text" class="text-[9px] font-bold uppercase tracking-widest text-right leading-tight"></p>
-        </div>
-
+    <div class="mb-6 text-sm bg-gray-50 p-3 rounded">
+        <p class="mb-1"><strong>Payment Mode:</strong> <span id="receipt-paymode"></span></p>
+        <p class="mb-1"><strong>Status:</strong> <span id="receipt-paystatus"></span></p>
+    </div>
+        <div class="mb-6 text-sm bg-gray-50 p-3 rounded">
+        <p class="mb-1"><strong>Payment Mode:</strong> <span id="receipt-paymode"></span></p>
+        <p class="mb-1"><strong>Status:</strong> <span id="receipt-paystatus"></span></p>
+    </div>
+        <div class="mb-6 text-sm bg-gray-50 p-3 rounded">
+        <p class="mb-1"><strong>Payment Mode:</strong> <span id="receipt-paymode"></span></p>
+        <p class="mb-1"><strong>Status:</strong> <span id="receipt-paystatus"></span></p>
     </div>
     
+    <div class="flex flex-col items-center justify-center pt-2 mb-4">
+        <img id="receipt-qr-img" src="" crossorigin="anonymous" alt="QR Code" class="w-24 h-24 mb-1.5 p-1 border border-gray-300 rounded bg-white">
+        <p id="receipt-qr-text" class="text-[10px] font-bold uppercase tracking-widest text-center"></p>
+    </div>
+    <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-400">
+
+    <div class="flex flex-col items-center justify-center pt-2 mb-4">
+        <img id="receipt-qr-img" src="" crossorigin="anonymous" alt="QR Code" class="w-24 h-24 mb-1.5 p-1 border border-gray-300 rounded bg-white">
+        <p id="receipt-qr-text" class="text-[10px] font-bold uppercase tracking-widest text-center"></p>
+    </div>
+    <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-400">
     <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-400">
         <p class="font-semibold text-gray-800 text-sm">“Thank you for choosing Netaji Jhadu Store”</p>
         <p class="text-xs text-gray-500 mt-1">We value your trust!</p>
