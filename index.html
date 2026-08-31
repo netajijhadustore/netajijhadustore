@@ -1183,7 +1183,26 @@
                         </select>
                     </div>
                 </div>
-                
+                     <!-- 🟢🟢 YAHAN SE NAYA CODE SHURU HAI 🟢🟢 -->
+                <div class="flex flex-col gap-3 mt-4 border-t border-gray-800 pt-4 mb-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Discount (₹)</label>
+                            <input type="number" id="bill-discount" value="0" min="0" oninput="renderDraftBill()" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none transition shadow-inner">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Delivery Charge (₹)</label>
+                            <input type="number" id="bill-delivery" value="0" min="0" oninput="renderDraftBill()" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none transition shadow-inner">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-brand-green font-bold uppercase tracking-wider mb-1 block"><i class="fas fa-layer-group"></i> Add to Material Tracker</label>
+                        <select id="bill-tracker-select" class="w-full bg-[#111820] border border-brand-green/40 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-green outline-none transition cursor-pointer shadow-inner">
+                            <option value="none">Don't link to any tracker</option>
+                            <!-- Dropdown Options JS se aayenge -->
+                        </select>
+                    </div>
+                </div>
                 <!-- Bill Summary -->
                 <div class="border-t border-gray-700 pt-4 pb-2 flex justify-between items-end">
                     <span class="text-sm text-gray-400 font-medium">Grand Total</span>
@@ -5488,6 +5507,38 @@ async function downloadUserInvoice(orderId) {
             `;
         });
         document.getElementById('receipt-items').innerHTML = itemsHtml;
+        // NAYA LOGIC: Discount & Delivery Breakdown
+        let itemTotalAmountAll = 0;
+        bill.items.forEach(i => itemTotalAmountAll += (i.total || (i.price * i.qty)));
+        
+        let discountAmt = bill.discount || 0;
+        let deliveryAmt = bill.delivery || 0;
+        
+        let breakdownDiv = document.getElementById('receipt-breakdown');
+        let discountRow = document.getElementById('receipt-discount-row');
+        let deliveryRow = document.getElementById('receipt-delivery-row');
+
+        if (discountAmt > 0 || deliveryAmt > 0) {
+            document.getElementById('receipt-subtotal').innerText = `₹${itemTotalAmountAll}`;
+            
+            if (discountAmt > 0) {
+                document.getElementById('receipt-discount').innerText = discountAmt;
+                discountRow.classList.remove('hidden'); discountRow.classList.add('flex');
+            } else {
+                discountRow.classList.add('hidden'); discountRow.classList.remove('flex');
+            }
+
+            if (deliveryAmt > 0) {
+                document.getElementById('receipt-delivery').innerText = deliveryAmt;
+                deliveryRow.classList.remove('hidden'); deliveryRow.classList.add('flex');
+            } else {
+                deliveryRow.classList.add('hidden'); deliveryRow.classList.remove('flex');
+            }
+
+            breakdownDiv.classList.remove('hidden'); breakdownDiv.classList.add('flex');
+        } else {
+            breakdownDiv.classList.add('hidden'); breakdownDiv.classList.remove('flex');
+        }
 
         // ==========================================
         // 🚀 DYNAMIC QR CODE LOGIC 🚀
@@ -5560,7 +5611,39 @@ function downloadBillImage(id) {
         `;
     });
     document.getElementById('receipt-items').innerHTML = itemsHtml;
+        // NAYA LOGIC: Discount & Delivery Breakdown
+        let itemTotalAmountAll = 0;
+        bill.items.forEach(i => itemTotalAmountAll += (i.total || (i.price * i.qty)));
+        
+        let discountAmt = bill.discount || 0;
+        let deliveryAmt = bill.delivery || 0;
+        
+        let breakdownDiv = document.getElementById('receipt-breakdown');
+        let discountRow = document.getElementById('receipt-discount-row');
+        let deliveryRow = document.getElementById('receipt-delivery-row');
 
+        if (discountAmt > 0 || deliveryAmt > 0) {
+            document.getElementById('receipt-subtotal').innerText = `₹${itemTotalAmountAll}`;
+            
+            if (discountAmt > 0) {
+                document.getElementById('receipt-discount').innerText = discountAmt;
+                discountRow.classList.remove('hidden'); discountRow.classList.add('flex');
+            } else {
+                discountRow.classList.add('hidden'); discountRow.classList.remove('flex');
+            }
+
+            if (deliveryAmt > 0) {
+                document.getElementById('receipt-delivery').innerText = deliveryAmt;
+                deliveryRow.classList.remove('hidden'); deliveryRow.classList.add('flex');
+            } else {
+                deliveryRow.classList.add('hidden'); deliveryRow.classList.remove('flex');
+            }
+
+            breakdownDiv.classList.remove('hidden'); breakdownDiv.classList.add('flex');
+        } else {
+            breakdownDiv.classList.add('hidden'); breakdownDiv.classList.remove('flex');
+        }
+        
     // ==========================================
     // 🚀 DYNAMIC QR CODE LOGIC 🚀
     // ==========================================
@@ -7326,7 +7409,47 @@ function renderMaterialBatches() {
             </tbody>
         </table>
     </div>
+        <!-- ... (Upar ka table same rahega) ... -->
+    <div class="mb-4">
+        <p class="text-sm font-bold border-b border-gray-300 mb-2 pb-1">Order Summary</p>
+        <table class="w-full text-sm mb-2 text-left">
+            <thead class="border-b border-gray-300">
+                <tr>
+                    <th class="py-1">Product</th>
+                    <th class="py-1 text-center">Qty</th>
+                    <th class="py-1 text-right">Rate</th>
+                    <th class="py-1 text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody id="receipt-items">
+                <!-- Items ayenge -->
+            </tbody>
+        </table>
+
+        <!-- 🟢 NAYA: DISCOUNT & DELIVERY BREAKDOWN 🟢 -->
+        <div id="receipt-breakdown" class="hidden flex-col gap-1 text-sm text-gray-700 mt-2 border-t border-dashed border-gray-300 pt-2 px-1">
+            <div class="flex justify-between items-center">
+                <span>Item Total:</span>
+                <span class="font-semibold" id="receipt-subtotal">₹0</span>
+            </div>
+            <div id="receipt-discount-row" class="hidden justify-between items-center text-red-600">
+                <span>Discount:</span>
+                <span class="font-semibold">-₹<span id="receipt-discount">0</span></span>
+            </div>
+            <div id="receipt-delivery-row" class="hidden justify-between items-center text-blue-600">
+                <span>Delivery Charge:</span>
+                <span class="font-semibold">+₹<span id="receipt-delivery">0</span></span>
+            </div>
+        </div>
+        <!-- 🟢 BREAKDOWN KHATAM 🟢 -->
+
+    </div>
     
+    <div class="border-t-2 border-black pt-2 mb-4 flex justify-between items-center">
+        <span class="font-bold text-lg">Grand Total:</span>
+        <span class="font-extrabold text-2xl text-green-700" id="receipt-total"></span>
+    </div>
+
     <div class="border-t-2 border-black pt-2 mb-4 flex justify-between items-center">
         <span class="font-bold text-lg">Total Amount:</span>
         <span class="font-extrabold text-2xl text-green-700" id="receipt-total"></span>
