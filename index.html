@@ -6479,7 +6479,7 @@ async function deleteCustomer(idKey) {
     }
 }
 // ==========================================
-// 1. DOWNLOAD SMART REPORT (PREMIUM SAAS DASHBOARD UI)
+// 1. DOWNLOAD SMART REPORT (WITH PRINT PDF & SEARCH FILTER)
 // ==========================================
 function downloadSmartReportHTML() {
     const monthPicker = document.getElementById('insight-month-picker');
@@ -6652,9 +6652,14 @@ function downloadSmartReportHTML() {
             .nav-brand .icon { width: 40px; height: 40px; background: #dcfce7; color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
             .nav-brand h1 { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
             .nav-brand p { font-size: 13px; color: var(--text-light); font-weight: 500; }
-            .nav-actions { display: flex; align-items: center; gap: 12px; }
+            .nav-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
             .period-badge { background: #f3f4f6; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text); border: 1px solid var(--border); }
             
+            /* Print Button Styles */
+            .btn-print { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+            .btn-print:hover { background: #f8fafc; border-color: #cbd5e1; }
+            .btn-print i { color: var(--primary); }
+
             /* Financial Transparency Bar */
             .trust-bar { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px 24px; border-radius: 12px; font-size: 12px; color: #475569; display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
             .trust-bar span { font-family: monospace; background: white; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 600; color: var(--text); }
@@ -6698,9 +6703,15 @@ function downloadSmartReportHTML() {
             .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
             .repeat-badge { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
             
-            /* Data Table */
+            /* Data Table & Search */
             .table-card { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; }
-            .table-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
+            .table-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fafafa; flex-wrap: wrap; gap: 12px; }
+            
+            .search-box { position: relative; width: 260px; max-width: 100%; }
+            .search-box i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 13px; }
+            .search-box input { width: 100%; padding: 8px 12px 8px 32px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none; transition: 0.2s; font-family: inherit; }
+            .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1); }
+
             .table-wrapper { overflow-x: auto; max-height: 600px; }
             table { width: 100%; border-collapse: collapse; min-width: 1000px; text-align: left; }
             th { position: sticky; top: 0; background: #f8fafc; color: var(--text-light); padding: 14px 20px; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); z-index: 10; }
@@ -6718,8 +6729,16 @@ function downloadSmartReportHTML() {
             .badge-blue { background: #dbeafe; color: #2563eb; border: 1px solid #bfdbfe; }
             .badge-gray { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
             
-            @media print { body { background: white; padding: 0; } .dashboard, .navbar, .kpi-card, .table-card { box-shadow: none; border-color: #000; } }
-            @media(max-width: 640px) { .navbar { flex-direction: column; align-items: flex-start; gap: 16px; } .trust-bar { flex-direction: column; gap: 8px; } }
+            /* Print Specific CSS */
+            @media print { 
+                body { background: white; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+                .dashboard, .navbar, .kpi-card, .table-card, .chart-widget, .insights-wrapper, .repeat-card { box-shadow: none; border-color: #000; }
+                .nav-actions .btn-print, .search-box { display: none !important; }
+                .table-wrapper { overflow: visible !important; max-height: none !important; }
+                .dashboard { max-width: 100%; }
+                .table-header { padding: 12px; }
+            }
+            @media(max-width: 640px) { .navbar { flex-direction: column; align-items: flex-start; gap: 16px; } .trust-bar { flex-direction: column; gap: 8px; } .table-header { flex-direction: column; align-items: stretch; } .search-box { width: 100%; } }
         </style>
     </head>
     <body>
@@ -6735,6 +6754,7 @@ function downloadSmartReportHTML() {
                 </div>
                 <div class="nav-actions">
                     <div class="period-badge"><i class="far fa-calendar-alt" style="margin-right:6px; color:#6b7280;"></i>${monthName} ${selectedYear}</div>
+                    <button class="btn-print" onclick="window.print()"><i class="fas fa-print"></i> Print / Save PDF</button>
                 </div>
             </header>
 
@@ -6829,10 +6849,16 @@ function downloadSmartReportHTML() {
             <div class="table-card">
                 <div class="table-header">
                     <h3 class="section-title" style="margin:0;"><i class="fas fa-list-alt" style="color:var(--text-light);"></i> Order History</h3>
-                    <span class="badge badge-gray">${validOrdersCount} Records</span>
+                    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="reportSearch" onkeyup="filterOrders()" placeholder="Search Name or Phone...">
+                        </div>
+                        <span class="badge badge-gray">${validOrdersCount} Records</span>
+                    </div>
                 </div>
                 <div class="table-wrapper">
-                    <table>
+                    <table id="ordersTable">
                         <thead>
                             <tr>
                                 <th>Order ID</th><th>Date</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Pay Mode</th><th>Pay Status</th><th>Delivery</th>
@@ -6844,8 +6870,33 @@ function downloadSmartReportHTML() {
                     </table>
                 </div>
             </div>
-            
         </div>
+
+        <!-- Live Search Script -->
+        <script>
+            function filterOrders() {
+                let input = document.getElementById('reportSearch');
+                let filter = input.value.toLowerCase();
+                let table = document.getElementById('ordersTable');
+                let tr = table.getElementsByTagName('tr');
+
+                for (let i = 1; i < tr.length; i++) {
+                    let tdName = tr[i].getElementsByTagName('td')[2];
+                    let tdPhone = tr[i].getElementsByTagName('td')[3];
+                    
+                    if (tdName || tdPhone) {
+                        let nameTxt = tdName.textContent || tdName.innerText;
+                        let phoneTxt = tdPhone.textContent || tdPhone.innerText;
+                        
+                        if (nameTxt.toLowerCase().indexOf(filter) > -1 || phoneTxt.toLowerCase().indexOf(filter) > -1) {
+                            tr[i].style.display = "";
+                        } else {
+                            tr[i].style.display = "none";
+                        }
+                    }
+                }
+            }
+        </script>
     </body>
     </html>`;
 
