@@ -6478,9 +6478,8 @@ async function deleteCustomer(idKey) {
         }
     }
 }
-
 // ==========================================
-// 1. DOWNLOAD SMART REPORT (ENHANCED WITH ADVANCED INSIGHTS)
+// 1. DOWNLOAD SMART REPORT (PREMIUM SAAS DASHBOARD UI)
 // ==========================================
 function downloadSmartReportHTML() {
     const monthPicker = document.getElementById('insight-month-picker');
@@ -6503,7 +6502,6 @@ function downloadSmartReportHTML() {
     let productMap = {};
     let customerMap = {};
     let dailySales = {};
-    let upiCount = 0, cashCount = 0;
 
     adminBills.forEach(bill => {
         let billDate;
@@ -6521,29 +6519,21 @@ function downloadSmartReportHTML() {
                 monthSale += bill.grandTotal;
                 validOrdersCount++;
 
-                if (bill.payStatus && bill.payStatus.includes('Paid')) monthCash += bill.grandTotal;
+                let isPaid = bill.payStatus && bill.payStatus.includes('Paid');
+                if (isPaid) monthCash += bill.grandTotal;
                 else monthUdhar += bill.grandTotal;
 
-                // Payment mode counter
-                if (bill.payMode && bill.payMode.includes('UPI')) upiCount++;
-                else cashCount++;
-
-                // Daily sales tracking
                 if (!dailySales[bill.date]) dailySales[bill.date] = 0;
                 dailySales[bill.date] += bill.grandTotal;
 
-                // Customer tracking (Regular vs One-time)
                 let custName = bill.customerName ? bill.customerName.trim() : "Unknown";
                 let custPhone = bill.customerPhone ? bill.customerPhone.trim() : "N/A";
                 let custKey = (custPhone !== "N/A" && custPhone !== "") ? custPhone : "NONUM_" + custName.toLowerCase();
 
-                if (!customerMap[custKey]) {
-                    customerMap[custKey] = { name: custName, phone: custPhone, count: 0, spent: 0 };
-                }
+                if (!customerMap[custKey]) customerMap[custKey] = { name: custName, phone: custPhone, count: 0, spent: 0 };
                 customerMap[custKey].count += 1;
                 customerMap[custKey].spent += bill.grandTotal;
 
-                // Product sales tracking
                 if (bill.items && Array.isArray(bill.items)) {
                     bill.items.forEach(item => {
                         let qty = parseInt(item.qty) || 0;
@@ -6551,47 +6541,45 @@ function downloadSmartReportHTML() {
                         let total = item.total || (price * qty);
                         totalUnitsSold += qty;
 
-                        if (!productMap[item.name]) {
-                            productMap[item.name] = { qty: 0, revenue: 0 };
-                        }
+                        if (!productMap[item.name]) productMap[item.name] = { qty: 0, revenue: 0 };
                         productMap[item.name].qty += qty;
                         productMap[item.name].revenue += total;
                     });
                 }
             }
 
-            let itemsStr = bill.items.map(i => `${i.qty}x ${i.name}`).join("<br>");
-            let payColor = (bill.payStatus && bill.payStatus.includes('Paid')) ? '#16a34a' : '#ef4444';
+            let itemsList = bill.items.map(i => `<div style="margin-bottom:2px;">${i.qty}x ${i.name}</div>`).join("");
+            let payBadge = (bill.payStatus && bill.payStatus.includes('Paid')) 
+                ? `<span class="badge badge-green"><i class="fas fa-check-circle" style="margin-right:4px;"></i>Paid</span>` 
+                : `<span class="badge badge-red"><i class="fas fa-times-circle" style="margin-right:4px;"></i>Unpaid</span>`;
+            
+            let dStatus = bill.deliveryStatus || "Processing";
+            let dBadgeClass = dStatus.toLowerCase() === 'delivered' ? 'badge-blue' : (dStatus.toLowerCase() === 'cancelled' ? 'badge-red' : 'badge-gray');
 
             orderRows.push(`
-                <tr style="border-bottom: 1px solid #e5e7eb;">
-                    <td style="padding: 12px 10px; font-family: monospace; font-size: 13px;">${bill.id.substring(0,8).toUpperCase()}</td>
-                    <td style="padding: 12px 10px; white-space: nowrap; font-size: 13px;">${bill.date}</td>
-                    <td style="padding: 12px 10px; font-weight: bold; color: #111827;">${bill.customerName}</td>
-                    <td style="padding: 12px 10px; font-size: 13px;">${bill.customerPhone || 'N/A'}</td>
-                    <td style="padding: 12px 10px; font-size: 12px; color: #4b5563;">${itemsStr}</td>
-                    <td style="padding: 12px 10px; font-weight: bold; color: #111827;">₹${bill.grandTotal}</td>
-                    <td style="padding: 12px 10px; font-size: 13px;">${bill.payMode || "N/A"}</td>
-                    <td style="padding: 12px 10px; font-weight: bold; color: ${payColor};">${bill.payStatus || "Unpaid"}</td>
-                    <td style="padding: 12px 10px; font-size: 13px;">${bill.deliveryStatus || "Processing"}</td>
+                <tr>
+                    <td class="font-mono text-gray">#${bill.id.substring(0,8).toUpperCase()}</td>
+                    <td style="white-space:nowrap;">${bill.date}</td>
+                    <td style="font-weight:600; color:#111827;">${bill.customerName}</td>
+                    <td class="text-gray">${bill.customerPhone || 'N/A'}</td>
+                    <td class="text-gray" style="font-size:12px;">${itemsList}</td>
+                    <td style="font-weight:700; color:#111827;">₹${bill.grandTotal}</td>
+                    <td class="text-gray">${bill.payMode || "N/A"}</td>
+                    <td>${payBadge}</td>
+                    <td><span class="badge ${dBadgeClass}">${dStatus}</span></td>
                 </tr>
             `);
         }
     });
 
-    // 1. Highest Product Sale
     let topProduct = { name: "N/A", qty: 0, revenue: 0 };
     for (let p in productMap) {
-        if (productMap[p].qty > topProduct.qty) {
-            topProduct = { name: p, qty: productMap[p].qty, revenue: productMap[p].revenue };
-        }
+        if (productMap[p].qty > topProduct.qty) topProduct = { name: p, qty: productMap[p].qty, revenue: productMap[p].revenue };
     }
 
-    // 2. Customer Segmentation (Top, Regular >= 2 orders, Irregular/One-time == 1 order)
     let customerList = Object.values(customerMap);
     let topCustomer = { name: "N/A", spent: 0, count: 0 };
-    let regularCustomers = [];
-    let irregularCustomers = [];
+    let regularCustomers = [], irregularCustomers = [];
 
     customerList.forEach(c => {
         if (c.spent > topCustomer.spent) topCustomer = c;
@@ -6599,23 +6587,17 @@ function downloadSmartReportHTML() {
         else irregularCustomers.push(c);
     });
 
-    // 3. AOV & Best Day
     let aov = validOrdersCount > 0 ? Math.round(monthSale / validOrdersCount) : 0;
-    let bestDay = "N/A";
-    let maxDaySale = 0;
+    let bestDay = "N/A", maxDaySale = 0;
     for (let d in dailySales) {
-        if (dailySales[d] > maxDaySale) {
-            maxDaySale = dailySales[d];
-            bestDay = `${d} (₹${maxDaySale})`;
-        }
+        if (dailySales[d] > maxDaySale) { maxDaySale = dailySales[d]; bestDay = `${d} (₹${maxDaySale})`; }
     }
-
-    let regularChipsHtml = regularCustomers.length > 0
-        ? regularCustomers.map(r => `<span style="background:#dcfce7; color:#15803d; padding:4px 10px; border-radius:15px; font-size:11px; font-weight:bold; margin-right:6px; display:inline-block; margin-bottom:4px;">${r.name} (${r.count} orders • ₹${r.spent})</span>`).join('')
-        : `<span style="color:#9ca3af; font-size:12px;">No repeat customers this month</span>`;
 
     let currentInvestment = (typeof allInvestments !== 'undefined' && allInvestments[monthKey]) ? allInvestments[monthKey] : 0;
     let netProfit = monthCash - currentInvestment;
+
+    let cashPercent = monthSale > 0 ? Math.round((monthCash / monthSale) * 100) : 0;
+    let udharPercent = monthSale > 0 ? Math.round((monthUdhar / monthSale) * 100) : 0;
 
     let dataValues, bgColors, labels, totalGraphValue = 0;
     if (monthCash === 0 && monthUdhar === 0 && currentInvestment === 0) {
@@ -6624,13 +6606,13 @@ function downloadSmartReportHTML() {
         if (netProfit >= 0) {
             dataValues = [netProfit, currentInvestment, monthUdhar];
             bgColors = ['#16a34a', '#3b82f6', '#ef4444']; 
-            labels = ['Net Profit', 'Total Investment', 'Udhar (Pending)'];
+            labels = ['Net Profit', 'Investment', 'Outstanding Udhar'];
             totalGraphValue = netProfit + currentInvestment + monthUdhar;
         } else {
             let loss = Math.abs(netProfit);
             dataValues = [monthCash, loss, monthUdhar];
             bgColors = ['#16a34a', '#f97316', '#ef4444']; 
-            labels = ['Cash Received', 'Loss (Unrecovered Inv)', 'Udhar (Pending)'];
+            labels = ['Cash Received', 'Unrecovered Loss', 'Outstanding Udhar'];
             totalGraphValue = monthCash + loss + monthUdhar;
         }
     }
@@ -6640,118 +6622,229 @@ function downloadSmartReportHTML() {
     let gradientString = dataValues.length === 1 ? `conic-gradient(${bgColors[0]} 0% 100%)` : `conic-gradient(${bgColors[0]} 0% ${p1}%, ${bgColors[1]} ${p1}% ${p1+p2}%, ${bgColors[2]} ${p1+p2}% 100%)`;
 
     let legendHtml = `
-        <div style="margin-bottom: 8px; font-size: 13px; font-weight: bold; color: #374151; display: flex; align-items: center;"><span style="display:inline-block; width:12px; height:12px; background:${bgColors[0]}; border-radius:50%; margin-right:8px;"></span>${labels[0]}: ₹${dataValues[0]}</div>
-        <div style="margin-bottom: 8px; font-size: 13px; font-weight: bold; color: #374151; display: flex; align-items: center;"><span style="display:inline-block; width:12px; height:12px; background:${bgColors[1]}; border-radius:50%; margin-right:8px;"></span>${labels[1]}: ₹${dataValues[1]}</div>
+        <div class="legend-item"><span class="dot" style="background:${bgColors[0]};"></span><span class="lbl">${labels[0]}</span><span class="val">₹${dataValues[0]}</span></div>
+        <div class="legend-item"><span class="dot" style="background:${bgColors[1]};"></span><span class="lbl">${labels[1]}</span><span class="val">₹${dataValues[1]}</span></div>
     `;
-    if (dataValues.length > 2) legendHtml += `<div style="font-size: 13px; font-weight: bold; color: #374151; display: flex; align-items: center;"><span style="display:inline-block; width:12px; height:12px; background:${bgColors[2]}; border-radius:50%; margin-right:8px;"></span>${labels[2]}: ₹${dataValues[2]}</div>`;
+    if (dataValues.length > 2) legendHtml += `<div class="legend-item"><span class="dot" style="background:${bgColors[2]};"></span><span class="lbl">${labels[2]}</span><span class="val">₹${dataValues[2]}</span></div>`;
+
+    let regularChipsHtml = regularCustomers.length > 0
+        ? regularCustomers.map(r => `<span class="repeat-badge"><i class="fas fa-user-check"></i> ${r.name} (${r.count} orders)</span>`).join('')
+        : `<span style="color:#9ca3af; font-size:13px; font-style:italic;">No repeat customers this month</span>`;
 
     let htmlContent = `<!DOCTYPE html>
     <html lang="en">
-    <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Report - ${monthName} ${selectedYear}</title>
-    <style>
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f3f4f6;padding:20px;color:#374151;}
-        .container{max-width:1100px;margin:auto;background:white;padding:30px;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.05);}
-        .header{text-align:center;border-bottom:2px solid #16a34a;padding-bottom:20px;margin-bottom:25px;}
-        .header h1{color:#16a34a;margin:0 0 5px 0;font-size:28px;}
-        .stats-grid{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
-        .card{flex:1;min-width:160px;background:#f8fafc;padding:16px;border-radius:12px;border:1px solid #e2e8f0;text-align:center;}
-        .card.profit{background:#f0fdf4;border-color:#bbf7d0;}
-        .card.loss{background:#fef2f2;border-color:#fecaca;}
-        .card h3{margin:0 0 6px 0;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;}
-        .card .val{margin:0;font-size:24px;font-weight:900;color:#111827;}
-        
-        .insights-section{display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:15px;margin-bottom:25px;}
-        .insight-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px;}
-        .insight-box h4{margin:0 0 8px 0;font-size:12px;color:#6b7280;text-transform:uppercase;font-weight:700;}
-        .insight-box .big-txt{font-size:18px;font-weight:800;color:#111827;margin-bottom:4px;}
-        .insight-box .sub-txt{font-size:12px;color:#4b5563;}
-
-        .chart-section{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:30px;margin-bottom:30px;background:#f8fafc;padding:25px;border-radius:12px;border:1px solid #e2e8f0;}
-        .doughnut{width:140px;height:140px;border-radius:50%;background:${gradientString};position:relative;display:flex;align-items:center;justify-content:center;}
-        .doughnut::after{content:"";width:85px;height:85px;background:#f8fafc;border-radius:50%;position:absolute;}
-        
-        .table-wrapper{overflow-x:auto;border:1px solid #e5e7eb;border-radius:10px;}
-        table{width:100%;border-collapse:collapse;min-width:900px;text-align:left;}
-        th{background:#1f2937;color:white;padding:12px 10px;font-size:12px;text-transform:uppercase;}
-        tbody tr:nth-child(even){background:#f9fafb;}
-        @media print{body{background:white;padding:0;}.container{box-shadow:none;padding:0;}}
-    </style>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard - Netaji Jhadu Store</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+        <style>
+            :root { --bg: #f3f4f6; --surface: #ffffff; --primary: #16a34a; --text: #111827; --text-light: #6b7280; --border: #e5e7eb; }
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
+            
+            .dashboard { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+            
+            /* Top Navigation Bar */
+            .navbar { background: var(--surface); padding: 20px 24px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+            .nav-brand { display: flex; align-items: center; gap: 12px; }
+            .nav-brand .icon { width: 40px; height: 40px; background: #dcfce7; color: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+            .nav-brand h1 { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+            .nav-brand p { font-size: 13px; color: var(--text-light); font-weight: 500; }
+            .nav-actions { display: flex; align-items: center; gap: 12px; }
+            .period-badge { background: #f3f4f6; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--text); border: 1px solid var(--border); }
+            
+            /* Financial Transparency Bar */
+            .trust-bar { background: #f8fafc; border: 1px dashed #cbd5e1; padding: 12px 24px; border-radius: 12px; font-size: 12px; color: #475569; display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+            .trust-bar span { font-family: monospace; background: white; padding: 2px 6px; border-radius: 4px; border: 1px solid #e2e8f0; font-weight: 600; color: var(--text); }
+            
+            /* KPI Grid */
+            .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+            .kpi-card { background: var(--surface); padding: 24px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; overflow: hidden; }
+            .kpi-card.profit { background: #f0fdf4; border-color: #bbf7d0; }
+            .kpi-card.loss { background: #fef2f2; border-color: #fecaca; }
+            .kpi-title { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+            .kpi-val { font-size: 32px; font-weight: 800; color: var(--text); letter-spacing: -1px; }
+            .kpi-sub { font-size: 12px; color: var(--text-light); margin-top: 8px; font-weight: 500; }
+            .kpi-sub strong { color: var(--text); }
+            .kpi-icon { position: absolute; right: 24px; top: 24px; color: #e5e7eb; font-size: 40px; z-index: 0; }
+            
+            /* Two Column Section */
+            .main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+            @media(max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+            
+            /* Insights Grid */
+            .insights-wrapper { background: var(--surface); padding: 24px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+            .section-title { font-size: 16px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+            .insights-inner { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+            .insight-box { padding: 16px; border-radius: 12px; background: #f8fafc; border: 1px solid #f1f5f9; border-left: 4px solid var(--border); }
+            .insight-box h4 { font-size: 11px; color: var(--text-light); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
+            .insight-box .b-txt { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .insight-box .s-txt { font-size: 12px; color: var(--text-light); }
+            
+            /* Chart Widget */
+            .chart-widget { background: var(--surface); padding: 24px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; }
+            .doughnut { width: 160px; height: 160px; border-radius: 50%; background: ${gradientString}; position: relative; display: flex; align-items: center; justify-content: center; margin-bottom: 24px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.1); }
+            .doughnut::after { content: ""; width: 100px; height: 100px; background: var(--surface); border-radius: 50%; position: absolute; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+            .legend { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+            .legend-item { display: flex; align-items: center; font-size: 13px; font-weight: 500; color: var(--text); background: #f8fafc; padding: 10px 12px; border-radius: 8px; border: 1px solid #f1f5f9; }
+            .legend-item .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; }
+            .legend-item .lbl { flex: 1; }
+            .legend-item .val { font-weight: 700; font-family: monospace; font-size: 14px; }
+            
+            /* Repeat Customers */
+            .repeat-card { background: var(--surface); padding: 20px 24px; border-radius: 16px; border: 1px solid var(--border); }
+            .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+            .repeat-badge { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+            
+            /* Data Table */
+            .table-card { background: var(--surface); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; }
+            .table-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fafafa; }
+            .table-wrapper { overflow-x: auto; max-height: 600px; }
+            table { width: 100%; border-collapse: collapse; min-width: 1000px; text-align: left; }
+            th { position: sticky; top: 0; background: #f8fafc; color: var(--text-light); padding: 14px 20px; font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); z-index: 10; }
+            td { padding: 16px 20px; font-size: 13px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+            tbody tr:nth-child(even) td { background: #fafafa; }
+            tbody tr:hover td { background: #f0fdf4; }
+            
+            .text-gray { color: var(--text-light); }
+            .font-mono { font-family: 'Courier New', Courier, monospace; font-weight: 600; }
+            
+            /* Badges */
+            .badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; letter-spacing: 0.3px; text-transform: uppercase; }
+            .badge-green { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+            .badge-red { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+            .badge-blue { background: #dbeafe; color: #2563eb; border: 1px solid #bfdbfe; }
+            .badge-gray { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+            
+            @media print { body { background: white; padding: 0; } .dashboard, .navbar, .kpi-card, .table-card { box-shadow: none; border-color: #000; } }
+            @media(max-width: 640px) { .navbar { flex-direction: column; align-items: flex-start; gap: 16px; } .trust-bar { flex-direction: column; gap: 8px; } }
+        </style>
     </head>
     <body>
-        <div class="container">
-            <div class="header">
-                <h1>Netaji Jhadu Store</h1>
-                <p style="margin:0;color:#6b7280;font-weight:500;">Executive Performance & Insights Report • ${monthName} ${selectedYear}</p>
+        <div class="dashboard">
+            <!-- Navbar -->
+            <header class="navbar">
+                <div class="nav-brand">
+                    <div class="icon"><i class="fas fa-chart-line"></i></div>
+                    <div>
+                        <h1>Netaji Jhadu Store</h1>
+                        <p>Executive Analytics Dashboard</p>
+                    </div>
+                </div>
+                <div class="nav-actions">
+                    <div class="period-badge"><i class="far fa-calendar-alt" style="margin-right:6px; color:#6b7280;"></i>${monthName} ${selectedYear}</div>
+                </div>
+            </header>
+
+            <!-- Trust / Formula Bar -->
+            <div class="trust-bar">
+                <div><i class="fas fa-info-circle"></i> <strong>Gross Sales</strong> = <span>Cash Received</span> + <span>Udhar</span></div>
+                <div><i class="fas fa-calculator"></i> <strong>Net Profit</strong> = <span>Cash Received</span> - <span>Investment</span></div>
+            </div>
+
+            <!-- KPI Grid -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <i class="fas fa-wallet kpi-icon"></i>
+                    <div class="kpi-title" style="color:var(--text);"><i class="fas fa-chart-bar" style="color:var(--primary);"></i> Total Sales</div>
+                    <div class="kpi-val">₹${monthSale}</div>
+                    <div class="kpi-sub">Total revenue generated</div>
+                </div>
+                <div class="kpi-card">
+                    <i class="fas fa-money-bill-wave kpi-icon"></i>
+                    <div class="kpi-title"><i class="fas fa-arrow-down" style="color:#16a34a;"></i> Cash Received</div>
+                    <div class="kpi-val" style="color:#16a34a;">₹${monthCash}</div>
+                    <div class="kpi-sub">Collection Rate: <strong>${cashPercent}%</strong></div>
+                </div>
+                <div class="kpi-card">
+                    <i class="fas fa-hand-holding-usd kpi-icon"></i>
+                    <div class="kpi-title"><i class="fas fa-exclamation-circle" style="color:#ef4444;"></i> Pending Udhar</div>
+                    <div class="kpi-val" style="color:#ef4444;">₹${monthUdhar}</div>
+                    <div class="kpi-sub">Outstanding: <strong>${udharPercent}%</strong></div>
+                </div>
+                <div class="kpi-card">
+                    <i class="fas fa-boxes kpi-icon"></i>
+                    <div class="kpi-title"><i class="fas fa-truck-loading" style="color:#3b82f6;"></i> Investment</div>
+                    <div class="kpi-val" style="color:#3b82f6;">₹${currentInvestment}</div>
+                    <div class="kpi-sub">Total monthly expense</div>
+                </div>
+            </div>
+
+            <!-- Net Profit Banner -->
+            <div class="kpi-card ${netProfit >= 0 ? 'profit' : 'loss'}" style="display:flex; justify-content:space-between; align-items:center; padding: 24px 32px;">
+                <div>
+                    <div class="kpi-title" style="color:${netProfit >= 0 ? '#15803d' : '#b91c1c'}; font-size:14px;"><i class="fas fa-coins"></i> ${netProfit >= 0 ? 'Net Profit' : 'Net Loss'}</div>
+                    <div class="kpi-val" style="color:${netProfit >= 0 ? '#16a34a' : '#ef4444'}; font-size:42px;">₹${netProfit}</div>
+                    <div class="kpi-sub" style="color:${netProfit >= 0 ? '#15803d' : '#b91c1c'};">Actual cash in hand after expenses</div>
+                </div>
+                <i class="fas ${netProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}" style="font-size:64px; opacity:0.1; color:${netProfit >= 0 ? '#16a34a' : '#ef4444'};"></i>
+            </div>
+
+            <div class="main-grid">
+                <!-- Left: Business Insights & Repeat Customers -->
+                <div style="display:flex; flex-direction:column; gap:24px;">
+                    <div class="insights-wrapper">
+                        <h3 class="section-title"><i class="fas fa-lightbulb" style="color:#f59e0b;"></i> Key Business Insights</h3>
+                        <div class="insights-inner">
+                            <div class="insight-box" style="border-left-color: #16a34a;">
+                                <h4><i class="fas fa-star" style="margin-right:4px;"></i> Top Product</h4>
+                                <div class="b-txt">${topProduct.name}</div>
+                                <div class="s-txt">${topProduct.qty} Units • ₹${topProduct.revenue}</div>
+                            </div>
+                            <div class="insight-box" style="border-left-color: #3b82f6;">
+                                <h4><i class="fas fa-crown" style="margin-right:4px;"></i> Top Customer</h4>
+                                <div class="b-txt">${topCustomer.name}</div>
+                                <div class="s-txt">Spent ₹${topCustomer.spent} (${topCustomer.count} Orders)</div>
+                            </div>
+                            <div class="insight-box" style="border-left-color: #8b5cf6;">
+                                <h4><i class="fas fa-users" style="margin-right:4px;"></i> Customers</h4>
+                                <div class="b-txt">${regularCustomers.length} Repeat / ${irregularCustomers.length} New</div>
+                                <div class="s-txt">Total Unique: ${customerList.length}</div>
+                            </div>
+                            <div class="insight-box" style="border-left-color: #f59e0b;">
+                                <h4><i class="fas fa-chart-line" style="margin-right:4px;"></i> Metrics</h4>
+                                <div class="b-txt">AOV: ₹${aov}</div>
+                                <div class="s-txt">Best Day: ${bestDay}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="repeat-card">
+                        <h3 class="section-title" style="font-size:14px; color:var(--text-light);"><i class="fas fa-sync-alt"></i> Loyal Customers (2+ Orders)</h3>
+                        <div class="chips-container">${regularChipsHtml}</div>
+                    </div>
+                </div>
+
+                <!-- Right: Chart Widget -->
+                <div class="chart-widget">
+                    <h3 class="section-title" style="align-self:flex-start;"><i class="fas fa-pie-chart" style="color:#3b82f6;"></i> Financial Overview</h3>
+                    <div class="doughnut"></div>
+                    <div class="legend">${legendHtml}</div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="table-card">
+                <div class="table-header">
+                    <h3 class="section-title" style="margin:0;"><i class="fas fa-list-alt" style="color:var(--text-light);"></i> Order History</h3>
+                    <span class="badge badge-gray">${validOrdersCount} Records</span>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th><th>Date</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Pay Mode</th><th>Pay Status</th><th>Delivery</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${orderRows.length > 0 ? orderRows.join('') : '<tr><td colspan="9" style="text-align:center; padding:40px; color:#ef4444;"><i class="fas fa-box-open" style="font-size:24px; margin-bottom:10px; display:block;"></i>No orders found for this month.</td></tr>'}
+                        </tbody>
+                    </table>
+                </div>
             </div>
             
-            <!-- Financial Overview -->
-            <div class="stats-grid">
-                <div class="card"><h3>Total Sales</h3><p class="val">₹${monthSale}</p></div>
-                <div class="card"><h3>Cash Received</h3><p class="val" style="color:#16a34a">₹${monthCash}</p></div>
-                <div class="card"><h3>Udhar</h3><p class="val" style="color:#ef4444">₹${monthUdhar}</p></div>
-                <div class="card"><h3>Investment</h3><p class="val" style="color:#3b82f6">₹${currentInvestment}</p></div>
-                <div class="card ${netProfit >= 0 ? 'profit' : 'loss'}">
-                    <h3 style="color:${netProfit >= 0 ? '#15803d' : '#b91c1c'};">Net Profit</h3>
-                    <p class="val" style="color:${netProfit >= 0 ? '#16a34a' : '#ef4444'}">₹${netProfit}</p>
-                </div>
-            </div>
-
-            <!-- Deep Business Insights Grid -->
-            <div class="insights-section">
-                <div class="insight-box" style="border-left:4px solid #16a34a;">
-                    <h4>⭐ Highest Product Sale</h4>
-                    <div class="big-txt">${topProduct.name}</div>
-                    <div class="sub-txt">${topProduct.qty} Units Sold • ₹${topProduct.revenue} Revenue</div>
-                </div>
-
-                <div class="insight-box" style="border-left:4px solid #3b82f6;">
-                    <h4>👑 Top Customer (By Spends)</h4>
-                    <div class="big-txt">${topCustomer.name}</div>
-                    <div class="sub-txt">Spent ₹${topCustomer.spent} (${topCustomer.count} Orders)</div>
-                </div>
-
-                <div class="insight-box" style="border-left:4px solid #8b5cf6;">
-                    <h4>👥 Customer Breakdown</h4>
-                    <div class="big-txt">${regularCustomers.length} Regular / ${irregularCustomers.length} One-Time</div>
-                    <div class="sub-txt">Total Unique Customers: ${customerList.length}</div>
-                </div>
-
-                <div class="insight-box" style="border-left:4px solid #f59e0b;">
-                    <h4>📊 Sales Metrics</h4>
-                    <div class="big-txt">Avg Order: ₹${aov}</div>
-                    <div class="sub-txt">Total Units: ${totalUnitsSold} | Best Day: ${bestDay}</div>
-                </div>
-            </div>
-
-            <!-- Regular Customer Highlights -->
-            <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:15px; margin-bottom:25px;">
-                <h4 style="margin:0 0 10px 0; font-size:12px; color:#6b7280; text-transform:uppercase;">🔁 Repeat Customers (2+ Orders this month)</h4>
-                ${regularChipsHtml}
-            </div>
-
-            <!-- Chart Section -->
-            <div class="chart-section">
-                <div class="doughnut"></div>
-                <div class="legend">
-                    <h4 style="margin:0 0 10px 0; color:#111827;">Financial Breakdown</h4>
-                    ${legendHtml}
-                </div>
-            </div>
-
-            <!-- Detailed Orders Table -->
-            <h3 style="margin-bottom:12px; font-size:16px; color:#111827;">Detailed Order History (${validOrdersCount} Orders)</h3>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Order ID</th><th>Date</th><th>Customer Name</th><th>Phone</th><th>Items Ordered</th><th>Total</th><th>Pay Mode</th><th>Pay Status</th><th>Delivery Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${orderRows.length > 0 ? orderRows.join('') : '<tr><td colspan="9" style="text-align:center; padding:30px; color:#ef4444;">No orders found for this month.</td></tr>'}
-                    </tbody>
-                </table>
-            </div>
         </div>
     </body>
     </html>`;
@@ -6759,7 +6852,7 @@ function downloadSmartReportHTML() {
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
     const link = document.createElement("a");
     link.setAttribute("href", URL.createObjectURL(blob));
-    link.setAttribute("download", `SmartReport_${monthName}_${selectedYear}.html`);
+    link.setAttribute("download", `Executive_Dashboard_${monthName}_${selectedYear}.html`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
