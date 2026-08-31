@@ -7229,7 +7229,7 @@ async function downloadUserInvoice(orderId) {
     }
 }
 
-// --- MAIN INVOICE GENERATOR FUNCTION ---
+// --- MAIN INVOICE GENERATOR FUNCTION (ULTIMATE MOBILE FIX) ---
 function generateAndDownloadInvoice(bill) {
     // 1. Basic Details
     document.getElementById('receipt-invoice-no').innerText = `NJS-${new Date().getFullYear()}-${bill.id.substring(0,5).toUpperCase()}`;
@@ -7312,8 +7312,7 @@ function generateAndDownloadInvoice(bill) {
 
     const container = document.getElementById('receipt-container');
     
-    // 5. YAHAN HAI MAIN FIX (BLOB GENERATION)
-    // 400ms ka delay taaki QR Code theek se load ho jaye warna canvas error dega
+    // 5. 🚀 MANUAL BLOB CONVERSION (100% WORKING ON ANDROID)
     setTimeout(() => {
         if(typeof html2canvas !== 'undefined') {
             html2canvas(container, {
@@ -7321,35 +7320,48 @@ function generateAndDownloadInvoice(bill) {
                 useCORS: true, 
                 backgroundColor: "#ffffff"
             }).then(canvas => {
-                
-                // Canvas ko Blob me badlo (Ye mobile download fail hone se rokega)
-                canvas.toBlob(function(blob) {
-                    if(blob) {
-                        let link = document.createElement('a');
-                        link.download = `NJS_Invoice_${bill.id.substring(0,8)}.png`;
-                        
-                        // Temporary Object URL banana
-                        let url = URL.createObjectURL(blob);
-                        link.href = url;
-                        
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        
-                        // Memory clean karna
-                        setTimeout(() => URL.revokeObjectURL(url), 1000);
-                    } else {
-                        alert("⚠️ Failed to process image for mobile download.");
+                try {
+                    // Step A: Convert to Base64 (Ye method safe hai)
+                    let base64Image = canvas.toDataURL("image/png");
+                    
+                    // Step B: Manually convert Base64 to Blob 
+                    let byteString = atob(base64Image.split(',')[1]);
+                    let mimeString = base64Image.split(',')[0].split(':')[1].split(';')[0];
+                    let ab = new ArrayBuffer(byteString.length);
+                    let ia = new Uint8Array(ab);
+                    for (let i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
                     }
-                }, 'image/png');
-                
+                    let blob = new Blob([ab], {type: mimeString});
+                    
+                    // Step C: Safe Mobile Download
+                    let url = window.URL.createObjectURL(blob);
+                    let link = document.createElement('a');
+                    link.download = `NJS_Invoice_${bill.id.substring(0,8).toUpperCase()}.png`;
+                    link.href = url;
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    setTimeout(() => window.URL.revokeObjectURL(url), 2000); 
+
+                } catch (e) {
+                    console.error("Blob Fix Error: ", e);
+                    // Agar Blob fail hota hai, toh purana safe tarika
+                    let link = document.createElement('a');
+                    link.download = `NJS_Invoice_${bill.id.substring(0,8).toUpperCase()}.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                }
             }).catch(err => {
                 console.error("Canvas Error:", err);
+                alert("⚠️ Rendering Error: " + err.message);
             });
         } else {
             alert("⚠️ html2canvas library is missing!");
         }
-    }, 400); 
+    }, 800); // 🔥 800ms ka delay taaki QR Code fully load ho sake
 }
 
     </script>
