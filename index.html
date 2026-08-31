@@ -5040,17 +5040,33 @@ async function updateDeliveryStatus(id) {
     }
 }
 // ==========================================
-// 1. ADMIN SIDE: ORDER DETAILS (Dropdown & Calendar Fixed)
+// ADMIN PANEL: ORDER DETAILS (WITH DISCOUNT & DELIVERY UI)
 // ==========================================
 function viewAdminOrderDetails(id) {
     const order = adminBills.find(b => b.id === id);
     if (!order) return;
 
     let itemsHtml = '';
+    let itemTotalAmountAll = 0;
+    
     order.items.forEach(item => {
         let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemTotalAmountAll += itemTotal;
         itemsHtml += `<div class="flex justify-between text-sm text-gray-300 mb-1 border-b border-gray-800/50 pb-1"><span class="truncate pr-2">${item.qty}x ${item.name}</span><span>₹${itemTotal}</span></div>`;
     });
+
+    // 🟢 NAYA LOGIC: Discount & Delivery ka UI 🟢
+    let discount = order.discount || 0;
+    let delivery = order.delivery || 0;
+    let extraChargesHtml = '';
+
+    if(discount > 0 || delivery > 0) {
+        extraChargesHtml += `<div class="mt-2 pt-2 border-t border-dashed border-gray-700">`;
+        extraChargesHtml += `<div class="flex justify-between text-xs text-gray-400 mb-1"><span>Item Total</span><span>₹${itemTotalAmountAll}</span></div>`;
+        if(discount > 0) extraChargesHtml += `<div class="flex justify-between text-xs text-red-400 mb-1"><span>Discount</span><span>-₹${discount}</span></div>`;
+        if(delivery > 0) extraChargesHtml += `<div class="flex justify-between text-xs text-blue-400 mb-1"><span>Delivery Charge</span><span>+₹${delivery}</span></div>`;
+        extraChargesHtml += `</div>`;
+    }
 
     let formattedAddress = "";
     if (order.address) {
@@ -5060,9 +5076,8 @@ function viewAdminOrderDetails(id) {
     }
     let addressHtml = formattedAddress ? `<div class="mt-4 bg-[#0b1115] p-3 rounded-lg border border-gray-800"><p class="text-xs text-gray-500 mb-1 uppercase font-bold tracking-wider">Delivery Address</p><div class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">${formattedAddress}</div></div>` : '';
     
-    // Status Logic
     let currentDelivery = order.deliveryStatus || 'Processing';
-    let isCustomDate = currentDelivery.includes('Delivery by'); // Check if it's a calendar date
+    let isCustomDate = currentDelivery.includes('Delivery by');
     
     let isPaid = order.payStatus && order.payStatus.includes('Paid');
     let nextStatus = isPaid ? 'Unpaid' : 'Paid';
@@ -5084,7 +5099,6 @@ function viewAdminOrderDetails(id) {
             </div>
         </div>
 
-        <!-- FIXED DROPDOWN & CALENDAR BOX -->
         <div class="bg-brand-green/10 p-3 rounded-lg border border-brand-green/30 mb-4">
             <p class="text-[10px] text-brand-green mb-1.5 uppercase font-bold tracking-wider">Current Status: <span class="text-white">${currentDelivery}</span></p>
             <div class="flex flex-col gap-2 w-full">
@@ -5093,13 +5107,11 @@ function viewAdminOrderDetails(id) {
                         <option value="Processing" ${currentDelivery === 'Processing' ? 'selected' : ''}>Processing</option>
                         <option value="Delivered" ${currentDelivery === 'Delivered' ? 'selected' : ''}>Delivered</option>
                         <option value="Cancelled" ${currentDelivery === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                        <!-- Agar pehle se koi date save hai, toh wo yahan khud select ho jayegi -->
                         ${isCustomDate ? `<option value="${currentDelivery}" selected>${currentDelivery}</option>` : ''}
                         <option value="Custom">📅 Pick New Date...</option>
                     </select>
                     <button onclick="updateDeliveryStatus('${order.id}')" class="shrink-0 bg-brand-green text-black px-3 py-2 rounded font-bold text-sm shadow-md hover:bg-brand-greenhover transition">Update</button>
                 </div>
-                <!-- FIXED: 'color-scheme: dark;' ki wajah se ab date white color me proper dikhegi -->
                 <input type="date" id="admin-delivery-date-${order.id}" style="color-scheme: dark;" class="hidden w-full bg-brand-dark border border-brand-green/50 rounded px-2 py-2 text-white text-sm outline-none cursor-pointer">
             </div>
         </div>
@@ -5115,7 +5127,8 @@ function viewAdminOrderDetails(id) {
         <div class="mt-4 mb-2 bg-[#0b1115] p-3 rounded-lg border border-gray-800">
             <p class="text-xs text-gray-500 mb-3 uppercase font-bold tracking-wider border-b border-gray-800 pb-2">Items Ordered</p>
             ${itemsHtml}
-            <div class="mt-3 pt-2 flex justify-between items-center">
+            ${extraChargesHtml}
+            <div class="mt-3 pt-2 flex justify-between items-center border-t border-gray-800">
                 <span class="text-gray-400 text-sm">Grand Total</span>
                 <span class="text-brand-green font-bold text-xl">₹${order.grandTotal}</span>
             </div>
@@ -5142,6 +5155,7 @@ function viewAdminOrderDetails(id) {
     modal.classList.remove('hidden');
     setTimeout(() => modal.classList.add('opacity-100'), 10);
 }
+
 
 // ==========================================
 // 2. TOGGLE CALENDAR VISIBILITY
