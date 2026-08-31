@@ -1144,8 +1144,8 @@
                     <div id="draft-bill-empty" class="text-center py-6 text-sm text-gray-500 italic bg-brand-dark/20 rounded-b-lg border-b border-gray-800">No items added yet.</div>
                 </div>
                 
-                <!-- Payment Status & Mode Row -->
-                <div class="grid grid-cols-2 gap-4 mt-6 border-t border-gray-800 pt-5 mb-4">
+                    <!-- Payment Status & Mode Row -->
+                <div class="grid grid-cols-2 gap-4 mt-6 border-t border-gray-800 pt-5 mb-2">
                     <div>
                         <label class="text-xs text-gray-400 mb-1.5 block font-medium">Payment Status</label>
                         <select id="bill-pay-status" onchange="handlePaymentStatusChange()" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-green outline-none transition cursor-pointer">
@@ -1163,12 +1163,30 @@
                     </div>
                 </div>
                 
-                <!-- Bill Summary -->
-                <div class="border-t border-gray-700 pt-4 pb-2 flex justify-between items-end">
-                    <span class="text-sm text-gray-400 font-medium">Grand Total</span>
-                    <span id="draft-bill-total" class="text-2xl font-bold text-brand-green leading-none">₹0</span>
+                <!-- 🔥 NAYA: Discount & Delivery Row -->
+                <div class="grid grid-cols-2 gap-4 mt-3 mb-4">
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1.5 block font-medium">Discount (₹)</label>
+                        <input type="number" id="bill-discount" value="0" min="0" oninput="calculateDraftTotal()" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none transition">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 mb-1.5 block font-medium">Delivery Charge (₹)</label>
+                        <input type="number" id="bill-delivery" value="0" min="0" oninput="calculateDraftTotal()" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none transition">
+                    </div>
                 </div>
-            </div>
+
+                <!-- Bill Summary -->
+                <div class="border-t border-gray-700 pt-3 pb-2">
+                    <div class="flex justify-between items-end mb-2">
+                        <span class="text-xs text-gray-400 font-medium">Item Subtotal</span>
+                        <span id="draft-bill-subtotal" class="text-sm font-bold text-white">₹0</span>
+                    </div>
+                    <div class="flex justify-between items-end mt-2 pt-2 border-t border-gray-800">
+                        <span class="text-sm text-gray-400 font-medium">Grand Total</span>
+                        <span id="draft-bill-total" class="text-2xl font-bold text-brand-green leading-none">₹0</span>
+                    </div>
+                </div>
+
 
                         <!-- Yahan buttons ko split kar diya gaya hai -->
             <div class="p-4 border-t border-gray-800 bg-brand-dark shrink-0 flex gap-3">
@@ -6658,10 +6676,12 @@ function downloadExcelCSV() {
                 <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Quality You Trust, Cleanliness You Deserve</p>
             </div>
         </div>
-               <!-- QR Code Placeholder (Dynamic) -->
-        <div class="w-20 h-20 border-2 border-gray-200 rounded-lg p-1.5 flex flex-col items-center justify-center bg-gray-50">
-            <img id="receipt-qr" src="" class="w-full h-full" alt="QR" crossorigin="anonymous">
+                      <!-- QR Code Placeholder (Dynamic Label) -->
+        <div class="border-2 border-gray-200 rounded-lg p-2 flex flex-col items-center justify-center bg-gray-50 w-24">
+            <img id="receipt-qr" src="" class="w-16 h-16" alt="QR" crossorigin="anonymous">
+            <p id="receipt-qr-label" class="text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight"></p>
         </div>
+
 
     </div>
 
@@ -6749,14 +6769,15 @@ function downloadExcelCSV() {
                 <span>Subtotal</span>
                 <span id="receipt-subtotal" class="text-gray-800"></span>
             </div>
-            <div class="flex justify-between text-sm text-green-600 py-2 px-3 font-semibold">
+                        <div class="flex justify-between text-sm text-green-600 py-2 px-3 font-semibold">
                 <span>Discount</span>
-                <span>- ₹0</span>
+                <span id="receipt-discount">- ₹0</span> <!-- ID लगाई गई है -->
             </div>
             <div class="flex justify-between text-sm text-gray-600 py-2 px-3 border-b border-gray-300 mb-3 font-semibold">
                 <span>Delivery Charges</span>
-                <span>₹0</span>
+                <span id="receipt-delivery">₹0</span> <!-- ID लगाई गई है -->
             </div>
+
             <div class="flex justify-between items-center bg-green-50 p-4 rounded-lg border-2 border-green-200 shadow-inner">
                 <span class="font-black text-green-900 text-lg uppercase tracking-wider">Grand Total</span>
                 <span class="font-black text-3xl text-green-700" id="receipt-total"></span>
@@ -6840,19 +6861,25 @@ function generateAndDownloadInvoice(bill) {
     document.getElementById('receipt-paystatus-badge').innerHTML = badgeHtml;
 
     // 4. SMART QR CODE LOGIC (UPI Payment or Website)
-    const myUpiId = "8750900635@kotakbank"; // <-- यहाँ अपना असली UPI ID डालें (जैसे: 8750900635@paytm)
-    const storeUrl = "https://netajijhadustore.github.io"; // <-- आपकी वेबसाइट का लिंक
+    const myUpiId = "your_upi_id@bank"; // <-- यहाँ अपना असली UPI ID डालें
+    const storeUrl = "https://netajijhadustore.github.io/netajijhadustore/"; 
 
     let qrImage = document.getElementById('receipt-qr');
+    let qrLabel = document.getElementById('receipt-qr-label');
     
     if (!isPaid) {
-        // अगर बिल Unpaid है, तो Payment का QR दिखाओ (Amount के साथ)
+        // Unpaid: Payment QR & Red Label
         let upiLink = `upi://pay?pa=${myUpiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
         qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
+        qrLabel.innerText = "SCAN TO PAY";
+        qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-red-500";
     } else {
-        // अगर बिल Paid है, तो वेबसाइट या WhatsApp का लिंक दिखाओ
+        // Paid: Website QR & Green Label
         qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(storeUrl)}`;
+        qrLabel.innerText = "VISIT WEBSITE";
+        qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-green-700";
     }
+
 
     // 4. Products Table Rows
     let itemsHtml = '';
@@ -6890,6 +6917,140 @@ function generateAndDownloadInvoice(bill) {
             alert("⚠️ html2canvas library is missing!");
         }
     }, 250);
+}
+// 1. NAYA FUNCTION: Total Calculate Karne Ke Liye
+function calculateDraftTotal() {
+    let subtotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
+    let discount = parseInt(document.getElementById('bill-discount').value) || 0;
+    let delivery = parseInt(document.getElementById('bill-delivery').value) || 0;
+
+    let grandTotal = subtotal - discount + delivery;
+    if (grandTotal < 0) grandTotal = 0; // Total minus mein na jaye
+
+    let subEl = document.getElementById('draft-bill-subtotal');
+    if(subEl) subEl.innerText = `₹${subtotal}`;
+    
+    document.getElementById('draft-bill-total').innerText = `₹${grandTotal}`;
+    
+    return { subtotal, discount, delivery, grandTotal };
+}
+
+// 2. RENDER UPDATE (जब आइटम ऐड या रिमूव हों)
+function renderDraftBill() {
+    const tbody = document.getElementById('draft-bill-items-list');
+    const emptyMsg = document.getElementById('draft-bill-empty');
+    
+    if(draftBillItems.length === 0) {
+        tbody.innerHTML = ''; emptyMsg.style.display = 'block'; 
+        calculateDraftTotal(); // Reset to 0
+        return;
+    }
+    
+    emptyMsg.style.display = 'none';
+    let html = '';
+    draftBillItems.forEach(item => {
+        html += `
+        <tr class="text-white hover:bg-gray-800/30 transition border-b border-gray-800/50 last:border-0">
+            <td class="py-3 pl-3 truncate max-w-[120px] sm:max-w-[180px]">${item.name}</td>
+            <td class="py-3 text-center">${item.qty}</td>
+            <td class="py-3 text-right">₹${item.price}</td>
+            <td class="py-3 text-right pr-3 text-brand-green font-semibold">₹${item.total}</td>
+            <td class="py-3 text-center text-gray-600 hover:text-red-500 cursor-pointer pr-1" onclick="removeDraftItem('${item.id}')"><i class="fas fa-times text-xs"></i></td>
+        </tr>`;
+    });
+    tbody.innerHTML = html; 
+    calculateDraftTotal(); // Calculate grand total with discount
+}
+
+// 3. OPEN MODAL UPDATE (Fields को 0 पर रिसेट करना)
+function openCreateBillModal() {
+    draftBillItems = [];
+    document.getElementById('bill-cust-name').value = '';
+    document.getElementById('bill-cust-phone').value = '';
+    document.getElementById('bill-qty-input').value = '1';
+    document.getElementById('bill-pay-status').value = 'Paid';
+    document.getElementById('bill-discount').value = '0'; // Reset
+    document.getElementById('bill-delivery').value = '0'; // Reset
+    
+    const modeSelect = document.getElementById('bill-pay-mode');
+    modeSelect.value = 'UPI (Online)';
+    modeSelect.disabled = false; 
+    
+    populateBillProductSelect();
+    renderDraftBill();
+    
+    const createBillModal = document.getElementById('create-bill-modal');
+    createBillModal.classList.remove('hidden');
+    setTimeout(() => createBillModal.classList.add('opacity-100'), 10);
+}
+
+// 4. SAVE BILL UPDATE (Database में Discount सेव करना)
+// (saveBillOnly और saveAndSendBill दोनों में ये बदलाव करें)
+async function saveBillOnly() {
+    const name = document.getElementById('bill-cust-name').value.trim();
+    const phone = document.getElementById('bill-cust-phone').value.trim();
+    const payStatus = document.getElementById('bill-pay-status').value;
+    const payMode = document.getElementById('bill-pay-mode').value;
+    
+    if(!name) return alert("Please enter Customer Name.");
+    if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
+    let finalPhone = phone ? phone : "N/A";
+    
+    const saveBtn = event.currentTarget;
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1.5"></i> Saving...`;
+    saveBtn.disabled = true;
+    
+    // 🔥 Get totals from function
+    let totals = calculateDraftTotal();
+    const dateObj = new Date();
+    const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const newBill = {
+        date: dateStr,
+        customerName: name, 
+        customerPhone: finalPhone, 
+        items: [...draftBillItems],
+        subtotal: totals.subtotal,       // Saved to DB
+        discount: totals.discount,       // Saved to DB
+        delivery: totals.delivery,       // Saved to DB
+        grandTotal: totals.grandTotal, 
+        payStatus: payStatus, 
+        payMode: payMode,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    try {
+        const docRef = await db.collection('bills').add(newBill);
+        newBill.id = docRef.id;
+        adminBills.unshift(newBill);
+        closeCreateBillModal();
+        renderAdminBills();
+        alert("✅ Bill Saved Successfully!");
+    } catch (error) {
+        alert("❌ Error saving bill: " + error.message);
+    } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
+}
+// Note: saveAndSendBill mein bhi "newBill" object banate waqt subtotal, discount, aur delivery add kar lena.
+
+// 5. INVOICE GENERATOR UPDATE (बिल पर असली वैल्यू प्रिंट करना)
+function generateAndDownloadInvoice(bill) {
+    // ... [तुम्हारा पुराना Header और Address वाला कोड] ...
+    
+    // 🔥 Totals & Payment (Updated to show real discount)
+    let subtotal = bill.subtotal || bill.items.reduce((sum, i) => sum + (i.total || i.price*i.qty), 0);
+    let discount = bill.discount || 0;
+    let delivery = bill.delivery || 0;
+
+    document.getElementById('receipt-subtotal').innerText = `₹${subtotal}`;
+    document.getElementById('receipt-discount').innerText = `- ₹${discount}`;
+    document.getElementById('receipt-delivery').innerText = `₹${delivery}`;
+    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
+    
+    // ... [बाकी का पुराना Code] ...
 }
 
     </script>
