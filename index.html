@@ -977,11 +977,27 @@
                             </div>
                         </div>
 
-                        <!-- 4. Final Net Profit -->
-                        <div class="flex justify-between items-center pt-1">
-                            <span class="text-sm text-white uppercase font-black tracking-widest"><i class="fas fa-chart-line text-brand-green mr-1"></i> Net Profit</span>
-                            <span id="insight-net-profit" class="font-black text-xl text-brand-green drop-shadow-md">₹0</span>
-                        </div>
+                           <!-- 5. NEW: SPECIFIC MATERIAL BATCH TRACKER -->
+        <div class="mt-5 pt-4 border-t border-gray-800/80">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-[11px] text-blue-400 uppercase font-bold tracking-wider"><i class="fas fa-layer-group mr-1"></i> Specific Material Tracker</span>
+            </div>
+            
+            <div class="flex gap-1.5 mb-3">
+                <input type="text" id="batch-name" placeholder="E.g. Desi 2950 + Wire" class="flex-1 min-w-0 bg-[#0b1115] border border-gray-700 rounded px-2 py-2 text-white text-[11px] outline-none focus:border-brand-green shadow-inner">
+                <div class="flex items-center bg-[#0b1115] border border-gray-700 rounded px-1.5 focus-within:border-brand-green shadow-inner w-24">
+                    <span class="text-gray-500 text-[11px] font-bold">₹</span>
+                    <input type="number" id="batch-cost" placeholder="Cost" class="w-full bg-transparent py-2 pl-1 text-white text-[11px] outline-none">
+                </div>
+                <button onclick="addMaterialBatch()" class="bg-brand-green text-black px-3 py-2 rounded text-[10px] font-bold hover:bg-brand-greenhover shadow-md">Track</button>
+            </div>
+
+            <!-- Tracker List -->
+            <div id="batch-list" class="flex flex-col gap-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                <p class="text-[10px] text-gray-500 italic text-center py-2">No material tracked yet.</p>
+            </div>
+        </div>
+
                     </div>
 
                 </div>
@@ -7018,6 +7034,129 @@ function downloadExcelCSV() {
     const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(blob));
     link.setAttribute("download", `ExcelData_${monthName}_${selectedYear}.csv`);
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+// ==========================================
+// SPECIFIC MATERIAL BATCH TRACKER LOGIC
+// ==========================================
+let materialBatches = [];
+
+// Admin panel open hone par fetch karega (Purane wale ke sath merge)
+const originalAdminForBatches = openAdmin;
+openAdmin = async function() {
+    if(typeof originalAdminForBatches === 'function') originalAdminForBatches();
+    try {
+        const snap = await db.collection('materialTracker').get();
+        materialBatches = [];
+        snap.forEach(doc => materialBatches.push({ id: doc.id, ...doc.data() }));
+        renderMaterialBatches();
+    } catch(e) { console.error("Batch load error:", e); }
+};
+
+// Naya Material Lot shuru karna
+async function addMaterialBatch() {
+    let nameInput = document.getElementById('batch-name');
+    let costInput = document.getElementById('batch-cost');
+    let name = nameInput.value.trim();
+    let cost = parseInt(costInput.value);
+
+    if (!name || isNaN(cost) || cost <= 0) return alert("⚠️ Please enter a valid material name and cost.");
+
+    let newBatch = { name: name, cost: cost, recovered: 0, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+    
+    let btn = event.currentTarget;
+    let origText = btn.innerText;
+    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i>";
+    
+    try {
+        let docRef = await db.collection('materialTracker').add(newBatch);
+        newBatch.id = docRef.id;
+        materialBatches.push(newBatch);
+        nameInput.value = ''; costInput.value = '';
+        renderMaterialBatches();
+    } catch(e) { alert("Error saving tracker: " + e.message); }
+    finally { btn.innerText = origText; }
+}
+
+// Sale add karna
+async function addSaleToBatch(id) {
+    let amountStr = prompt("इस मटेरियल से कितने रुपये का माल बिका? (Enter Amount):");
+    if (!amountStr) return;
+    let amount = parseInt(amountStr);
+    
+    if (isNaN(amount) || amount <= 0) return alert("Invalid amount!");
+
+    let batch = materialBatches.find(b => b.id === id);
+    if (!batch) return;
+
+    let newRecovered = batch.recovered + amount;
+
+    try {
+        await db.collection('materialTracker').doc(id).update({ recovered: newRecovered });
+        batch.recovered = newRecovered;
+        renderMaterialBatches();
+    } catch(e) { alert("Error updating sale: " + e.message); }
+}
+
+// Delete Batch
+async function deleteBatch(id) {
+    if (!confirm("⚠️ क्या आप इस मटेरियल ट्रैकर को डिलीट करना चाहते हैं?")) return;
+    try {
+        await db.collection('materialTracker').doc(id).delete();
+        materialBatches = materialBatches.filter(b => b.id !== id);
+        renderMaterialBatches();
+    } catch(e) { alert("Error deleting tracker: " + e.message); }
+}
+
+// Render UI
+function renderMaterialBatches() {
+    let container = document.getElementById('batch-list');
+    if (!container) return;
+    
+    if (materialBatches.length === 0) {
+        container.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-2">No material tracked yet.</p>';
+        return;
+    }
+
+    let html = '';
+    [...materialBatches].reverse().forEach(b => {
+        let profit = b.recovered - b.cost;
+        let isProfitable = profit >= 0;
+        let profitColor = isProfitable ? 'text-brand-green' : 'text-red-400';
+        let profitLabel = isProfitable ? 'Pure Profit' : 'Remaining to Recover';
+        let displayAmt = Math.abs(profit);
+
+        let percent = (b.recovered / b.cost) * 100;
+        let barColor = isProfitable ? 'bg-brand-green' : 'bg-blue-400';
+        if (percent > 100) percent = 100;
+
+        html += `
+        <div class="bg-[#0b1115] border border-gray-800 rounded-lg p-2.5 shadow-sm relative group">
+            <div class="flex justify-between items-center mb-1">
+                <span class="text-white text-xs font-bold truncate pr-2">${b.name}</span>
+                <i class="fas fa-trash-alt text-gray-600 hover:text-red-500 cursor-pointer text-[10px] transition" onclick="deleteBatch('${b.id}')" title="Delete Tracker"></i>
+            </div>
+            
+            <div class="flex justify-between text-[10px] text-gray-400 mb-1.5">
+                <span>Cost: <strong class="text-white">₹${b.cost}</strong></span>
+                <span>Recovered: <strong class="text-blue-400">₹${b.recovered}</strong></span>
+            </div>
+
+            <div class="w-full bg-gray-800 rounded-full h-1.5 mb-2 overflow-hidden">
+                <div class="${barColor} h-1.5 rounded-full" style="width: ${percent}%"></div>
+            </div>
+
+            <div class="flex justify-between items-center bg-[#151f28] rounded p-1.5 mb-2 border border-gray-800">
+                <span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider">${profitLabel}:</span>
+                <span class="text-xs font-black ${profitColor}">₹${displayAmt}</span>
+            </div>
+
+            <button onclick="addSaleToBatch('${b.id}')" class="w-full bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-400 border border-blue-500/30 py-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1.5">
+                <i class="fas fa-plus-circle"></i> Add Sale Amount
+            </button>
+        </div>
+        `;
+    });
+    container.innerHTML = html;
 }
 
 
