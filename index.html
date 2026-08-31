@@ -1098,7 +1098,8 @@
                         <input type="text" id="bill-cust-name" oninput="showCustomerSuggestions()" autocomplete="off" placeholder="e.g. Satyam" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none transition">
                     </div>
                     <div>
-                        <label class="text-xs text-gray-400 mb-1.5 block font-medium">WhatsApp No. *</label>
+                    <label class="text-xs text-gray-400 mb-1.5 block font-medium">WhatsApp No. (Optional)</label>
+
                         <input type="number" id="bill-cust-phone" oninput="showCustomerSuggestions()" autocomplete="off" placeholder="91xxxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none transition">
                     </div>
                     
@@ -1548,10 +1549,20 @@ function resendBill(id) {
     const phone = document.getElementById('bill-cust-phone').value.trim();
     const payStatus = document.getElementById('bill-pay-status').value;
     const payMode = document.getElementById('bill-pay-mode').value;
-    
-    if(!name || !phone) return alert("Please enter Customer Name and WhatsApp Number.");
+
+    if(!name) return alert("Please enter Customer Name.");
     if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
-    
+
+    // SMART TARIKA: Agar number nahi hai aur WhatsApp button dabaya hai
+    if(!phone) {
+        let confirmSave = confirm("आपने WhatsApp नंबर नहीं डाला है, इसलिए मैसेज सेंड नहीं हो सकता। \n\nक्या आप सिर्फ बिल सेव करना चाहते हैं?");
+        if(confirmSave) {
+            return saveBillOnly(); // Direct save wale function ko bhej do
+        } else {
+            return; // Yahin ruk jao
+        }
+    }
+
     let grandTotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
 
     const dateObj = new Date();
@@ -3142,10 +3153,13 @@ async function saveBillOnly() {
     const payStatus = document.getElementById('bill-pay-status').value;
     const payMode = document.getElementById('bill-pay-mode').value;
     
-    if(!name || !phone) return alert("Please enter Customer Name and WhatsApp Number.");
+    // SMART TARIKA: Sirf naam check karo, phone optional hai
+    if(!name) return alert("Please enter Customer Name.");
     if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
     
-    // Button ko disable karo taki double click na ho
+    // Agar phone khali hai toh "N/A" daal do
+    let finalPhone = phone ? phone : "N/A";
+    
     const saveBtn = event.currentTarget;
     const originalText = saveBtn.innerHTML;
     saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1.5"></i> Saving...`;
@@ -3158,7 +3172,7 @@ async function saveBillOnly() {
     const newBill = {
         date: dateStr,
         customerName: name, 
-        customerPhone: phone, 
+        customerPhone: finalPhone, // Updated yahan
         items: [...draftBillItems],
         grandTotal: grandTotal, 
         payStatus: payStatus, 
@@ -3173,15 +3187,15 @@ async function saveBillOnly() {
         
         closeCreateBillModal();
         renderAdminBills();
-        alert("✅ Bill Saved Successfully (Without sending WhatsApp message).");
+        alert("✅ Bill Saved Successfully!");
     } catch (error) {
         alert("❌ Error saving bill: " + error.message);
     } finally {
-        // Button reset
         saveBtn.innerHTML = originalText;
         saveBtn.disabled = false;
     }
 }
+
 // ==========================================
 // 👤 ROLE SELECTION LOGIC
 // ==========================================
