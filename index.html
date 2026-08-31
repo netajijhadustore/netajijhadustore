@@ -5791,32 +5791,48 @@ openAdmin = function() {
 async function processCustomerData() {
     allCustomersMap = {};
     
-    // 1. Purane sabhi bills se data extract karna
     adminBills.forEach(bill => {
-        let phone = bill.customerPhone ? bill.customerPhone.trim() : "Unknown";
-        if(phone === "" || phone === "Unknown") return;
+        let phone = bill.customerPhone ? bill.customerPhone.trim() : "";
+        let name = bill.customerName ? bill.customerName.trim() : "Unknown";
         
-        if(!allCustomersMap[phone]) {
-            allCustomersMap[phone] = {
-                name: bill.customerName,
+        // 🔥 SMART FIX: अगर नंबर नहीं है, तो 'Naam' को यूनिक आईडी बना लो
+        let idKey = phone;
+        if(phone === "" || phone === "N/A" || phone === "Unknown") {
+            idKey = "NONUM_" + name.toLowerCase(); // नाम से ग्रुप करेगा
+            phone = "N/A"; // UI में दिखाने के लिए
+        }
+        
+        if(!allCustomersMap[idKey]) {
+            allCustomersMap[idKey] = {
+                idKey: idKey, // <-- नई चीज़
+                name: name,
                 phone: phone,
                 totalSpent: 0,
                 orders: []
             };
         }
-        allCustomersMap[phone].orders.push(bill);
-        allCustomersMap[phone].totalSpent += bill.grandTotal;
+        allCustomersMap[idKey].orders.push(bill);
+        allCustomersMap[idKey].totalSpent += bill.grandTotal;
     });
 
-    // 2. Firebase se Manual Customers load karna (Jo bina bill ke banaye gaye hain)
     try {
         const snap = await db.collection('customers').get();
         snap.forEach(doc => {
             let data = doc.data();
-            if(!allCustomersMap[data.phone]) {
-                allCustomersMap[data.phone] = {
-                    name: data.name,
-                    phone: data.phone,
+            let phone = data.phone ? data.phone.trim() : "";
+            let name = data.name ? data.name.trim() : "Unknown";
+            
+            let idKey = phone;
+            if(phone === "" || phone === "N/A" || phone === "Unknown") {
+                idKey = "NONUM_" + name.toLowerCase();
+                phone = "N/A";
+            }
+
+            if(!allCustomersMap[idKey]) {
+                allCustomersMap[idKey] = {
+                    idKey: idKey,
+                    name: name,
+                    phone: phone,
                     totalSpent: 0,
                     orders: [],
                     isManual: true
@@ -5825,7 +5841,6 @@ async function processCustomerData() {
         });
     } catch(e) { console.error("Error loading manual customers", e); }
 
-    // Convert object to Array and sort by Total Spent (Highest value customers on top)
     allCustomersArray = Object.values(allCustomersMap).sort((a, b) => b.totalSpent - a.totalSpent);
     renderAdminCustomers();
 }
@@ -5856,29 +5871,22 @@ function renderAdminCustomers() {
         
         html += `
         <div class="bg-[#0b1115] border border-gray-800 rounded-xl p-3 flex justify-between items-center hover:border-brand-green/50 transition group">
-            
-            <!-- Left Side (Clickable to view profile) -->
-            <div onclick="viewCustomerInsights('${cust.phone}')" class="flex items-center gap-3 flex-1 cursor-pointer">
+            <div onclick="viewCustomerInsights('${cust.idKey}')" class="flex items-center gap-3 flex-1 cursor-pointer">
                 <div class="w-10 h-10 bg-brand-green/10 text-brand-green rounded-full flex items-center justify-center font-bold border border-brand-green/20 shrink-0">${initials}</div>
                 <div>
                     <h4 class="text-white font-semibold text-sm group-hover:text-brand-green transition">${cust.name}</h4>
                     <p class="text-gray-400 text-[11px] mt-0.5"><i class="fab fa-whatsapp text-gray-500 mr-1"></i> ${cust.phone}</p>
                 </div>
             </div>
-            
-            <!-- Right Side (Stats & Delete Button) -->
             <div class="flex items-center gap-4 shrink-0">
-                <div class="text-right cursor-pointer" onclick="viewCustomerInsights('${cust.phone}')">
+                <div class="text-right cursor-pointer" onclick="viewCustomerInsights('${cust.idKey}')">
                     <p class="text-brand-green font-bold text-sm">₹${cust.totalSpent}</p>
                     <p class="text-gray-500 text-[10px] mt-0.5">${ordersCount} Orders <i class="fas fa-chevron-right text-[9px] ml-1"></i></p>
                 </div>
-                
-                <!-- 🗑️ NAYA DELETE BUTTON -->
-                <button onclick="deleteCustomer('${cust.phone}')" class="text-gray-500 hover:text-red-500 transition bg-gray-800 hover:bg-red-500/10 w-8 h-8 rounded flex items-center justify-center border border-transparent hover:border-red-500/30" title="Delete Customer">
+                <button onclick="deleteCustomer('${cust.idKey}')" class="text-gray-500 hover:text-red-500 transition bg-gray-800 hover:bg-red-500/10 w-8 h-8 rounded flex items-center justify-center border border-transparent hover:border-red-500/30" title="Delete Customer">
                     <i class="fas fa-trash-alt text-xs"></i>
                 </button>
             </div>
-            
         </div>`;
     });
     list.innerHTML = html;
@@ -5887,59 +5895,44 @@ function renderAdminCustomers() {
 // -----------------------------------------
 // CUSTOMER INSIGHTS MODAL (With All-Time & Month Filter)
 // -----------------------------------------
-function viewCustomerInsights(phone, filterMonth = 'all') {
-    const cust = allCustomersMap[phone];
+function viewCustomerInsights(idKey, filterMonth = 'all') {
+    const cust = allCustomersMap[idKey];
     if(!cust) return;
 
     const content = document.getElementById('customer-insights-content');
-    
     let filteredOrders = cust.orders;
     let selectedYear = null;
     let selectedMonth = null;
-    
-    // Labels jo filter ke hisaab se change honge
     let periodLabel = "LIFETIME SPENT";
     let ordersLabel = "TOTAL ORDERS";
 
-    // 1. FILTERING LOGIC
     if (filterMonth !== 'all') {
         const parts = filterMonth.split('-');
         if (parts.length === 2) {
             selectedYear = parseInt(parts[0]);
-            selectedMonth = parseInt(parts[1]) - 1; // JS mein mahine 0 se shuru hote hain
-            
+            selectedMonth = parseInt(parts[1]) - 1; 
             periodLabel = "MONTHLY SPENT";
             ordersLabel = "MONTHLY ORDERS";
 
             filteredOrders = cust.orders.filter(order => {
                 let billDateObj = null;
-                // Date nikalne ka solid logic
-                if (order.timestamp && typeof order.timestamp.toDate === 'function') {
-                    billDateObj = order.timestamp.toDate();
-                } else if (order.timestamp && order.timestamp.seconds) {
-                    billDateObj = new Date(order.timestamp.seconds * 1000);
-                } else {
+                if (order.timestamp && typeof order.timestamp.toDate === 'function') billDateObj = order.timestamp.toDate();
+                else if (order.timestamp && order.timestamp.seconds) billDateObj = new Date(order.timestamp.seconds * 1000);
+                else {
                     let dParts = order.date.split('/');
                     if(dParts.length === 3) billDateObj = new Date(dParts[2], dParts[1] - 1, dParts[0]);
                     else billDateObj = new Date(order.date);
                 }
-
-                if (billDateObj && !isNaN(billDateObj)) {
-                    return billDateObj.getFullYear() === selectedYear && billDateObj.getMonth() === selectedMonth;
-                }
+                if (billDateObj && !isNaN(billDateObj)) return billDateObj.getFullYear() === selectedYear && billDateObj.getMonth() === selectedMonth;
                 return false;
             });
         }
     }
 
-    // 2. NAYE STATS CALCULATE KARNA (Filter hone ke baad)
     let displayTotalSpent = filteredOrders.reduce((sum, order) => sum + order.grandTotal, 0);
     let displayTotalOrders = filteredOrders.length;
-
-    // 3. ORDERS SORTING (Naye orders sabse upar)
     filteredOrders.sort((a, b) => b.timestamp - a.timestamp);
 
-    // 4. ORDERS HTML GENERATE KARNA
     let ordersHtml = '';
     if(filteredOrders.length === 0) {
         ordersHtml = `<p class="text-center text-gray-500 text-sm py-8 bg-brand-dark rounded-lg border border-gray-800">No orders found for this period.</p>`;
@@ -5948,13 +5941,13 @@ function viewCustomerInsights(phone, filterMonth = 'all') {
             let isPaid = order.payStatus && order.payStatus.includes('Paid');
             let payColor = isPaid ? 'text-green-400' : 'text-red-400';
             let itemsText = order.items.map(i => `${i.qty}x ${i.name}`).join(', ');
-
-            // Reminder Button (Sirf Unpaid)
-            let reminderBtn = !isPaid ? `
+            
+            // अगर नंबर नहीं है, तो Reminder बटन हाइड हो जाएगा
+            let reminderBtn = !isPaid && cust.phone !== "N/A" ? `
                 <button onclick="sendPaymentReminder('${order.id}')" class="text-[10px] bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-1 rounded transition flex items-center gap-1" title="Send Payment Reminder">
                     <i class="fab fa-whatsapp"></i> Reminder
                 </button>
-            ` : '';
+            ` : ''; 
 
             ordersHtml += `
             <div class="bg-[#0b1115] p-3 rounded-lg border border-gray-800 mb-3 shadow-inner">
@@ -5968,14 +5961,10 @@ function viewCustomerInsights(phone, filterMonth = 'all') {
                         <p class="text-[10px] ${payColor} font-bold mt-0.5">${order.payStatus}</p>
                     </div>
                 </div>
-                
                 <p class="text-gray-400 text-[11px] leading-relaxed line-clamp-2 mb-2"><span class="text-gray-500 font-semibold">Items:</span> ${itemsText}</p>
-                
-                <!-- Buttons Row -->
                 <div class="flex justify-end gap-1.5 pt-1">
                     ${reminderBtn}
-                    <!-- Download Bill Icon -->
-                    <button onclick="downloadInvoiceOnly('${order.id}')" class="text-[10px] bg-brand-green/10 hover:bg-brand-green hover:text-black text-brand-green border border-brand-green/30 px-2.5 py-1 rounded transition flex items-center justify-center shadow-sm" title="Download Bill Image">
+                    <button onclick="downloadBillImage('${order.id}')" class="text-[10px] bg-brand-green/10 hover:bg-brand-green hover:text-black text-brand-green border border-brand-green/30 px-2.5 py-1 rounded transition flex items-center justify-center shadow-sm" title="Download Bill Image">
                         <i class="fas fa-download"></i>
                     </button>
                 </div>
@@ -5983,35 +5972,33 @@ function viewCustomerInsights(phone, filterMonth = 'all') {
         });
     }
 
-    // 5. MAIN MODAL HTML (Jisme naya Filter Bar lagaya hai)
+    // अगर नंबर नहीं है, तो WhatsApp/Call बटन की जगह 'No Number' दिखेगा
+    let contactButtons = cust.phone !== "N/A" ? `
+        <a href="https://wa.me/91${cust.phone}" target="_blank" class="text-[11px] bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-1 rounded flex items-center gap-1 hover:bg-green-500/20 transition"><i class="fab fa-whatsapp"></i> Chat</a>
+        <a href="tel:+91${cust.phone}" class="text-[11px] bg-blue-500/10 text-blue-400 border border-blue-500/30 px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-500/20 transition"><i class="fas fa-phone-alt"></i> Call</a>
+    ` : `<span class="text-[10px] bg-gray-800 text-gray-500 px-2 py-1.5 rounded flex items-center gap-1 font-semibold">No Number Available</span>`;
+
     content.innerHTML = `
-        <!-- Profile Header -->
         <div class="flex items-center gap-4 mb-5">
             <div class="w-14 h-14 bg-brand-green rounded-full flex items-center justify-center text-black text-2xl font-bold shadow-[0_0_15px_rgba(22,163,74,0.3)]">
                 ${cust.name.charAt(0).toUpperCase()}
             </div>
             <div>
                 <h2 class="text-lg font-bold text-white">${cust.name}</h2>
-                <div class="flex gap-2 mt-1.5">
-                    <a href="https://wa.me/91${cust.phone}" target="_blank" class="text-[11px] bg-green-500/10 text-green-400 border border-green-500/30 px-2 py-1 rounded flex items-center gap-1 hover:bg-green-500/20 transition"><i class="fab fa-whatsapp"></i> Chat</a>
-                    <a href="tel:+91${cust.phone}" class="text-[11px] bg-blue-500/10 text-blue-400 border border-blue-500/30 px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-500/20 transition"><i class="fas fa-phone-alt"></i> Call</a>
+                <div class="flex gap-2 mt-2">
+                    ${contactButtons}
                 </div>
             </div>
         </div>
 
-        <!-- NAYA FILTER UI BAR -->
         <div class="flex justify-between items-center mb-4 bg-brand-dark p-2 rounded-lg border border-gray-800 shadow-inner">
             <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider pl-1">Select Period</p>
             <div class="flex gap-2">
-                <!-- All Time Button -->
-                <button onclick="viewCustomerInsights('${cust.phone}', 'all')" class="${filterMonth === 'all' ? 'bg-brand-green text-black' : 'bg-gray-800 text-gray-400 hover:text-white'} px-3 py-1 rounded text-[10px] font-bold transition">All Time</button>
-                
-                <!-- Month Picker (Calendar) -->
-                <input type="month" onchange="if(this.value) viewCustomerInsights('${cust.phone}', this.value)" value="${filterMonth !== 'all' ? filterMonth : ''}" class="${filterMonth !== 'all' ? 'bg-brand-green/20 text-brand-green border-brand-green/50' : 'bg-gray-800 text-gray-400 border-gray-700'} border rounded px-2 py-1 text-[10px] font-bold outline-none cursor-pointer" style="color-scheme: dark;">
+                <button onclick="viewCustomerInsights('${cust.idKey}', 'all')" class="${filterMonth === 'all' ? 'bg-brand-green text-black' : 'bg-gray-800 text-gray-400 hover:text-white'} px-3 py-1 rounded text-[10px] font-bold transition">All Time</button>
+                <input type="month" onchange="if(this.value) viewCustomerInsights('${cust.idKey}', this.value)" value="${filterMonth !== 'all' ? filterMonth : ''}" class="${filterMonth !== 'all' ? 'bg-brand-green/20 text-brand-green border-brand-green/50' : 'bg-gray-800 text-gray-400 border-gray-700'} border rounded px-2 py-1 text-[10px] font-bold outline-none cursor-pointer" style="color-scheme: dark;">
             </div>
         </div>
 
-        <!-- Dynamic Value Cards (Filter ke hisaab se change honge) -->
         <div class="grid grid-cols-2 gap-3 mb-5">
             <div class="bg-brand-card border border-brand-green/20 rounded-xl p-3 text-center relative overflow-hidden">
                 <div class="absolute -right-3 -top-3 text-brand-green/5 text-5xl"><i class="fas fa-wallet"></i></div>
@@ -6025,7 +6012,6 @@ function viewCustomerInsights(phone, filterMonth = 'all') {
             </div>
         </div>
 
-        <!-- Order History List -->
         <div>
             <h4 class="text-[11px] text-gray-400 uppercase tracking-wider mb-2 font-semibold border-b border-gray-800 pb-2">Order History</h4>
             <div class="max-h-64 overflow-y-auto custom-scrollbar pr-1">
@@ -6217,14 +6203,12 @@ document.addEventListener('click', function(e) {
 // -----------------------------------------
 // DELETE CUSTOMER LOGIC
 // -----------------------------------------
-async function deleteCustomer(phone) {
-    // Ye line card ka profile popup khulne se rokegi jab tum delete dabaoge
+async function deleteCustomer(idKey) {
     if (window.event) window.event.stopPropagation(); 
 
-    const cust = allCustomersMap[phone];
+    const cust = allCustomersMap[idKey];
     if (!cust) return;
 
-    // Security Check: Agar customer ke naam par bill hai, toh delete hone se rokna
     if (cust.orders && cust.orders.length > 0) {
         alert("⚠️ आप इस कस्टमर को डिलीट नहीं कर सकते क्योंकि इनके नाम पर बिल बने हुए हैं।\n\nकृपया पहले 'Billing System' में जाकर इनके बिल डिलीट करें, फिर ये नाम यहाँ से अपने आप हट जाएगा।");
         return;
@@ -6232,15 +6216,21 @@ async function deleteCustomer(phone) {
 
     if (confirm(`क्या आप सच में ${cust.name} को डिलीट करना चाहते हैं?`)) {
         try {
-            // Firebase Database se delete karna (Manual customers ke liye)
-            const snapshot = await db.collection('customers').where('phone', '==', phone).get();
+            // अगर नंबर नहीं है, तो Firebase से नाम के ज़रिए डिलीट करो
+            let query = db.collection('customers').where('name', '==', cust.name);
+            if (cust.phone !== "N/A") {
+                query = query.where('phone', '==', cust.phone);
+            } else {
+                query = query.where('phone', 'in', ["", "N/A", "Unknown"]);
+            }
+
+            const snapshot = await query.get();
             if (!snapshot.empty) {
                 snapshot.forEach(doc => doc.ref.delete());
             }
 
-            // Local list se hatana taki bina refresh kiye UI update ho jaye
-            delete allCustomersMap[phone];
-            allCustomersArray = allCustomersArray.filter(c => c.phone !== phone);
+            delete allCustomersMap[idKey];
+            allCustomersArray = allCustomersArray.filter(c => c.idKey !== idKey);
             
             renderAdminCustomers(); 
             alert("✅ कस्टमर सफलतापूर्वक डिलीट हो गया!");
@@ -6249,6 +6239,7 @@ async function deleteCustomer(phone) {
         }
     }
 }
+
 // ==========================================
 // 1. DOWNLOAD SMART REPORT (BEAUTIFUL HTML WITH GRAPH)
 // ==========================================
