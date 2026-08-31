@@ -7229,9 +7229,8 @@ async function downloadUserInvoice(orderId) {
     }
 }
 
-// --- MAIN INVOICE GENERATOR FUNCTION (ULTIMATE MOBILE FIX) ---
+// --- MAIN INVOICE GENERATOR FUNCTION (ANDROID DOWNLOAD MANAGER FIX) ---
 function generateAndDownloadInvoice(bill) {
-    // 1. Basic Details
     document.getElementById('receipt-invoice-no').innerText = `NJS-${new Date().getFullYear()}-${bill.id.substring(0,5).toUpperCase()}`;
     document.getElementById('receipt-date').innerText = bill.date;
     document.getElementById('receipt-name').innerText = bill.customerName;
@@ -7242,7 +7241,6 @@ function generateAndDownloadInvoice(bill) {
     let cleanAddress = bill.address ? bill.address.replace(/(https?:\/\/[^\s]+)/g, '').replace(/🔗/g, '').trim() : 'Walk-in Customer / No Address Provided';
     document.getElementById('receipt-address').innerText = cleanAddress;
 
-    // 2. Totals
     let subtotal = bill.subtotal || bill.items.reduce((sum, i) => sum + (i.total || i.price*i.qty), 0);
     let discount = bill.discount || 0;
     let delivery = bill.delivery || 0;
@@ -7274,7 +7272,6 @@ function generateAndDownloadInvoice(bill) {
     if(badgeEl) badgeEl.innerHTML = badgeHtml;
     else if(document.getElementById('receipt-paystatus')) document.getElementById('receipt-paystatus').innerText = displayStatus;
 
-    // 3. SMART QR CODE
     const myUpiId = "8750900635@paytm"; 
     const storeUrl = "https://netajijhadustore.github.io"; 
 
@@ -7294,7 +7291,6 @@ function generateAndDownloadInvoice(bill) {
         }
     }
 
-    // 4. Products Table Rows
     let itemsHtml = '';
     bill.items.forEach((item, index) => {
         let itemTotal = item.total ? item.total : (item.price * item.qty);
@@ -7312,7 +7308,6 @@ function generateAndDownloadInvoice(bill) {
 
     const container = document.getElementById('receipt-container');
     
-    // 5. 🚀 MANUAL BLOB CONVERSION (100% WORKING ON ANDROID)
     setTimeout(() => {
         if(typeof html2canvas !== 'undefined') {
             html2canvas(container, {
@@ -7321,10 +7316,8 @@ function generateAndDownloadInvoice(bill) {
                 backgroundColor: "#ffffff"
             }).then(canvas => {
                 try {
-                    // Step A: Convert to Base64 (Ye method safe hai)
                     let base64Image = canvas.toDataURL("image/png");
                     
-                    // Step B: Manually convert Base64 to Blob 
                     let byteString = atob(base64Image.split(',')[1]);
                     let mimeString = base64Image.split(',')[0].split(':')[1].split(';')[0];
                     let ab = new ArrayBuffer(byteString.length);
@@ -7334,7 +7327,6 @@ function generateAndDownloadInvoice(bill) {
                     }
                     let blob = new Blob([ab], {type: mimeString});
                     
-                    // Step C: Safe Mobile Download
                     let url = window.URL.createObjectURL(blob);
                     let link = document.createElement('a');
                     link.download = `NJS_Invoice_${bill.id.substring(0,8).toUpperCase()}.png`;
@@ -7344,11 +7336,11 @@ function generateAndDownloadInvoice(bill) {
                     link.click();
                     document.body.removeChild(link);
                     
-                    setTimeout(() => window.URL.revokeObjectURL(url), 2000); 
+                    // 🔥 FIX: yahan se humne 'revokeObjectURL' wala timer hata diya hai. 
+                    // Ab Android Download Manager aaram se file save kar lega.
 
                 } catch (e) {
                     console.error("Blob Fix Error: ", e);
-                    // Agar Blob fail hota hai, toh purana safe tarika
                     let link = document.createElement('a');
                     link.download = `NJS_Invoice_${bill.id.substring(0,8).toUpperCase()}.png`;
                     link.href = canvas.toDataURL("image/png");
@@ -7361,7 +7353,7 @@ function generateAndDownloadInvoice(bill) {
         } else {
             alert("⚠️ html2canvas library is missing!");
         }
-    }, 800); // 🔥 800ms ka delay taaki QR Code fully load ho sake
+    }, 800); 
 }
 
     </script>
