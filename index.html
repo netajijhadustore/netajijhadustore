@@ -5711,7 +5711,7 @@ async function downloadUserInvoice(orderId) {
     }
 }
 
-// --- BILL IMAGE GENERATOR (PREMIUM VINTAGE UI - CRASH FIXED) ---
+// --- BILL IMAGE GENERATOR (PREMIUM VINTAGE UI - FIXED STATUS & QR) ---
 function downloadBillImage(id) {
     let clickedBtn = window.event ? window.event.currentTarget : null;
     let origBtnHtml = "";
@@ -5731,7 +5731,6 @@ function downloadBillImage(id) {
     }
 
     try {
-        // Setting Header Data Safely
         document.getElementById('receipt-id').innerText = `#NJS-${bill.id.substring(0,6).toUpperCase()}`;
         document.getElementById('receipt-name').innerText = bill.customerName || "Customer";
         document.getElementById('receipt-phone').innerText = (bill.customerPhone && bill.customerPhone !== "N/A") ? bill.customerPhone : "Not Provided";
@@ -5772,7 +5771,6 @@ function downloadBillImage(id) {
         }
         document.getElementById('receipt-items').innerHTML = itemsHtml;
 
-        // Discount & Delivery Breakdown Safely
         let discountAmt = parseFloat(bill.discount) || 0;
         let deliveryAmt = parseFloat(bill.delivery) || 0;
         
@@ -5782,46 +5780,56 @@ function downloadBillImage(id) {
 
         if (discountAmt > 0 || deliveryAmt > 0) {
             document.getElementById('receipt-subtotal').innerText = `₹${itemTotalAmountAll.toFixed(2)}`;
-            
             if (discountAmt > 0) {
                 document.getElementById('receipt-discount').innerText = discountAmt.toFixed(2);
                 if(discountRow) { discountRow.classList.remove('hidden'); discountRow.classList.add('flex'); }
             } else {
                 if(discountRow) { discountRow.classList.add('hidden'); discountRow.classList.remove('flex'); }
             }
-
             if (deliveryAmt > 0) {
                 document.getElementById('receipt-delivery').innerText = deliveryAmt.toFixed(2);
                 if(deliveryRow) { deliveryRow.classList.remove('hidden'); deliveryRow.classList.add('flex'); }
             } else {
                 if(deliveryRow) { deliveryRow.classList.add('hidden'); deliveryRow.classList.remove('flex'); }
             }
-
-            if(breakdownDiv) { breakdownDiv.classList.remove('hidden'); breakdownDiv.classList.add('flex'); }
-        } else {
-            if(breakdownDiv) { breakdownDiv.classList.add('hidden'); breakdownDiv.classList.remove('flex'); }
         }
-
+        
         document.getElementById('receipt-total').innerText = `₹ ${(parseFloat(bill.grandTotal)||0).toFixed(2)}`;
 
-        // Crash-proof PayStatus check
+        // 🟢 NAYA LOGIC: Payment Status & Dynamic QR 🟢
         let isPaid = (bill.payStatus && typeof bill.payStatus === 'string') ? bill.payStatus.includes('Paid') : false;
+        
+        // Update Status Box Text
+        let statusEl = document.getElementById('receipt-paystatus');
+        if(statusEl) {
+            if(isPaid) {
+                statusEl.innerText = 'PAID ✓';
+                statusEl.className = 'text-green-600 font-bold uppercase tracking-widest';
+            } else {
+                statusEl.innerText = 'UNPAID';
+                statusEl.className = 'text-red-600 font-bold uppercase tracking-widest';
+            }
+        }
+
+        // Update QR Code & Label
         let qrImg = document.getElementById('receipt-qr-img');
+        let qrLabel = document.getElementById('receipt-qr-label');
 
         if (qrImg) {
             if (isPaid) {
                 let websiteUrl = "https://netajijhadustore.github.io/netajijhadustore/"; 
                 qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(websiteUrl)}`;
+                if(qrLabel) qrLabel.innerText = "VISIT WEBSITE";
             } else {
                 let upiId = "8750900635@kotakbank"; 
                 let upiLink = `upi://pay?pa=${upiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
                 qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
+                if(qrLabel) qrLabel.innerText = "SCAN TO PAY";
             }
         }
 
         const container = document.getElementById('receipt-container');
         
-        // 800ms delay to let QR load completely
         setTimeout(() => {
             if (typeof html2canvas === 'undefined') {
                 alert("Library not loaded! Please refresh page.");
@@ -5830,7 +5838,7 @@ function downloadBillImage(id) {
             }
 
             html2canvas(container, {
-                scale: 2, // Mobile friendly scale (stops browser crashing)
+                scale: 2, 
                 backgroundColor: "#Fdfbf7",
                 useCORS: true,
                 logging: false
@@ -7547,22 +7555,24 @@ function renderMaterialBatches() {
 }
 
     </script>
-<!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION (VINTAGE PREMIUM UI) -->
-<div id="receipt-container" class="fixed -left-[9999px] top-0 bg-[#Fdfbf7] text-[#3e2723] w-[800px] font-sans relative overflow-hidden shadow-2xl">
+<!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION (VINTAGE PREMIUM UI - FIXED) -->
+<div id="receipt-container" class="fixed -left-[9999px] top-0 bg-[#Fdfbf7] text-[#3e2723] w-[800px] font-sans relative overflow-hidden shadow-2xl pb-0">
     
+    <!-- Load custom fonts inside the container -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Great+Vibes&display=swap');
+        .font-serif-logo { font-family: 'Playfair Display', serif; }
+        .font-cursive { font-family: 'Great Vibes', cursive; }
+    </style>
 
-
-    <!-- Faint Background Overlay (Optional) -->
+    <!-- Faint Background Overlay -->
     <div class="absolute bottom-16 left-0 w-[400px] h-[300px] opacity-10 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] pointer-events-none z-0"></div>
 
     <!-- HEADER -->
     <div class="px-10 pt-12 pb-6 flex justify-between items-start relative z-10 border-b border-[#e6dfd3]">
-        
-        <!-- LOGO SECTION -->
         <div class="flex flex-col items-center text-center">
-            <!-- Image Placeholder (Replace src with your actual Netaji Logo later) -->
-            <div class="w-32 h-32 mb-2 bg-[#f0ebd8] rounded-full border-2 border-[#4A3B32] flex items-center justify-center overflow-hidden">
-                <i class="fas fa-user-tie text-6xl text-[#4A3B32]"></i>
+            <div class="w-32 h-32 mb-2 bg-[#f0ebd8] rounded-full border-2 border-[#4A3B32] flex items-center justify-center overflow-hidden shadow-sm">
+                <i class="fas fa-leaf text-6xl text-[#4A3B32]"></i>
             </div>
             <h1 class="font-serif-logo text-5xl text-[#4A3B32] tracking-[0.15em] leading-none mb-1">NETAJI</h1>
             <div class="flex items-center gap-2 mt-2 w-full justify-center">
@@ -7574,10 +7584,9 @@ function renderMaterialBatches() {
             <p class="text-[9px] tracking-widest text-[#c29b62] mt-1 font-bold uppercase">Premium Quality • Strong Binding • Clean India</p>
         </div>
 
-        <!-- INVOICE INFO SECTION -->
         <div class="text-right w-72 pt-4">
             <h2 class="text-4xl font-sans font-light tracking-[0.2em] text-[#4A3B32] mb-3">INVOICE</h2>
-            <div class="bg-[#4A3B32] text-white text-sm font-bold py-1.5 px-5 rounded-full inline-block tracking-wider mb-6" id="receipt-id">#NJS-0000</div>
+            <div class="bg-[#4A3B32] text-white text-sm font-bold py-1.5 px-5 rounded-full inline-block tracking-wider mb-6 shadow-sm" id="receipt-id">#NJS-0000</div>
 
             <div class="text-left space-y-4 text-sm text-[#4A3B32] ml-8">
                 <div class="flex items-start gap-4">
@@ -7592,7 +7601,7 @@ function renderMaterialBatches() {
                     <div>
                         <p class="font-bold text-xs text-[#8b7355]">Bill To:</p>
                         <p class="font-bold" id="receipt-name">-</p>
-                        <p class="text-xs max-w-[180px] leading-tight mt-0.5 text-[#5a4a40]" id="receipt-address">Customer Address<br>Delhi, India</p>
+                        <p class="text-xs max-w-[180px] leading-tight mt-0.5 text-[#5a4a40]" id="receipt-address">Delhi, India</p>
                     </div>
                 </div>
                 <div class="flex items-start gap-4">
@@ -7607,8 +7616,8 @@ function renderMaterialBatches() {
     </div>
 
     <!-- ITEMS TABLE -->
-    <div class="px-10 mt-6 relative z-10">
-        <table class="w-full text-left border-collapse border border-[#e6dfd3]">
+    <div class="px-10 mt-6 relative z-10 min-h-[220px]">
+        <table class="w-full text-left border-collapse border border-[#e6dfd3] shadow-sm bg-white">
             <thead>
                 <tr class="bg-[#4A3B32] text-white text-[11px] uppercase tracking-wider">
                     <th class="py-3 px-4 font-semibold w-16 text-center">Sr. No.</th>
@@ -7618,15 +7627,14 @@ function renderMaterialBatches() {
                     <th class="py-3 px-4 font-semibold text-right w-28">Amount (₹)</th>
                 </tr>
             </thead>
-            <tbody id="receipt-items" class="text-sm bg-white border-b border-[#e6dfd3]">
+            <tbody id="receipt-items" class="text-sm">
                 <!-- JS will inject items here -->
             </tbody>
         </table>
     </div>
 
     <!-- MIDDLE SECTION: THANK YOU & CALCULATIONS -->
-    <div class="px-10 mt-6 flex justify-between items-start relative z-10">
-        <!-- Thank You Note -->
+    <div class="px-10 mt-4 flex justify-between items-start relative z-10">
         <div class="w-[45%] pt-4 pl-2">
             <div class="flex items-center gap-3 mb-2">
                 <i class="fas fa-gift text-[#c29b62] text-2xl"></i>
@@ -7635,8 +7643,8 @@ function renderMaterialBatches() {
             <p class="text-xs text-[#5a4a40] leading-relaxed font-medium mt-3">We truly appreciate your business.<br>Your trust motivates us to keep delivering<br>the best quality.</p>
         </div>
 
-        <!-- Math Breakdown -->
-        <div class="w-[320px] bg-white border border-[#e6dfd3] p-4 rounded text-[#4A3B32]">
+        <!-- 🟢 NAYA: Math Breakdown + Payment Status 🟢 -->
+        <div class="w-[320px] bg-white border border-[#e6dfd3] p-4 rounded shadow-sm text-[#4A3B32]">
             <div class="flex justify-between items-center py-1.5 text-sm font-semibold">
                 <span>Subtotal</span>
                 <span id="receipt-subtotal">₹0.00</span>
@@ -7649,7 +7657,11 @@ function renderMaterialBatches() {
                 <span>Shipping</span>
                 <span>+₹<span id="receipt-delivery">0.00</span></span>
             </div>
-            <div class="bg-[#4A3B32] text-white mt-3 rounded px-4 py-3 flex justify-between items-center">
+            <div class="flex justify-between items-center py-1.5 text-sm font-semibold border-t border-[#e6dfd3] mt-1 pt-2">
+                <span>Status</span>
+                <span id="receipt-paystatus" class="uppercase tracking-wider">-</span>
+            </div>
+            <div class="bg-[#4A3B32] text-white mt-3 rounded px-4 py-3 flex justify-between items-center shadow-sm">
                 <span class="text-xs tracking-wider uppercase font-bold">Total Amount</span>
                 <span class="text-xl font-bold" id="receipt-total">₹0.00</span>
             </div>
@@ -7659,61 +7671,39 @@ function renderMaterialBatches() {
     <!-- ICONS / BADGES ROW -->
     <div class="px-10 mt-8 mb-6 flex justify-end gap-8 relative z-10 pr-6">
         <div class="flex flex-col items-center text-center w-16">
-            <div class="w-10 h-10 rounded-full border border-[#c29b62] flex items-center justify-center mb-1 bg-[#fdfbf7] shadow-sm">
-                <i class="fas fa-leaf text-[#c29b62]"></i>
-            </div>
+            <div class="w-10 h-10 rounded-full border border-[#c29b62] flex items-center justify-center mb-1 bg-[#fdfbf7] shadow-sm"><i class="fas fa-leaf text-[#c29b62]"></i></div>
             <p class="text-[8px] font-bold uppercase tracking-wider text-[#4A3B32] leading-tight">Natural<br>Material</p>
         </div>
         <div class="flex flex-col items-center text-center w-16">
-            <div class="w-10 h-10 rounded-full border border-[#c29b62] flex items-center justify-center mb-1 bg-[#fdfbf7] shadow-sm">
-                <i class="fas fa-shield-alt text-[#c29b62]"></i>
-            </div>
+            <div class="w-10 h-10 rounded-full border border-[#c29b62] flex items-center justify-center mb-1 bg-[#fdfbf7] shadow-sm"><i class="fas fa-shield-alt text-[#c29b62]"></i></div>
             <p class="text-[8px] font-bold uppercase tracking-wider text-[#4A3B32] leading-tight">Strong<br>& Durable</p>
         </div>
         <div class="flex flex-col items-center text-center w-16">
-            <div class="w-10 h-10 rounded-full border border-[#c29b62] flex items-center justify-center mb-1 bg-[#fdfbf7] shadow-sm">
-                <i class="fas fa-medal text-[#c29b62]"></i>
-            </div>
+            <div class="w-10 h-10 rounded-full border border-[#c29b62] flex items-center justify-center mb-1 bg-[#fdfbf7] shadow-sm"><i class="fas fa-medal text-[#c29b62]"></i></div>
             <p class="text-[8px] font-bold uppercase tracking-wider text-[#4A3B32] leading-tight">Premium<br>Quality</p>
         </div>
         <div class="flex flex-col items-center text-center w-16">
-            <div class="w-10 h-10 rounded-full border border-[#c29b62] flex items-center justify-center mb-1 bg-[#fdfbf7] shadow-sm">
-                <i class="fas fa-heart text-[#c29b62]"></i>
-            </div>
+            <div class="w-10 h-10 rounded-full border border-[#c29b62] flex items-center justify-center mb-1 bg-[#fdfbf7] shadow-sm"><i class="fas fa-heart text-[#c29b62]"></i></div>
             <p class="text-[8px] font-bold uppercase tracking-wider text-[#4A3B32] leading-tight">Made In<br>India</p>
         </div>
     </div>
 
     <!-- CURVED FOOTER -->
-    <div class="bg-[#4A3B32] text-[#f5ebd9] px-10 py-8 rounded-t-[40px] flex justify-between items-center relative z-10 shadow-inner">
-        <!-- Contact Details -->
+    <div class="bg-[#4A3B32] text-[#f5ebd9] px-10 py-8 rounded-t-[40px] flex justify-between items-center relative z-10 shadow-inner mt-4">
         <div class="text-[11px] space-y-3 w-1/3">
-            <div class="flex items-start gap-3">
-                <i class="fas fa-map-marker-alt mt-0.5 text-[#c29b62]"></i>
-                <div>
-                    <p class="font-bold text-white mb-0.5 tracking-wider uppercase">NETAJI JHADU STORE</p>
-                    <p class="opacity-80 leading-snug font-medium">Chander Vihar Nilothi  <br>Delhi - 110041</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <i class="fas fa-phone-alt text-[#c29b62]"></i>
-                <p class="opacity-90 font-medium">+91 87509 00635</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <i class="fab fa-whatsapp text-lg text-[#c29b62]"></i>
-                <p class="opacity-90 font-medium">+91 87509 00635</p>
-            </div>
+            <div class="flex items-start gap-3"><i class="fas fa-map-marker-alt mt-0.5 text-[#c29b62]"></i><div><p class="font-bold text-white mb-0.5 tracking-wider uppercase">NETAJI JHADU STORE</p><p class="opacity-80 leading-snug font-medium">Near Old Bus Stand, Main Road,<br>Delhi - 110041</p></div></div>
+            <div class="flex items-center gap-3"><i class="fas fa-phone-alt text-[#c29b62]"></i><p class="opacity-90 font-medium">+91 87509 00635</p></div>
+            <div class="flex items-center gap-3"><i class="fab fa-whatsapp text-lg text-[#c29b62]"></i><p class="opacity-90 font-medium">+91 87509 00635</p></div>
         </div>
 
-        <!-- Scan to Pay -->
+        <!-- 🟢 NAYA: Dynamic Scan to Pay Text 🟢 -->
         <div class="flex flex-col items-center w-1/3 border-x border-[#5a4a40]">
-            <p class="text-[10px] uppercase tracking-widest font-bold mb-2 text-[#c29b62]">Scan To Pay</p>
+            <p id="receipt-qr-label" class="text-[10px] uppercase tracking-widest font-bold mb-2 text-[#c29b62]">Scan To Pay</p>
             <div class="bg-white p-1.5 rounded shadow-lg">
                 <img id="receipt-qr-img" src="" crossorigin="anonymous" alt="QR Code" class="w-20 h-20">
             </div>
         </div>
 
-        <!-- Closing Note -->
         <div class="w-1/3 text-center">
             <p class="text-xs opacity-90 leading-relaxed mb-2 font-medium">Thank you for choosing<br>Netaji Jhadu Store!</p>
             <p class="font-cursive text-5xl text-[#c29b62] mb-1">Jai Hind!</p>
@@ -7726,9 +7716,10 @@ function renderMaterialBatches() {
         <p>Terms & Conditions:</p>
         <p>1. Goods once sold will not be taken back.</p>
         <p>2. Warranty only on manufacturing defects.</p>
-        <p>3. Prices are subject to change without prior notice.</p>
+        <p>3. Custom/bulk orders are subject to prior confirmation.</p>
     </div>
 </div>
+
 
 
     <!-- AOS Animation Init -->
