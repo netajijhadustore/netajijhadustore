@@ -6918,14 +6918,15 @@ function generateAndDownloadInvoice(bill) {
         }
     }, 250);
 }
-// 1. NAYA FUNCTION: Total Calculate Karne Ke Liye
+
+// 1. Total Calculate Karne Ke Liye
 function calculateDraftTotal() {
     let subtotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
     let discount = parseInt(document.getElementById('bill-discount').value) || 0;
     let delivery = parseInt(document.getElementById('bill-delivery').value) || 0;
 
     let grandTotal = subtotal - discount + delivery;
-    if (grandTotal < 0) grandTotal = 0; // Total minus mein na jaye
+    if (grandTotal < 0) grandTotal = 0; 
 
     let subEl = document.getElementById('draft-bill-subtotal');
     if(subEl) subEl.innerText = `₹${subtotal}`;
@@ -6935,14 +6936,14 @@ function calculateDraftTotal() {
     return { subtotal, discount, delivery, grandTotal };
 }
 
-// 2. RENDER UPDATE (जब आइटम ऐड या रिमूव हों)
+// 2. Draft Bill List Render
 function renderDraftBill() {
     const tbody = document.getElementById('draft-bill-items-list');
     const emptyMsg = document.getElementById('draft-bill-empty');
     
     if(draftBillItems.length === 0) {
         tbody.innerHTML = ''; emptyMsg.style.display = 'block'; 
-        calculateDraftTotal(); // Reset to 0
+        calculateDraftTotal(); 
         return;
     }
     
@@ -6959,18 +6960,18 @@ function renderDraftBill() {
         </tr>`;
     });
     tbody.innerHTML = html; 
-    calculateDraftTotal(); // Calculate grand total with discount
+    calculateDraftTotal(); 
 }
 
-// 3. OPEN MODAL UPDATE (Fields को 0 पर रिसेट करना)
+// 3. Open Modal (Resetting fields to 0)
 function openCreateBillModal() {
     draftBillItems = [];
     document.getElementById('bill-cust-name').value = '';
     document.getElementById('bill-cust-phone').value = '';
     document.getElementById('bill-qty-input').value = '1';
     document.getElementById('bill-pay-status').value = 'Paid';
-    document.getElementById('bill-discount').value = '0'; // Reset
-    document.getElementById('bill-delivery').value = '0'; // Reset
+    document.getElementById('bill-discount').value = '0';
+    document.getElementById('bill-delivery').value = '0';
     
     const modeSelect = document.getElementById('bill-pay-mode');
     modeSelect.value = 'UPI (Online)';
@@ -6984,8 +6985,7 @@ function openCreateBillModal() {
     setTimeout(() => createBillModal.classList.add('opacity-100'), 10);
 }
 
-// 4. SAVE BILL UPDATE (Database में Discount सेव करना)
-// (saveBillOnly और saveAndSendBill दोनों में ये बदलाव करें)
+// 4. Save Bill Only
 async function saveBillOnly() {
     const name = document.getElementById('bill-cust-name').value.trim();
     const phone = document.getElementById('bill-cust-phone').value.trim();
@@ -7001,7 +7001,6 @@ async function saveBillOnly() {
     saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1.5"></i> Saving...`;
     saveBtn.disabled = true;
     
-    // 🔥 Get totals from function
     let totals = calculateDraftTotal();
     const dateObj = new Date();
     const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -7011,9 +7010,9 @@ async function saveBillOnly() {
         customerName: name, 
         customerPhone: finalPhone, 
         items: [...draftBillItems],
-        subtotal: totals.subtotal,       // Saved to DB
-        discount: totals.discount,       // Saved to DB
-        delivery: totals.delivery,       // Saved to DB
+        subtotal: totals.subtotal,       
+        discount: totals.discount,       
+        delivery: totals.delivery,       
         grandTotal: totals.grandTotal, 
         payStatus: payStatus, 
         payMode: payMode,
@@ -7034,13 +7033,99 @@ async function saveBillOnly() {
         saveBtn.disabled = false;
     }
 }
-// Note: saveAndSendBill mein bhi "newBill" object banate waqt subtotal, discount, aur delivery add kar lena.
 
-// 5. INVOICE GENERATOR UPDATE (बिल पर असली वैल्यू प्रिंट करना)
-function generateAndDownloadInvoice(bill) {
-    // ... [तुम्हारा पुराना Header और Address वाला कोड] ...
+// 5. Save & Send Bill (WhatsApp)
+async function saveAndSendBill() {
+    const name = document.getElementById('bill-cust-name').value.trim();
+    const phone = document.getElementById('bill-cust-phone').value.trim();
+    const payStatus = document.getElementById('bill-pay-status').value;
+    const payMode = document.getElementById('bill-pay-mode').value;
+
+    if(!name) return alert("Please enter Customer Name.");
+    if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
     
-    // 🔥 Totals & Payment (Updated to show real discount)
+    let finalPhone = phone ? phone : "N/A";
+    if(finalPhone === "N/A" || finalPhone.length < 10) {
+        return alert("⚠️ WhatsApp pe bhejne ke liye valid phone number daalna zaroori hai!");
+    }
+
+    const saveBtn = event.currentTarget;
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1.5"></i> Sending...`;
+    saveBtn.disabled = true;
+
+    let totals = calculateDraftTotal();
+    const dateObj = new Date();
+    const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const newBill = {
+        date: dateStr,
+        customerName: name, 
+        customerPhone: finalPhone, 
+        items: [...draftBillItems],
+        subtotal: totals.subtotal,
+        discount: totals.discount,
+        delivery: totals.delivery,
+        grandTotal: totals.grandTotal, 
+        payStatus: payStatus, 
+        payMode: payMode,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        const docRef = await db.collection('bills').add(newBill);
+        newBill.id = docRef.id;
+        adminBills.unshift(newBill);
+        closeCreateBillModal();
+        renderAdminBills();
+        
+        let waMessage = `*NETAJI JHADU STORE - ORDER INVOICE* 🌿\n\n`;
+        waMessage += `Hello *${name}*,\n`;
+        waMessage += `Here is your order summary:\n\n`;
+        waMessage += `*Invoice No:* NJS-${new Date().getFullYear()}-${newBill.id.substring(0,5).toUpperCase()}\n`;
+        waMessage += `*Date:* ${dateStr}\n\n`;
+        
+        waMessage += `*ITEMS:*\n`;
+        newBill.items.forEach((item, index) => {
+            waMessage += `${index+1}. ${item.name} (x${item.qty}) = ₹${item.total || (item.qty * item.price)}\n`;
+        });
+        
+        waMessage += `\n`;
+        if(totals.subtotal !== totals.grandTotal) {
+            waMessage += `Subtotal: ₹${totals.subtotal}\n`;
+            if(totals.discount > 0) waMessage += `Discount: -₹${totals.discount}\n`;
+            if(totals.delivery > 0) waMessage += `Delivery: +₹${totals.delivery}\n`;
+        }
+        waMessage += `*Grand Total: ₹${totals.grandTotal}*\n`;
+        waMessage += `*Payment Status:* ${payStatus} ${payStatus.includes('Paid') ? '✅' : '❌'}\n\n`;
+        
+        waMessage += `*Thank you for choosing Netaji Jhadu Store!*\n`;
+        waMessage += `Quality You Trust, Cleanliness You Deserve.`;
+
+        let encodedMessage = encodeURIComponent(waMessage);
+        let waUrl = `https://wa.me/91${finalPhone}?text=${encodedMessage}`;
+        window.open(waUrl, '_blank');
+
+    } catch (error) {
+        alert("❌ Error saving bill: " + error.message);
+    } finally {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    }
+}
+
+// 6. MAIN INVOICE GENERATOR FUNCTION
+function generateAndDownloadInvoice(bill) {
+    document.getElementById('receipt-invoice-no').innerText = `NJS-${new Date().getFullYear()}-${bill.id.substring(0,5).toUpperCase()}`;
+    document.getElementById('receipt-date').innerText = bill.date;
+    document.getElementById('receipt-name').innerText = bill.customerName;
+    
+    let phoneStr = (bill.customerPhone === 'N/A' || !bill.customerPhone) ? 'No Number Provided' : '+91 ' + bill.customerPhone;
+    document.getElementById('receipt-phone').innerText = phoneStr;
+    
+    let cleanAddress = bill.address ? bill.address.replace(/(https?:\/\/[^\s]+)/g, '').replace(/🔗/g, '').trim() : 'Walk-in Customer / No Address Provided';
+    document.getElementById('receipt-address').innerText = cleanAddress;
+
     let subtotal = bill.subtotal || bill.items.reduce((sum, i) => sum + (i.total || i.price*i.qty), 0);
     let discount = bill.discount || 0;
     let delivery = bill.delivery || 0;
@@ -7049,8 +7134,76 @@ function generateAndDownloadInvoice(bill) {
     document.getElementById('receipt-discount').innerText = `- ₹${discount}`;
     document.getElementById('receipt-delivery').innerText = `₹${delivery}`;
     document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
+    document.getElementById('receipt-paymode').innerText = bill.payMode || 'Cash / Offline';
     
-    // ... [बाकी का पुराना Code] ...
+    let txnContainer = document.getElementById('receipt-txn-container');
+    if (txnContainer) {
+        if (bill.txnId && bill.txnId !== "N/A") {
+            document.getElementById('receipt-txnid').innerText = bill.txnId;
+            txnContainer.classList.remove('hidden'); 
+        } else {
+            txnContainer.classList.add('hidden'); 
+        }
+    }
+
+    let isPaid = bill.payStatus && bill.payStatus.includes('Paid');
+    let badgeHtml = isPaid 
+        ? `<span class="inline-flex items-center justify-center gap-1.5 bg-green-100 text-green-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-green-400 uppercase tracking-widest"><i class="fas fa-check-circle text-xs"></i> PAID</span>`
+        : `<span class="inline-flex items-center justify-center gap-1.5 bg-red-100 text-red-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-red-400 uppercase tracking-widest"><i class="fas fa-times-circle text-xs"></i> UNPAID</span>`;
+    document.getElementById('receipt-paystatus-badge').innerHTML = badgeHtml;
+
+    // SMART QR CODE LOGIC
+    const myUpiId = "8750900635@paytm"; // <-- Apni asli UPI ID yahan daal sakte ho
+    const storeUrl = "https://netajijhadustore.github.io"; 
+
+    let qrImage = document.getElementById('receipt-qr');
+    let qrLabel = document.getElementById('receipt-qr-label');
+    
+    if (qrImage && qrLabel) {
+        if (!isPaid) {
+            let upiLink = `upi://pay?pa=${myUpiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
+            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
+            qrLabel.innerText = "SCAN TO PAY";
+            qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-red-500";
+        } else {
+            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(storeUrl)}`;
+            qrLabel.innerText = "VISIT WEBSITE";
+            qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-green-700";
+        }
+    }
+
+    let itemsHtml = '';
+    bill.items.forEach((item, index) => {
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemsHtml += `
+            <tr class="border-b border-gray-200">
+                <td class="py-3 px-3 text-center text-gray-500 font-bold">${index + 1}</td>
+                <td class="py-3 px-2 font-bold text-gray-900">${item.name}</td>
+                <td class="py-3 px-2 text-center text-gray-700 font-semibold">${item.qty}</td>
+                <td class="py-3 px-2 text-right text-gray-700 font-semibold">₹${item.price}</td>
+                <td class="py-3 px-3 text-right font-black text-gray-900">₹${itemTotal}</td>
+            </tr>
+        `;
+    });
+    document.getElementById('receipt-items').innerHTML = itemsHtml;
+
+    const container = document.getElementById('receipt-container');
+    setTimeout(() => {
+        if(typeof html2canvas !== 'undefined') {
+            html2canvas(container, {
+                scale: 2, 
+                useCORS: true, 
+                backgroundColor: "#ffffff"
+            }).then(canvas => {
+                let link = document.createElement('a');
+                link.download = `NJS_Invoice_${bill.id.substring(0,8)}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        } else {
+            alert("⚠️ html2canvas library is missing!");
+        }
+    }, 250);
 }
 
     </script>
