@@ -7382,10 +7382,8 @@ function renderMaterialBatches() {
         <p class="text-sm font-semibold text-gray-600 mt-1">Quality You Trust, Cleanliness You Deserve</p>
     </div>
     
-    <!-- Yahan py-2 aur tracking-wider add kiya hai -->
-<h2 class="text-center text-xl font-bold bg-gray-200 py-2 mb-4 uppercase tracking-wider flex items-center justify-center">ORDER INVOICE</h2>
+    <h2 class="text-center text-xl font-bold bg-gray-200 py-2 mb-4 uppercase tracking-wider flex items-center justify-center">ORDER INVOICE</h2>
 
-    
     <div class="mb-4">
         <p class="text-sm font-bold border-b border-gray-300 mb-2 pb-1">Customer Details</p>
         <p class="text-sm mb-1"><strong>Name:</strong> <span id="receipt-name"></span></p>
@@ -7408,25 +7406,8 @@ function renderMaterialBatches() {
                 <!-- Items ayenge -->
             </tbody>
         </table>
-    </div>
-        <!-- ... (Upar ka table same rahega) ... -->
-    <div class="mb-4">
-        <p class="text-sm font-bold border-b border-gray-300 mb-2 pb-1">Order Summary</p>
-        <table class="w-full text-sm mb-2 text-left">
-            <thead class="border-b border-gray-300">
-                <tr>
-                    <th class="py-1">Product</th>
-                    <th class="py-1 text-center">Qty</th>
-                    <th class="py-1 text-right">Rate</th>
-                    <th class="py-1 text-right">Amount</th>
-                </tr>
-            </thead>
-            <tbody id="receipt-items">
-                <!-- Items ayenge -->
-            </tbody>
-        </table>
 
-        <!-- 🟢 NAYA: DISCOUNT & DELIVERY BREAKDOWN 🟢 -->
+        <!-- 🟢 DISCOUNT & DELIVERY BREAKDOWN 🟢 -->
         <div id="receipt-breakdown" class="hidden flex-col gap-1 text-sm text-gray-700 mt-2 border-t border-dashed border-gray-300 pt-2 px-1">
             <div class="flex justify-between items-center">
                 <span>Item Total:</span>
@@ -7441,17 +7422,10 @@ function renderMaterialBatches() {
                 <span class="font-semibold">+₹<span id="receipt-delivery">0</span></span>
             </div>
         </div>
-        <!-- 🟢 BREAKDOWN KHATAM 🟢 -->
-
     </div>
     
     <div class="border-t-2 border-black pt-2 mb-4 flex justify-between items-center">
         <span class="font-bold text-lg">Grand Total:</span>
-        <span class="font-extrabold text-2xl text-green-700" id="receipt-total"></span>
-    </div>
-
-    <div class="border-t-2 border-black pt-2 mb-4 flex justify-between items-center">
-        <span class="font-bold text-lg">Total Amount:</span>
         <span class="font-extrabold text-2xl text-green-700" id="receipt-total"></span>
     </div>
     
@@ -7459,15 +7433,18 @@ function renderMaterialBatches() {
         <p class="mb-1"><strong>Payment Mode:</strong> <span id="receipt-paymode"></span></p>
         <p class="mb-1"><strong>Status:</strong> <span id="receipt-paystatus"></span></p>
     </div>
-        <div class="flex flex-col items-center justify-center pt-2 mb-4">
+    
+    <div class="flex flex-col items-center justify-center pt-2 mb-4">
         <img id="receipt-qr-img" src="" crossorigin="anonymous" alt="QR Code" class="w-24 h-24 mb-1.5 p-1 border border-gray-300 rounded bg-white">
         <p id="receipt-qr-text" class="text-[10px] font-bold uppercase tracking-widest text-center"></p>
     </div>
+    
     <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-400">
         <p class="font-semibold text-gray-800 text-sm">“Thank you for choosing Netaji Jhadu Store”</p>
         <p class="text-xs text-gray-500 mt-1">We value your trust!</p>
     </div>
 </div>
+
     <!-- AOS Animation Init -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
