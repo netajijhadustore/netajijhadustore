@@ -6643,7 +6643,6 @@ function downloadExcelCSV() {
 
 
     </script>
-<!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION -->
 <!-- PREMIUM HIDDEN BILL TEMPLATE FOR IMAGE GENERATION -->
 <div id="receipt-container" class="fixed -left-[9999px] top-0 bg-white text-black w-[700px] p-10 font-sans border border-gray-200 shadow-2xl">
     
@@ -6664,16 +6663,15 @@ function downloadExcelCSV() {
         </div>
     </div>
 
-    <!-- STORE INFO BAR -->
-    <div class="flex gap-6 text-xs text-gray-700 mb-8 bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-200 font-medium">
-        <div class="flex items-center gap-2"><i class="fas fa-phone-alt text-green-700"></i> +91 87509 00635</div>
-        <div class="flex items-center gap-2"><i class="fab fa-whatsapp text-green-700 text-sm"></i> +91 87509 00635</div>
+    <!-- STORE INFO BAR (Fixed Duplicate Number) -->
+    <div class="flex gap-8 text-xs text-gray-700 mb-8 bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-200 font-medium">
+        <div class="flex items-center gap-2"><i class="fab fa-whatsapp text-green-700 text-sm"></i> / <i class="fas fa-phone-alt text-green-700"></i> +91 87509 00635</div>
         <div class="flex items-center gap-2"><i class="fas fa-map-marker-alt text-green-700"></i> Nangloi, Delhi 110041</div>
     </div>
 
-    <!-- INVOICE TITLE & DATE -->
+    <!-- INVOICE TITLE & DATE (Fixed: ORDER INVOICE) -->
     <div class="flex justify-between items-end border-b-2 border-green-800 pb-3 mb-6">
-        <h2 class="text-3xl font-black text-gray-800 uppercase tracking-wider">TAX INVOICE</h2>
+        <h2 class="text-3xl font-black text-gray-800 uppercase tracking-wider">ORDER INVOICE</h2>
         <div class="text-right">
             <p class="text-sm text-gray-500 font-bold mb-1">Invoice No: <span id="receipt-invoice-no" class="text-gray-900 font-black"></span></p>
             <p class="text-sm text-gray-500 font-bold">Date: <span id="receipt-date" class="text-gray-900 font-black"></span></p>
@@ -6715,8 +6713,9 @@ function downloadExcelCSV() {
                     <span class="text-sm font-bold text-gray-700">Status:</span>
                     <span id="receipt-paystatus-badge"></span>
                 </div>
-                <p class="text-sm text-gray-600 mb-1.5"><span class="font-bold text-gray-700">Mode:</span> <span id="receipt-paymode"></span></p>
-                <p class="text-sm text-gray-600 truncate"><span class="font-bold text-gray-700">Txn ID:</span> <span id="receipt-txnid" class="font-mono bg-gray-200 px-1 rounded">N/A</span></p>
+                <p class="text-sm text-gray-600"><span class="font-bold text-gray-700">Mode:</span> <span id="receipt-paymode"></span></p>
+                <!-- TXN ID ROW: By default hidden -->
+                <p id="receipt-txn-container" class="text-sm text-gray-600 truncate mt-1.5 hidden"><span class="font-bold text-gray-700">Txn ID:</span> <span id="receipt-txnid" class="font-mono bg-gray-200 px-1 rounded"></span></p>
             </div>
         </div>
 
@@ -6749,6 +6748,7 @@ function downloadExcelCSV() {
     </div>
 </div>
 
+
     <!-- AOS Animation Init -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
@@ -6779,7 +6779,6 @@ async function downloadUserInvoice(orderId) {
         alert("❌ Error generating invoice: " + error.message);
     }
 }
-
 // --- MAIN INVOICE GENERATOR FUNCTION ---
 function generateAndDownloadInvoice(bill) {
     // 1. Basic Details
@@ -6798,7 +6797,15 @@ function generateAndDownloadInvoice(bill) {
     document.getElementById('receipt-subtotal').innerText = `₹${bill.grandTotal}`;
     document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
     document.getElementById('receipt-paymode').innerText = bill.payMode || 'Cash / Offline';
-    document.getElementById('receipt-txnid').innerText = bill.txnId && bill.txnId !== "N/A" ? bill.txnId : "Cash-Received";
+    
+    // 🔥 FIX: Txn ID Logic - Sirf tabhi dikhega jab user online pay karega
+    let txnContainer = document.getElementById('receipt-txn-container');
+    if (bill.txnId && bill.txnId !== "N/A") {
+        document.getElementById('receipt-txnid').innerText = bill.txnId;
+        txnContainer.classList.remove('hidden'); // Show if valid Txn ID
+    } else {
+        txnContainer.classList.add('hidden'); // Hide completely for manual/cash bills
+    }
 
     // 3. Payment Status Badge Logic
     let isPaid = bill.payStatus && bill.payStatus.includes('Paid');
