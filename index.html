@@ -1248,7 +1248,8 @@
                         <input type="text" id="new-cust-name" placeholder="Customer Name" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none">
                     </div>
                     <div>
-                        <label class="text-xs text-gray-400 mb-1 block">WhatsApp No. *</label>
+                      <label class="text-xs text-gray-400 mb-1 block">WhatsApp No. (Optional)</label>
+
                         <input type="number" id="new-cust-phone" placeholder="91xxxxxxxxx" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-4 py-2.5 text-white text-sm focus:border-brand-green outline-none">
                     </div>
                     <button onclick="saveManualCustomer()" class="w-full bg-brand-green hover:bg-brand-greenhover text-black font-bold py-3.5 rounded-lg mt-2 transition text-sm flex justify-center items-center gap-2 shadow-lg">
@@ -1702,63 +1703,119 @@ async function deleteBill(id) {
 }
 
 
-        function renderAdminProducts() {
-            const list = document.getElementById('admin-product-list');
-            const totalCount = document.getElementById('admin-total-products');
-            if(!list) return;
-            totalCount.innerText = storeProducts.length;
+        // 1. PRODUCTS लिस्ट में Edit बटन जोड़ना
+function renderAdminProducts() {
+    const list = document.getElementById('admin-product-list');
+    const totalCount = document.getElementById('admin-total-products');
+    if(!list) return;
+    totalCount.innerText = storeProducts.length;
 
-            let html = '';
-            storeProducts.forEach(p => {
-                let adminImg = p.image ? `<img src="${p.image}" class="w-full h-full object-contain p-1">` : `<i class="fas fa-broom text-gray-500"></i>`;
-                html += `
-                <div class="bg-brand-dark border border-gray-700 rounded-xl p-4 flex justify-between items-center group">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-gray-800 rounded flex-shrink-0 flex justify-center items-center overflow-hidden">${adminImg}</div>
-                        <div>
-                            <h4 class="text-white font-semibold text-sm truncate max-w-[150px] sm:max-w-[300px]">${p.name}</h4>
-                            <p class="text-brand-green font-bold text-xs">₹${p.price} ${p.mrp ? `<span class="text-gray-500 line-through font-normal">₹${p.mrp}</span>` : ''}</p>
-                        </div>
-                    </div>
-                    <button onclick="deleteProduct('${p.id}')" class="text-gray-400 hover:text-red-500 transition bg-gray-800 w-8 h-8 rounded flex items-center justify-center"><i class="fas fa-trash-alt text-xs"></i></button>
-                </div>`;
-            });
-            list.innerHTML = html || `<p class="text-gray-500 text-sm italic">No products found.</p>`;
-        }
+    let html = '';
+    storeProducts.forEach(p => {
+        let adminImg = p.image ? `<img src="${p.image}" class="w-full h-full object-contain p-1">` : `<i class="fas fa-broom text-gray-500"></i>`;
+        html += `
+        <div class="bg-brand-dark border border-gray-700 rounded-xl p-4 flex justify-between items-center group">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-gray-800 rounded flex-shrink-0 flex justify-center items-center overflow-hidden">${adminImg}</div>
+                <div>
+                    <h4 class="text-white font-semibold text-sm truncate max-w-[150px] sm:max-w-[300px]">${p.name}</h4>
+                    <p class="text-brand-green font-bold text-xs">₹${p.price} ${p.mrp ? `<span class="text-gray-500 line-through font-normal">₹${p.mrp}</span>` : ''}</p>
+                </div>
+            </div>
+            
+            <!-- 🔥 EDIT और DELETE बटन्स -->
+            <div class="flex gap-2">
+                <button onclick="openEditProductModal('${p.id}')" class="text-gray-400 hover:text-blue-500 transition bg-gray-800 w-8 h-8 rounded flex items-center justify-center shadow-sm" title="Edit Product"><i class="fas fa-pen text-xs"></i></button>
+                <button onclick="deleteProduct('${p.id}')" class="text-gray-400 hover:text-red-500 transition bg-gray-800 w-8 h-8 rounded flex items-center justify-center shadow-sm" title="Delete Product"><i class="fas fa-trash-alt text-xs"></i></button>
+            </div>
+        </div>`;
+    });
+    list.innerHTML = html || `<p class="text-gray-500 text-sm italic">No products found.</p>`;
+}
+
+// 2. नया फंक्शन: Edit Modal खोलने के लिए
+function openEditProductModal(id) {
+    const prod = storeProducts.find(p => p.id === id);
+    if(!prod) return;
+
+    // फॉर्म में पुरानी डिटेल्स भरें
+    document.getElementById('new-prod-name').value = prod.name;
+    document.getElementById('new-prod-price').value = prod.price;
+    document.getElementById('new-prod-mrp').value = prod.mrp || '';
+    document.getElementById('new-prod-cat').value = prod.category || 'Soft Grass';
+    document.getElementById('new-prod-tag').value = prod.tag || '';
+    document.getElementById('new-prod-desc').value = prod.desc || '';
+    
+    const form = document.getElementById('add-product-form');
+    form.dataset.editId = id; // ID सेव करें ताकि पता रहे कि अपडेट करना है
+    
+    form.querySelector('button[type="submit"]').innerText = "Update Product";
+    document.querySelector('#add-product-modal h3').innerText = "Edit Product";
+
+    addProductModal.classList.remove('hidden'); 
+    setTimeout(() => addProductModal.classList.add('opacity-100'), 10);
+}
+
+// 3. Add Modal को रिसेट करने के लिए (ताकि Add New पर पुराना डाटा ना दिखे)
+function openAddProductModal() { 
+    const form = document.getElementById('add-product-form');
+    form.reset();
+    delete form.dataset.editId; // Edit ID हटा दें
+    form.querySelector('button[type="submit"]').innerText = "Save Product";
+    document.querySelector('#add-product-modal h3').innerText = "Add New Product";
+    
+    addProductModal.classList.remove('hidden'); 
+    setTimeout(() => addProductModal.classList.add('opacity-100'), 10); 
+}
+
+// 4. Save/Update लॉजिक को अपडेट करना
 async function handleAddNewProduct(e) {
     e.preventDefault();
     const fileInput = document.getElementById('new-prod-image');
+    const form = document.getElementById('add-product-form');
+    const editId = form.dataset.editId; // चेक करें कि Edit हो रहा है या Add
     
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.innerText;
-    submitBtn.innerText = "Saving...";
+    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
     submitBtn.disabled = true;
 
-    const saveNewProductData = async (base64Img) => {
+    const saveProductData = async (base64Img) => {
         try {
-            const newProduct = {
+            const productData = {
                 name: document.getElementById('new-prod-name').value,
                 price: parseInt(document.getElementById('new-prod-price').value), 
                 mrp: parseInt(document.getElementById('new-prod-mrp').value) || 0,
                 category: document.getElementById('new-prod-cat').value, 
                 tag: document.getElementById('new-prod-tag').value,
-                desc: document.getElementById('new-prod-desc').value, 
-                image: base64Img,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                desc: document.getElementById('new-prod-desc').value
             };
+            
+            // अगर नई फोटो डाली है तो अपडेट करें, वरना पुरानी ही रहने दें
+            if(base64Img) productData.image = base64Img;
 
-            const docRef = await db.collection('products').add(newProduct);
-            newProduct.id = docRef.id;
-            storeProducts.push(newProduct);
+            if (editId) {
+                // 🔄 UPDATE PRODUCT
+                await db.collection('products').doc(editId).update(productData);
+                let index = storeProducts.findIndex(p => p.id === editId);
+                if(index !== -1) {
+                    storeProducts[index] = { ...storeProducts[index], ...productData };
+                }
+                alert("✅ Product Updated Successfully!");
+            } else {
+                // 🆕 ADD NEW PRODUCT
+                productData.timestamp = firebase.firestore.FieldValue.serverTimestamp();
+                const docRef = await db.collection('products').add(productData);
+                productData.id = docRef.id;
+                storeProducts.push(productData);
+                alert("✅ Product Added Successfully!");
+            }
             
             renderAdminProducts(); 
             renderShopProducts();
-            document.getElementById('add-product-form').reset();
             closeAddProductModal(); 
-            alert("✅ Product Added Successfully!");
             
         } catch (error) {
-            console.error("Firebase Error:", error);
             alert("❌ Firebase Error: " + error.message);
         } finally {
             submitBtn.innerText = originalBtnText;
@@ -1766,51 +1823,27 @@ async function handleAddNewProduct(e) {
         }
     };
 
-    // 🌟 बिल्कुल SSCWarRoom वाला सिंपल FileReader Logic 🌟
+    // Photo logic (Same as before)
     if (fileInput.files && fileInput.files.length > 0) {
         const file = fileInput.files[0];
         const reader = new FileReader();
-        
         reader.onload = function(e) {
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 600;
-                const MAX_HEIGHT = 600;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                } else {
-                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // Compress image easily (70% quality jaisa aapne SSC me kiya hai)
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                saveNewProductData(compressedBase64);
+                let width = img.width, height = img.height;
+                if (width > 600) { height *= 600 / width; width = 600; }
+                canvas.width = width; canvas.height = height;
+                canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                saveProductData(canvas.toDataURL('image/jpeg', 0.7));
             };
             img.src = e.target.result;
         };
-
-        reader.onerror = function() {
-            alert("❌ Photo upload fail ho gayi. Kripya doosri photo chunein.");
-            submitBtn.innerText = originalBtnText;
-            submitBtn.disabled = false;
-        };
-
         reader.readAsDataURL(file);
     } else { 
-        // Agar photo select nahi ki hai toh bina photo ke save karein
-        saveNewProductData(""); 
+        saveProductData(""); 
     }
 }
-
 
 async function deleteProduct(id) {
     if(confirm('Are you sure you want to delete this product?')) {
@@ -5848,16 +5881,14 @@ async function processCustomerData() {
 // -----------------------------------------
 // RENDER CUSTOMERS LIST (With Delete Button)
 // -----------------------------------------
+// 1. CUSTOMER लिस्ट में Edit बटन जोड़ना
 function renderAdminCustomers() {
     const list = document.getElementById('admin-customers-list');
     const searchInput = document.getElementById('admin-search-customer');
     if(!list) return;
 
     let searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : "";
-    
-    let filteredCustomers = allCustomersArray.filter(c => {
-        return c.name.toLowerCase().includes(searchTerm) || c.phone.includes(searchTerm);
-    });
+    let filteredCustomers = allCustomersArray.filter(c => c.name.toLowerCase().includes(searchTerm) || c.phone.includes(searchTerm));
 
     if (filteredCustomers.length === 0) {
         list.innerHTML = `<p class="text-gray-500 text-sm italic py-4 text-center">No customers found.</p>`;
@@ -5878,18 +5909,118 @@ function renderAdminCustomers() {
                     <p class="text-gray-400 text-[11px] mt-0.5"><i class="fab fa-whatsapp text-gray-500 mr-1"></i> ${cust.phone}</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4 shrink-0">
-                <div class="text-right cursor-pointer" onclick="viewCustomerInsights('${cust.idKey}')">
+            
+            <!-- 🔥 EDIT और DELETE बटन्स -->
+            <div class="flex items-center gap-2 shrink-0">
+                <div class="text-right cursor-pointer mr-2" onclick="viewCustomerInsights('${cust.idKey}')">
                     <p class="text-brand-green font-bold text-sm">₹${cust.totalSpent}</p>
                     <p class="text-gray-500 text-[10px] mt-0.5">${ordersCount} Orders <i class="fas fa-chevron-right text-[9px] ml-1"></i></p>
                 </div>
-                <button onclick="deleteCustomer('${cust.idKey}')" class="text-gray-500 hover:text-red-500 transition bg-gray-800 hover:bg-red-500/10 w-8 h-8 rounded flex items-center justify-center border border-transparent hover:border-red-500/30" title="Delete Customer">
-                    <i class="fas fa-trash-alt text-xs"></i>
-                </button>
+                <button onclick="openEditCustomerModal('${cust.idKey}')" class="text-gray-400 hover:text-blue-500 transition bg-gray-800 hover:bg-blue-500/10 w-8 h-8 rounded flex items-center justify-center border border-transparent hover:border-blue-500/30" title="Edit Customer"><i class="fas fa-pen text-xs"></i></button>
+                <button onclick="deleteCustomer('${cust.idKey}')" class="text-gray-400 hover:text-red-500 transition bg-gray-800 hover:bg-red-500/10 w-8 h-8 rounded flex items-center justify-center border border-transparent hover:border-red-500/30" title="Delete Customer"><i class="fas fa-trash-alt text-xs"></i></button>
             </div>
         </div>`;
     });
     list.innerHTML = html;
+}
+
+// 2. नया फंक्शन: Edit Customer Modal खोलने के लिए
+function openEditCustomerModal(idKey) {
+    const cust = allCustomersMap[idKey];
+    if(!cust) return;
+
+    document.getElementById('new-cust-name').value = cust.name;
+    document.getElementById('new-cust-phone').value = (cust.phone === 'N/A' || cust.phone === 'Unknown') ? '' : cust.phone;
+    
+    const modal = document.getElementById('add-customer-modal');
+    modal.dataset.editIdKey = idKey; // ID सेव करें
+    
+    modal.querySelector('button[onclick="saveManualCustomer()"]').innerText = "Update Customer";
+    modal.querySelector('h3').innerHTML = `<i class="fas fa-user-edit text-brand-green mr-2"></i> Edit Customer`;
+
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+// 3. Add Modal को रिसेट करने के लिए
+function openAddCustomerModal() {
+    document.getElementById('new-cust-name').value = '';
+    document.getElementById('new-cust-phone').value = '';
+    
+    const modal = document.getElementById('add-customer-modal');
+    delete modal.dataset.editIdKey;
+    modal.querySelector('button[onclick="saveManualCustomer()"]').innerText = "Save Customer";
+    modal.querySelector('h3').innerHTML = `<i class="fas fa-user-plus text-brand-green mr-2"></i> Add Customer`;
+
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('opacity-100'), 10);
+}
+
+// 4. Save/Update Customer लॉजिक (Batch Update for all old bills)
+async function saveManualCustomer() {
+    const name = document.getElementById('new-cust-name').value.trim();
+    const phone = document.getElementById('new-cust-phone').value.trim();
+    const modal = document.getElementById('add-customer-modal');
+    const editIdKey = modal.dataset.editIdKey; // Edit Check
+
+    if(!name) return alert("Please enter Name!");
+    
+    const submitBtn = modal.querySelector('button[onclick="saveManualCustomer()"]');
+    const originalText = submitBtn.innerText;
+    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
+    submitBtn.disabled = true;
+
+    try {
+        if(editIdKey) {
+            // 🔄 UPDATE CUSTOMER (पुराने बिल्स में भी नाम/नंबर बदलेगा)
+            const cust = allCustomersMap[editIdKey];
+            const batch = db.batch();
+            
+            // 1. Update in all Bills
+            if(cust.orders && cust.orders.length > 0) {
+                cust.orders.forEach(order => {
+                    const billRef = db.collection('bills').doc(order.id);
+                    batch.update(billRef, { customerName: name, customerPhone: phone || "N/A" });
+                });
+            }
+            
+            // 2. Update in Customers Collection (अगर मैनुअल ऐड किया था)
+            let searchPhone = cust.phone === 'N/A' ? '' : cust.phone;
+            const snap = await db.collection('customers').where('phone', 'in', [searchPhone, cust.phone, "N/A"]).where('name', '==', cust.name).get();
+            if(!snap.empty) {
+                snap.forEach(doc => batch.update(doc.ref, { name: name, phone: phone }));
+            }
+            
+            await batch.commit();
+            
+            // लोकल एरे भी अपडेट कर दो ताकि रिफ्रेश ना करना पड़े
+            adminBills.forEach(b => {
+                if(cust.orders.some(o => o.id === b.id)) {
+                    b.customerName = name;
+                    b.customerPhone = phone || "N/A";
+                }
+            });
+            alert("✅ Customer Updated Successfully!");
+
+        } else {
+            // 🆕 ADD NEW CUSTOMER
+            if(!phone) { alert("Phone is required for new manual customer."); submitBtn.innerHTML = originalText; submitBtn.disabled = false; return; }
+            if(allCustomersMap[phone]) { alert("This customer already exists!"); submitBtn.innerHTML = originalText; submitBtn.disabled = false; return; }
+            
+            await db.collection('customers').add({ name: name, phone: phone, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            alert("✅ Customer Added Successfully!");
+        }
+        
+        closeAddCustomerModal();
+        renderAdminBills(); // बिल्स रिफ्रेश करें
+        processCustomerData(); // कस्टमर लिस्ट रिफ्रेश करें
+        
+    } catch(e) {
+        alert("❌ Error: " + e.message);
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
 }
 
 // -----------------------------------------
@@ -6063,34 +6194,81 @@ function closeAddCustomerModal() {
     setTimeout(() => modal.classList.add('hidden'), 300);
 }
 
+// 4. Save/Update Customer लॉजिक (Batch Update for all old bills)
 async function saveManualCustomer() {
     const name = document.getElementById('new-cust-name').value.trim();
     const phone = document.getElementById('new-cust-phone').value.trim();
+    const modal = document.getElementById('add-customer-modal');
+    const editIdKey = modal.dataset.editIdKey; // Edit Check
 
-    if(!name || !phone) return alert("Please enter Name and Phone!");
+    if(!name) return alert("Please enter Name!");
     
-    // Agar bill me pehle se hai toh warn kar do
-    if(allCustomersMap[phone]) {
-        alert("This customer already exists in your records!");
-        return;
-    }
+    // अगर नंबर खाली है, तो N/A डाल दो
+    let finalPhone = phone ? phone : "N/A";
+    
+    const submitBtn = modal.querySelector('button[onclick="saveManualCustomer()"]');
+    const originalText = submitBtn.innerText;
+    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Saving...`;
+    submitBtn.disabled = true;
 
     try {
-        const newCust = {
-            name: name,
-            phone: phone,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        await db.collection('customers').add(newCust);
-        alert("✅ Customer Added Successfully!");
+        if(editIdKey) {
+            // 🔄 UPDATE CUSTOMER (पुराने बिल्स में भी नाम/नंबर बदलेगा)
+            const cust = allCustomersMap[editIdKey];
+            const batch = db.batch();
+            
+            // 1. Update in all Bills
+            if(cust.orders && cust.orders.length > 0) {
+                cust.orders.forEach(order => {
+                    const billRef = db.collection('bills').doc(order.id);
+                    batch.update(billRef, { customerName: name, customerPhone: finalPhone });
+                });
+            }
+            
+            // 2. Update in Customers Collection (अगर मैनुअल ऐड किया था)
+            let searchPhone = cust.phone === 'N/A' ? '' : cust.phone;
+            const snap = await db.collection('customers').where('phone', 'in', [searchPhone, cust.phone, "N/A"]).where('name', '==', cust.name).get();
+            if(!snap.empty) {
+                snap.forEach(doc => batch.update(doc.ref, { name: name, phone: finalPhone }));
+            }
+            
+            await batch.commit();
+            
+            // लोकल एरे भी अपडेट कर दो ताकि रिफ्रेश ना करना पड़े
+            adminBills.forEach(b => {
+                if(cust.orders.some(o => o.id === b.id)) {
+                    b.customerName = name;
+                    b.customerPhone = finalPhone;
+                }
+            });
+            alert("✅ Customer Updated Successfully!");
+
+        } else {
+            // 🆕 ADD NEW CUSTOMER
+            // अगर नंबर डाला है और वो पहले से मौजूद है, तो रोक दें (N/A को नहीं रोकेगा)
+            if(finalPhone !== "N/A" && allCustomersMap[finalPhone]) { 
+                alert("This customer already exists!"); 
+                submitBtn.innerHTML = originalText; 
+                submitBtn.disabled = false; 
+                return; 
+            }
+            
+            await db.collection('customers').add({ name: name, phone: finalPhone, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            alert("✅ Customer Added Successfully!");
+        }
         
         closeAddCustomerModal();
-        processCustomerData(); // Reload customers
+        renderAdminBills(); // बिल्स रिफ्रेश करें
+        processCustomerData(); // कस्टमर लिस्ट रिफ्रेश करें
         
     } catch(e) {
         alert("❌ Error: " + e.message);
+    } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
 }
+
 // -----------------------------------------
 // WHATSAPP PAYMENT REMINDER (Direct UPI Number & Shop Visit)
 // -----------------------------------------
