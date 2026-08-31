@@ -5711,113 +5711,147 @@ async function downloadUserInvoice(orderId) {
     }
 }
 
-// --- BILL IMAGE GENERATOR (PREMIUM VINTAGE UI) ---
+// --- BILL IMAGE GENERATOR (PREMIUM VINTAGE UI - CRASH FIXED) ---
 function downloadBillImage(id) {
+    let clickedBtn = window.event ? window.event.currentTarget : null;
+    let origBtnHtml = "";
+    if (clickedBtn) {
+        origBtnHtml = clickedBtn.innerHTML;
+        clickedBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+        clickedBtn.disabled = true;
+    }
+
     if (window.event) window.event.stopPropagation(); 
 
     const bill = adminBills.find(b => b.id === id);
-    if(!bill) return;
-
-    // Setting Header Data
-    document.getElementById('receipt-id').innerText = `#NJS-${bill.id.substring(0,6).toUpperCase()}`;
-    document.getElementById('receipt-name').innerText = bill.customerName;
-    document.getElementById('receipt-phone').innerText = bill.customerPhone !== "N/A" ? bill.customerPhone : "Not Provided";
-    document.getElementById('receipt-date').innerText = bill.date;
-    
-    // Default address fallback
-    let printAddress = bill.address ? bill.address.replace(/(https?:\/\/[^\s]+)/g, '').replace(/🔗/g, "").trim() : "Delhi, India";
-    document.getElementById('receipt-address').innerHTML = printAddress;
-
-    let itemsHtml = '';
-    let itemTotalAmountAll = 0;
-    
-    bill.items.forEach((item, index) => {
-        let itemTotal = item.total ? item.total : (item.price * item.qty);
-        itemTotalAmountAll += itemTotal;
-        let srNo = String(index + 1).padStart(2, '0');
-        
-        itemsHtml += `
-            <tr class="border-b border-[#e6dfd3] last:border-0 bg-[#fdfbf7]">
-                <td class="py-3 px-4 text-center font-bold text-[#8b7355] border-r border-[#e6dfd3]">${srNo}</td>
-                <td class="py-3 px-4 border-r border-[#e6dfd3]">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-8 bg-[#f5ebd9] rounded shadow-sm border border-[#e6dfd3] flex items-center justify-center text-[#c29b62]">
-                            <i class="fas fa-broom"></i>
-                        </div>
-                        <div>
-                            <p class="font-bold text-[#4A3B32]">${item.name}</p>
-                            <p class="text-[10px] text-[#8b7355] mt-0.5">Premium Quality Product</p>
-                        </div>
-                    </div>
-                </td>
-                <td class="py-3 px-4 text-center font-bold text-[#4A3B32] border-r border-[#e6dfd3]">${item.qty}</td>
-                <td class="py-3 px-4 text-right font-semibold text-[#4A3B32] border-r border-[#e6dfd3]">${item.price.toFixed(2)}</td>
-                <td class="py-3 px-4 text-right font-bold text-[#4A3B32]">${itemTotal.toFixed(2)}</td>
-            </tr>
-        `;
-    });
-    document.getElementById('receipt-items').innerHTML = itemsHtml;
-
-    // 🟢 Discount & Delivery Breakdown 🟢
-    let discountAmt = bill.discount || 0;
-    let deliveryAmt = bill.delivery || 0;
-    
-    let breakdownDiv = document.getElementById('receipt-breakdown');
-    let discountRow = document.getElementById('receipt-discount-row');
-    let deliveryRow = document.getElementById('receipt-delivery-row');
-
-    if (discountAmt > 0 || deliveryAmt > 0) {
-        document.getElementById('receipt-subtotal').innerText = `${itemTotalAmountAll.toFixed(2)}`;
-        
-        if (discountAmt > 0) {
-            document.getElementById('receipt-discount').innerText = discountAmt.toFixed(2);
-            discountRow.classList.remove('hidden'); discountRow.classList.add('flex');
-        } else {
-            discountRow.classList.add('hidden'); discountRow.classList.remove('flex');
-        }
-
-        if (deliveryAmt > 0) {
-            document.getElementById('receipt-delivery').innerText = deliveryAmt.toFixed(2);
-            deliveryRow.classList.remove('hidden'); deliveryRow.classList.add('flex');
-        } else {
-            deliveryRow.classList.add('hidden'); deliveryRow.classList.remove('flex');
-        }
-
-        breakdownDiv.classList.remove('hidden'); breakdownDiv.classList.add('flex');
-    } else {
-        breakdownDiv.classList.add('hidden'); breakdownDiv.classList.remove('flex');
+    if(!bill) {
+        alert("Order not found!");
+        if(clickedBtn) { clickedBtn.innerHTML = origBtnHtml; clickedBtn.disabled = false; }
+        return;
     }
 
-    document.getElementById('receipt-total').innerText = `₹ ${bill.grandTotal.toFixed(2)}`;
+    try {
+        // Setting Header Data Safely
+        document.getElementById('receipt-id').innerText = `#NJS-${bill.id.substring(0,6).toUpperCase()}`;
+        document.getElementById('receipt-name').innerText = bill.customerName || "Customer";
+        document.getElementById('receipt-phone').innerText = (bill.customerPhone && bill.customerPhone !== "N/A") ? bill.customerPhone : "Not Provided";
+        document.getElementById('receipt-date').innerText = bill.date || "-";
+        
+        let printAddress = bill.address ? bill.address.replace(/(https?:\/\/[^\s]+)/g, '').replace(/🔗/g, "").trim() : "Delhi, India";
+        document.getElementById('receipt-address').innerHTML = printAddress;
 
-    // 🚀 DYNAMIC QR CODE LOGIC 🚀
-    let isPaid = bill.payStatus.includes('Paid');
-    let qrImg = document.getElementById('receipt-qr-img');
+        let itemsHtml = '';
+        let itemTotalAmountAll = 0;
+        
+        if (bill.items && Array.isArray(bill.items)) {
+            bill.items.forEach((item, index) => {
+                let itemTotal = item.total ? item.total : (item.price * item.qty);
+                itemTotalAmountAll += itemTotal;
+                let srNo = String(index + 1).padStart(2, '0');
+                
+                itemsHtml += `
+                    <tr class="border-b border-[#e6dfd3] last:border-0 bg-[#fdfbf7]">
+                        <td class="py-3 px-4 text-center font-bold text-[#8b7355] border-r border-[#e6dfd3]">${srNo}</td>
+                        <td class="py-3 px-4 border-r border-[#e6dfd3]">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-8 bg-[#f5ebd9] rounded shadow-sm border border-[#e6dfd3] flex items-center justify-center text-[#c29b62]">
+                                    <i class="fas fa-broom"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-[#4A3B32]">${item.name}</p>
+                                    <p class="text-[10px] text-[#8b7355] mt-0.5">Premium Quality</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-center font-bold text-[#4A3B32] border-r border-[#e6dfd3]">${item.qty}</td>
+                        <td class="py-3 px-4 text-right font-semibold text-[#4A3B32] border-r border-[#e6dfd3]">${parseFloat(item.price).toFixed(2)}</td>
+                        <td class="py-3 px-4 text-right font-bold text-[#4A3B32]">${parseFloat(itemTotal).toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+        }
+        document.getElementById('receipt-items').innerHTML = itemsHtml;
 
-    if (isPaid) {
-        let websiteUrl = "https://netajijhadustore.github.io/netajijhadustore/"; 
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(websiteUrl)}`;
-    } else {
-        let upiId = "8750900635@kotakbank"; 
-        let upiLink = `upi://pay?pa=${upiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
+        // Discount & Delivery Breakdown Safely
+        let discountAmt = parseFloat(bill.discount) || 0;
+        let deliveryAmt = parseFloat(bill.delivery) || 0;
+        
+        let breakdownDiv = document.getElementById('receipt-breakdown');
+        let discountRow = document.getElementById('receipt-discount-row');
+        let deliveryRow = document.getElementById('receipt-delivery-row');
+
+        if (discountAmt > 0 || deliveryAmt > 0) {
+            document.getElementById('receipt-subtotal').innerText = `₹${itemTotalAmountAll.toFixed(2)}`;
+            
+            if (discountAmt > 0) {
+                document.getElementById('receipt-discount').innerText = discountAmt.toFixed(2);
+                if(discountRow) { discountRow.classList.remove('hidden'); discountRow.classList.add('flex'); }
+            } else {
+                if(discountRow) { discountRow.classList.add('hidden'); discountRow.classList.remove('flex'); }
+            }
+
+            if (deliveryAmt > 0) {
+                document.getElementById('receipt-delivery').innerText = deliveryAmt.toFixed(2);
+                if(deliveryRow) { deliveryRow.classList.remove('hidden'); deliveryRow.classList.add('flex'); }
+            } else {
+                if(deliveryRow) { deliveryRow.classList.add('hidden'); deliveryRow.classList.remove('flex'); }
+            }
+
+            if(breakdownDiv) { breakdownDiv.classList.remove('hidden'); breakdownDiv.classList.add('flex'); }
+        } else {
+            if(breakdownDiv) { breakdownDiv.classList.add('hidden'); breakdownDiv.classList.remove('flex'); }
+        }
+
+        document.getElementById('receipt-total').innerText = `₹ ${(parseFloat(bill.grandTotal)||0).toFixed(2)}`;
+
+        // Crash-proof PayStatus check
+        let isPaid = (bill.payStatus && typeof bill.payStatus === 'string') ? bill.payStatus.includes('Paid') : false;
+        let qrImg = document.getElementById('receipt-qr-img');
+
+        if (qrImg) {
+            if (isPaid) {
+                let websiteUrl = "https://netajijhadustore.github.io/netajijhadustore/"; 
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(websiteUrl)}`;
+            } else {
+                let upiId = "8750900635@kotakbank"; 
+                let upiLink = `upi://pay?pa=${upiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
+                qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
+            }
+        }
+
+        const container = document.getElementById('receipt-container');
+        
+        // 800ms delay to let QR load completely
+        setTimeout(() => {
+            if (typeof html2canvas === 'undefined') {
+                alert("Library not loaded! Please refresh page.");
+                if(clickedBtn) { clickedBtn.innerHTML = origBtnHtml; clickedBtn.disabled = false; }
+                return;
+            }
+
+            html2canvas(container, {
+                scale: 2, // Mobile friendly scale (stops browser crashing)
+                backgroundColor: "#Fdfbf7",
+                useCORS: true,
+                logging: false
+            }).then(canvas => {
+                let link = document.createElement('a');
+                link.download = `Netaji_Invoice_${bill.customerName.replace(/\s+/g, '_')}.png`;
+                link.href = canvas.toDataURL("image/png", 1.0);
+                link.click();
+                if(clickedBtn) { clickedBtn.innerHTML = origBtnHtml; clickedBtn.disabled = false; }
+            }).catch(err => {
+                console.error("Canvas error:", err);
+                alert("Failed to generate image.");
+                if(clickedBtn) { clickedBtn.innerHTML = origBtnHtml; clickedBtn.disabled = false; }
+            });
+        }, 800);
+
+    } catch (e) {
+        console.error(e);
+        alert("Data error: " + e.message);
+        if(clickedBtn) { clickedBtn.innerHTML = origBtnHtml; clickedBtn.disabled = false; }
     }
-
-    const container = document.getElementById('receipt-container');
-    
-    // Scale badhaya hai for extreme clarity (A4 printable)
-    setTimeout(() => {
-        html2canvas(container, {
-            scale: 3, 
-            backgroundColor: "#Fdfbf7",
-            useCORS: true 
-        }).then(canvas => {
-            let link = document.createElement('a');
-            link.download = `Netaji_Invoice_${bill.customerName}.png`;
-            link.href = canvas.toDataURL("image/png", 1.0);
-            link.click();
-        });
-    }, 600);
 }
 
 // ==========================================
@@ -7516,12 +7550,7 @@ function renderMaterialBatches() {
 <!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION (VINTAGE PREMIUM UI) -->
 <div id="receipt-container" class="fixed -left-[9999px] top-0 bg-[#Fdfbf7] text-[#3e2723] w-[800px] font-sans relative overflow-hidden shadow-2xl">
     
-    <!-- Load custom fonts inside the container -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Great+Vibes&display=swap');
-        .font-serif-logo { font-family: 'Playfair Display', serif; }
-        .font-cursive { font-family: 'Great Vibes', cursive; }
-    </style>
+
 
     <!-- Faint Background Overlay (Optional) -->
     <div class="absolute bottom-16 left-0 w-[400px] h-[300px] opacity-10 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')] pointer-events-none z-0"></div>
