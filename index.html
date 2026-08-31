@@ -6644,55 +6644,111 @@ function downloadExcelCSV() {
 
     </script>
 <!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION -->
-<div id="receipt-container" class="fixed -left-[9999px] top-0 bg-white text-black w-[450px] p-8 font-sans border-2 border-gray-200">
-    <div class="text-center border-b-2 border-black pb-4 mb-4">
-        <h1 class="text-3xl font-extrabold text-green-700 tracking-wider">NETAJI JHADU STORE</h1>
-        <p class="text-sm font-semibold text-gray-600 mt-1">Quality You Trust, Cleanliness You Deserve</p>
-    </div>
+<!-- PREMIUM HIDDEN BILL TEMPLATE FOR IMAGE GENERATION -->
+<div id="receipt-container" class="fixed -left-[9999px] top-0 bg-white text-black w-[700px] p-10 font-sans border border-gray-200 shadow-2xl">
     
-    <!-- Yahan py-2 aur tracking-wider add kiya hai -->
-<h2 class="text-center text-xl font-bold bg-gray-200 py-2 mb-4 uppercase tracking-wider flex items-center justify-center">ORDER INVOICE</h2>
+    <!-- HEADER SECTION -->
+    <div class="flex justify-between items-start mb-6">
+        <div class="flex items-center gap-4">
+            <div class="w-16 h-16 bg-green-700 rounded-lg flex items-center justify-center text-white text-4xl shadow-md">
+                <i class="fas fa-leaf"></i>
+            </div>
+            <div>
+                <h1 class="text-4xl font-black text-green-800 tracking-tight leading-none mb-1.5">NETAJI JHADU STORE</h1>
+                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Quality You Trust, Cleanliness You Deserve</p>
+            </div>
+        </div>
+        <!-- QR Code Placeholder (WhatsApp Link) -->
+        <div class="w-20 h-20 border-2 border-gray-200 rounded-lg p-1.5 flex flex-col items-center justify-center bg-gray-50">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/918750900635" class="w-full h-full" alt="QR" crossorigin="anonymous">
+        </div>
+    </div>
 
-    
-    <div class="mb-4">
-        <p class="text-sm font-bold border-b border-gray-300 mb-2 pb-1">Customer Details</p>
-        <p class="text-sm mb-1"><strong>Name:</strong> <span id="receipt-name"></span></p>
-        <p class="text-sm mb-1"><strong>Phone:</strong> <span id="receipt-phone"></span></p>
-        <p class="text-sm mb-1"><strong>Order Date:</strong> <span id="receipt-date"></span></p>
+    <!-- STORE INFO BAR -->
+    <div class="flex gap-6 text-xs text-gray-700 mb-8 bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-200 font-medium">
+        <div class="flex items-center gap-2"><i class="fas fa-phone-alt text-green-700"></i> +91 87509 00635</div>
+        <div class="flex items-center gap-2"><i class="fab fa-whatsapp text-green-700 text-sm"></i> +91 87509 00635</div>
+        <div class="flex items-center gap-2"><i class="fas fa-map-marker-alt text-green-700"></i> Nangloi, Delhi 110041</div>
     </div>
-    
-    <div class="mb-4">
-        <p class="text-sm font-bold border-b border-gray-300 mb-2 pb-1">Order Summary</p>
-        <table class="w-full text-sm mb-2 text-left">
-            <thead class="border-b border-gray-300">
-                <tr>
-                    <th class="py-1">Product</th>
-                    <th class="py-1 text-center">Qty</th>
-                    <th class="py-1 text-right">Rate</th>
-                    <th class="py-1 text-right">Amount</th>
-                </tr>
-            </thead>
-            <tbody id="receipt-items">
-                <!-- Items ayenge -->
-            </tbody>
-        </table>
+
+    <!-- INVOICE TITLE & DATE -->
+    <div class="flex justify-between items-end border-b-2 border-green-800 pb-3 mb-6">
+        <h2 class="text-3xl font-black text-gray-800 uppercase tracking-wider">TAX INVOICE</h2>
+        <div class="text-right">
+            <p class="text-sm text-gray-500 font-bold mb-1">Invoice No: <span id="receipt-invoice-no" class="text-gray-900 font-black"></span></p>
+            <p class="text-sm text-gray-500 font-bold">Date: <span id="receipt-date" class="text-gray-900 font-black"></span></p>
+        </div>
     </div>
-    
-    <div class="border-t-2 border-black pt-2 mb-4 flex justify-between items-center">
-        <span class="font-bold text-lg">Total Amount:</span>
-        <span class="font-extrabold text-2xl text-green-700" id="receipt-total"></span>
+
+    <!-- CUSTOMER DETAILS SECTION -->
+    <div class="mb-8">
+        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b border-gray-200 pb-1 w-max">Billed To</p>
+        <h3 class="text-lg font-bold text-gray-900 mb-1 uppercase" id="receipt-name"></h3>
+        <p class="text-sm text-gray-600 mb-1 flex items-center gap-2 font-medium"><i class="fas fa-mobile-alt text-gray-400"></i> <span id="receipt-phone"></span></p>
+        <p class="text-sm text-gray-600 leading-relaxed max-w-sm font-medium flex items-start gap-2"><i class="fas fa-map-pin text-gray-400 mt-1"></i> <span id="receipt-address"></span></p>
     </div>
-    
-    <div class="mb-6 text-sm bg-gray-50 p-3 rounded">
-        <p class="mb-1"><strong>Payment Mode:</strong> <span id="receipt-paymode"></span></p>
-        <p class="mb-1"><strong>Status:</strong> <span id="receipt-paystatus"></span></p>
+
+    <!-- PROFESSIONAL PRODUCT TABLE -->
+    <table class="w-full text-sm mb-8 text-left border-collapse">
+        <thead>
+            <tr class="bg-gray-100 text-gray-700 uppercase text-[10px] tracking-wider">
+                <th class="py-3 px-3 w-12 text-center rounded-tl-lg font-bold border-y border-gray-300">S.No</th>
+                <th class="py-3 px-2 font-bold border-y border-gray-300">Product Description</th>
+                <th class="py-3 px-2 text-center font-bold border-y border-gray-300">Qty</th>
+                <th class="py-3 px-2 text-right font-bold border-y border-gray-300">Rate</th>
+                <th class="py-3 px-3 text-right rounded-tr-lg font-bold border-y border-gray-300">Amount</th>
+            </tr>
+        </thead>
+        <tbody id="receipt-items">
+            <!-- Dynamic rows will be injected here -->
+        </tbody>
+    </table>
+
+    <!-- TOTALS & PAYMENT SECTION -->
+    <div class="flex justify-between items-start mb-8">
+        
+        <!-- Payment Info Box -->
+        <div class="w-1/2 pr-8">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b border-gray-200 pb-1 w-max">Payment Details</p>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div class="mb-3 flex items-center gap-2">
+                    <span class="text-sm font-bold text-gray-700">Status:</span>
+                    <span id="receipt-paystatus-badge"></span>
+                </div>
+                <p class="text-sm text-gray-600 mb-1.5"><span class="font-bold text-gray-700">Mode:</span> <span id="receipt-paymode"></span></p>
+                <p class="text-sm text-gray-600 truncate"><span class="font-bold text-gray-700">Txn ID:</span> <span id="receipt-txnid" class="font-mono bg-gray-200 px-1 rounded">N/A</span></p>
+            </div>
+        </div>
+
+        <!-- Totals Calculation -->
+        <div class="w-1/2 ml-auto">
+            <div class="flex justify-between text-sm text-gray-600 py-2 px-3 font-semibold">
+                <span>Subtotal</span>
+                <span id="receipt-subtotal" class="text-gray-800"></span>
+            </div>
+            <div class="flex justify-between text-sm text-green-600 py-2 px-3 font-semibold">
+                <span>Discount</span>
+                <span>- ₹0</span>
+            </div>
+            <div class="flex justify-between text-sm text-gray-600 py-2 px-3 border-b border-gray-300 mb-3 font-semibold">
+                <span>Delivery Charges</span>
+                <span>₹0</span>
+            </div>
+            <div class="flex justify-between items-center bg-green-50 p-4 rounded-lg border-2 border-green-200 shadow-inner">
+                <span class="font-black text-green-900 text-lg uppercase tracking-wider">Grand Total</span>
+                <span class="font-black text-3xl text-green-700" id="receipt-total"></span>
+            </div>
+        </div>
     </div>
-    
-    <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-400">
-        <p class="font-semibold text-gray-800 text-sm">“Thank you for choosing Netaji Jhadu Store”</p>
-        <p class="text-xs text-gray-500 mt-1">We value your trust!</p>
+
+    <!-- FOOTER -->
+    <div class="text-center pt-6 border-t-2 border-dashed border-gray-300">
+        <p class="font-bold text-gray-900 text-base mb-1">Thank you for choosing Netaji Jhadu Store!</p>
+        <p class="text-xs text-gray-600 font-medium mb-5">Quality You Trust, Cleanliness You Deserve.</p>
+        <p class="text-[10px] text-gray-400 italic font-semibold">This is a computer-generated invoice and does not require a physical signature.</p>
     </div>
 </div>
+
     <!-- AOS Animation Init -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
@@ -6704,6 +6760,91 @@ function downloadExcelCSV() {
                 easing: 'ease-out-cubic'
             });
         });
+   // --- ADMIN SIDE DOWNLOAD ---
+function downloadBillImage(id) {
+    if (window.event) window.event.stopPropagation(); 
+    const bill = adminBills.find(b => b.id === id);
+    if(!bill) return;
+    generateAndDownloadInvoice(bill);
+}
+
+// --- USER SIDE DOWNLOAD ---
+async function downloadUserInvoice(orderId) {
+    try {
+        const doc = await db.collection('bills').doc(orderId).get();
+        if(!doc.exists) return alert("Order not found!");
+        const bill = {id: doc.id, ...doc.data()};
+        generateAndDownloadInvoice(bill);
+    } catch (error) {
+        alert("❌ Error generating invoice: " + error.message);
+    }
+}
+
+// --- MAIN INVOICE GENERATOR FUNCTION ---
+function generateAndDownloadInvoice(bill) {
+    // 1. Basic Details
+    document.getElementById('receipt-invoice-no').innerText = `NJS-${new Date().getFullYear()}-${bill.id.substring(0,5).toUpperCase()}`;
+    document.getElementById('receipt-date').innerText = bill.date;
+    document.getElementById('receipt-name').innerText = bill.customerName;
+    
+    // Address & Phone Fixes
+    let phoneStr = (bill.customerPhone === 'N/A' || !bill.customerPhone) ? 'No Number Provided' : '+91 ' + bill.customerPhone;
+    document.getElementById('receipt-phone').innerText = phoneStr;
+    
+    let cleanAddress = bill.address ? bill.address.replace(/(https?:\/\/[^\s]+)/g, '').replace(/🔗/g, '').trim() : 'Walk-in Customer / No Address Provided';
+    document.getElementById('receipt-address').innerText = cleanAddress;
+
+    // 2. Totals & Payment
+    document.getElementById('receipt-subtotal').innerText = `₹${bill.grandTotal}`;
+    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
+    document.getElementById('receipt-paymode').innerText = bill.payMode || 'Cash / Offline';
+    document.getElementById('receipt-txnid').innerText = bill.txnId && bill.txnId !== "N/A" ? bill.txnId : "Cash-Received";
+
+    // 3. Payment Status Badge Logic
+    let isPaid = bill.payStatus && bill.payStatus.includes('Paid');
+    let badgeHtml = isPaid 
+        ? `<span class="bg-green-100 text-green-800 text-xs font-bold px-2.5 py-1 rounded border border-green-400 uppercase tracking-widest"><i class="fas fa-check-circle mr-1"></i> PAID</span>`
+        : `<span class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded border border-red-400 uppercase tracking-widest"><i class="fas fa-times-circle mr-1"></i> UNPAID</span>`;
+    document.getElementById('receipt-paystatus-badge').innerHTML = badgeHtml;
+
+    // 4. Products Table Rows
+    let itemsHtml = '';
+    bill.items.forEach((item, index) => {
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemsHtml += `
+            <tr class="border-b border-gray-200">
+                <td class="py-3 px-3 text-center text-gray-500 font-bold">${index + 1}</td>
+                <td class="py-3 px-2 font-bold text-gray-900">${item.name}</td>
+                <td class="py-3 px-2 text-center text-gray-700 font-semibold">${item.qty}</td>
+                <td class="py-3 px-2 text-right text-gray-700 font-semibold">₹${item.price}</td>
+                <td class="py-3 px-3 text-right font-black text-gray-900">₹${itemTotal}</td>
+            </tr>
+        `;
+    });
+    document.getElementById('receipt-items').innerHTML = itemsHtml;
+
+    // 5. Convert to Image and Download
+    const container = document.getElementById('receipt-container');
+    
+    // Add small delay to let UI render properly before taking screenshot
+    setTimeout(() => {
+        if(typeof html2canvas !== 'undefined') {
+            html2canvas(container, {
+                scale: 2, // High-res image
+                useCORS: true, // Needed for QR code loading
+                backgroundColor: "#ffffff"
+            }).then(canvas => {
+                let link = document.createElement('a');
+                link.download = `NJS_Invoice_${bill.id.substring(0,8)}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        } else {
+            alert("⚠️ html2canvas library is missing!");
+        }
+    }, 250);
+}
+
     </script>
 </body>
 </html>
