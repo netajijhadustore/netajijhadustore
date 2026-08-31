@@ -1144,8 +1144,8 @@
                     <div id="draft-bill-empty" class="text-center py-6 text-sm text-gray-500 italic bg-brand-dark/20 rounded-b-lg border-b border-gray-800">No items added yet.</div>
                 </div>
                 
-                    <!-- Payment Status & Mode Row -->
-                <div class="grid grid-cols-2 gap-4 mt-6 border-t border-gray-800 pt-5 mb-2">
+                <!-- Payment Status & Mode Row -->
+                <div class="grid grid-cols-2 gap-4 mt-6 border-t border-gray-800 pt-5 mb-4">
                     <div>
                         <label class="text-xs text-gray-400 mb-1.5 block font-medium">Payment Status</label>
                         <select id="bill-pay-status" onchange="handlePaymentStatusChange()" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:border-brand-green outline-none transition cursor-pointer">
@@ -1163,30 +1163,12 @@
                     </div>
                 </div>
                 
-                <!-- 🔥 NAYA: Discount & Delivery Row -->
-                <div class="grid grid-cols-2 gap-4 mt-3 mb-4">
-                    <div>
-                        <label class="text-xs text-gray-400 mb-1.5 block font-medium">Discount (₹)</label>
-                        <input type="number" id="bill-discount" value="0" min="0" oninput="calculateDraftTotal()" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none transition">
-                    </div>
-                    <div>
-                        <label class="text-xs text-gray-400 mb-1.5 block font-medium">Delivery Charge (₹)</label>
-                        <input type="number" id="bill-delivery" value="0" min="0" oninput="calculateDraftTotal()" class="w-full bg-brand-dark border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-green outline-none transition">
-                    </div>
-                </div>
-
                 <!-- Bill Summary -->
-                <div class="border-t border-gray-700 pt-3 pb-2">
-                    <div class="flex justify-between items-end mb-2">
-                        <span class="text-xs text-gray-400 font-medium">Item Subtotal</span>
-                        <span id="draft-bill-subtotal" class="text-sm font-bold text-white">₹0</span>
-                    </div>
-                    <div class="flex justify-between items-end mt-2 pt-2 border-t border-gray-800">
-                        <span class="text-sm text-gray-400 font-medium">Grand Total</span>
-                        <span id="draft-bill-total" class="text-2xl font-bold text-brand-green leading-none">₹0</span>
-                    </div>
+                <div class="border-t border-gray-700 pt-4 pb-2 flex justify-between items-end">
+                    <span class="text-sm text-gray-400 font-medium">Grand Total</span>
+                    <span id="draft-bill-total" class="text-2xl font-bold text-brand-green leading-none">₹0</span>
                 </div>
-
+            </div>
 
                         <!-- Yahan buttons ko split kar diya gaya hai -->
             <div class="p-4 border-t border-gray-800 bg-brand-dark shrink-0 flex gap-3">
@@ -4952,8 +4934,7 @@ function viewAdminOrderDetails(id) {
         <div class="flex justify-between items-center mb-4">
             <div class="min-w-0 pr-2">
                 <p class="text-xs text-gray-500">Order ID</p>
-               <p class="text-sm text-white font-mono bg-gray-800 px-2 py-0.5 rounded mt-0.5 truncate">#${order.id.substring(0,8).toUpperCase()}</p>
-
+                <p class="text-sm text-white font-mono bg-gray-800 px-2 py-0.5 rounded mt-0.5 truncate">#${order.id}</p>
             </div>
             <div class="text-right shrink-0">
                 <p class="text-xs text-gray-500">Date</p>
@@ -6662,138 +6643,56 @@ function downloadExcelCSV() {
 
 
     </script>
-<!-- PREMIUM HIDDEN BILL TEMPLATE FOR IMAGE GENERATION -->
-<div id="receipt-container" class="fixed -left-[9999px] top-0 bg-white text-black w-[700px] p-10 font-sans border border-gray-200 shadow-2xl">
+<!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION -->
+<div id="receipt-container" class="fixed -left-[9999px] top-0 bg-white text-black w-[450px] p-8 font-sans border-2 border-gray-200">
+    <div class="text-center border-b-2 border-black pb-4 mb-4">
+        <h1 class="text-3xl font-extrabold text-green-700 tracking-wider">NETAJI JHADU STORE</h1>
+        <p class="text-sm font-semibold text-gray-600 mt-1">Quality You Trust, Cleanliness You Deserve</p>
+    </div>
     
-    <!-- HEADER SECTION -->
-    <div class="flex justify-between items-start mb-6">
-        <div class="flex items-center gap-4">
-            <div class="w-16 h-16 bg-green-700 rounded-lg flex items-center justify-center text-white text-4xl shadow-md">
-                <i class="fas fa-leaf"></i>
-            </div>
-            <div>
-                <h1 class="text-4xl font-black text-green-800 tracking-tight leading-none mb-1.5">NETAJI JHADU STORE</h1>
-                <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Quality You Trust, Cleanliness You Deserve</p>
-            </div>
-        </div>
-                      <!-- QR Code Placeholder (Dynamic Label) -->
-        <div class="border-2 border-gray-200 rounded-lg p-2 flex flex-col items-center justify-center bg-gray-50 w-24">
-            <img id="receipt-qr" src="" class="w-16 h-16" alt="QR" crossorigin="anonymous">
-            <p id="receipt-qr-label" class="text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight"></p>
-        </div>
+    <!-- Yahan py-2 aur tracking-wider add kiya hai -->
+<h2 class="text-center text-xl font-bold bg-gray-200 py-2 mb-4 uppercase tracking-wider flex items-center justify-center">ORDER INVOICE</h2>
 
-
+    
+    <div class="mb-4">
+        <p class="text-sm font-bold border-b border-gray-300 mb-2 pb-1">Customer Details</p>
+        <p class="text-sm mb-1"><strong>Name:</strong> <span id="receipt-name"></span></p>
+        <p class="text-sm mb-1"><strong>Phone:</strong> <span id="receipt-phone"></span></p>
+        <p class="text-sm mb-1"><strong>Order Date:</strong> <span id="receipt-date"></span></p>
     </div>
-
-     <!-- STORE INFO BAR (Premium Look) -->
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-[13px] text-gray-700 mb-8 pb-5 border-b border-gray-200">
-        <!-- Phone & WhatsApp -->
-        <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-full bg-green-50 border border-green-100 flex items-center justify-center">
-                <i class="fas fa-phone-alt text-green-700 text-[11px]"></i>
-            </div>
-            <span class="font-bold tracking-wide">+91 87509 00635 <span class="text-gray-400 font-medium ml-0.5 text-xs">(Call & WA)</span></span>
-        </div>
-        
-        <!-- Address -->
-        <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-full bg-green-50 border border-green-100 flex items-center justify-center">
-                <i class="fas fa-map-marker-alt text-green-700 text-[11px]"></i>
-            </div>
-            <span class="font-bold tracking-wide">Nangloi, Delhi 110041</span>
-        </div>
-
-        <!-- Email -->
-        <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 rounded-full bg-green-50 border border-green-100 flex items-center justify-center">
-                <i class="fas fa-envelope text-green-700 text-[11px]"></i>
-            </div>
-            <span class="font-bold tracking-wide">netajijhadustore@gmail.com</span>
-        </div>
+    
+    <div class="mb-4">
+        <p class="text-sm font-bold border-b border-gray-300 mb-2 pb-1">Order Summary</p>
+        <table class="w-full text-sm mb-2 text-left">
+            <thead class="border-b border-gray-300">
+                <tr>
+                    <th class="py-1">Product</th>
+                    <th class="py-1 text-center">Qty</th>
+                    <th class="py-1 text-right">Rate</th>
+                    <th class="py-1 text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody id="receipt-items">
+                <!-- Items ayenge -->
+            </tbody>
+        </table>
     </div>
-
-
-    <!-- INVOICE TITLE & DATE (Fixed: ORDER INVOICE) -->
-    <div class="flex justify-between items-end border-b-2 border-green-800 pb-3 mb-6">
-        <h2 class="text-3xl font-black text-gray-800 uppercase tracking-wider">ORDER INVOICE</h2>
-        <div class="text-right">
-            <p class="text-sm text-gray-500 font-bold mb-1">Invoice No: <span id="receipt-invoice-no" class="text-gray-900 font-black"></span></p>
-            <p class="text-sm text-gray-500 font-bold">Date: <span id="receipt-date" class="text-gray-900 font-black"></span></p>
-        </div>
+    
+    <div class="border-t-2 border-black pt-2 mb-4 flex justify-between items-center">
+        <span class="font-bold text-lg">Total Amount:</span>
+        <span class="font-extrabold text-2xl text-green-700" id="receipt-total"></span>
     </div>
-
-    <!-- CUSTOMER DETAILS SECTION -->
-    <div class="mb-8">
-        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b border-gray-200 pb-1 w-max">Billed To</p>
-        <h3 class="text-lg font-bold text-gray-900 mb-1 uppercase" id="receipt-name"></h3>
-        <p class="text-sm text-gray-600 mb-1 flex items-center gap-2 font-medium"><i class="fas fa-mobile-alt text-gray-400"></i> <span id="receipt-phone"></span></p>
-        <p class="text-sm text-gray-600 leading-relaxed max-w-sm font-medium flex items-start gap-2"><i class="fas fa-map-pin text-gray-400 mt-1"></i> <span id="receipt-address"></span></p>
+    
+    <div class="mb-6 text-sm bg-gray-50 p-3 rounded">
+        <p class="mb-1"><strong>Payment Mode:</strong> <span id="receipt-paymode"></span></p>
+        <p class="mb-1"><strong>Status:</strong> <span id="receipt-paystatus"></span></p>
     </div>
-
-    <!-- PROFESSIONAL PRODUCT TABLE -->
-    <table class="w-full text-sm mb-8 text-left border-collapse">
-        <thead>
-            <tr class="bg-gray-100 text-gray-700 uppercase text-[10px] tracking-wider">
-                <th class="py-3 px-3 w-12 text-center rounded-tl-lg font-bold border-y border-gray-300">S.No</th>
-                <th class="py-3 px-2 font-bold border-y border-gray-300">Product Description</th>
-                <th class="py-3 px-2 text-center font-bold border-y border-gray-300">Qty</th>
-                <th class="py-3 px-2 text-right font-bold border-y border-gray-300">Rate</th>
-                <th class="py-3 px-3 text-right rounded-tr-lg font-bold border-y border-gray-300">Amount</th>
-            </tr>
-        </thead>
-        <tbody id="receipt-items">
-            <!-- Dynamic rows will be injected here -->
-        </tbody>
-    </table>
-
-    <!-- TOTALS & PAYMENT SECTION -->
-    <div class="flex justify-between items-start mb-8">
-        
-        <!-- Payment Info Box -->
-        <div class="w-1/2 pr-8">
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 border-b border-gray-200 pb-1 w-max">Payment Details</p>
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <div class="mb-3 flex items-center gap-2">
-                    <span class="text-sm font-bold text-gray-700">Status:</span>
-                    <span id="receipt-paystatus-badge"></span>
-                </div>
-                <p class="text-sm text-gray-600"><span class="font-bold text-gray-700">Mode:</span> <span id="receipt-paymode"></span></p>
-                <!-- TXN ID ROW: By default hidden -->
-                <p id="receipt-txn-container" class="text-sm text-gray-600 truncate mt-1.5 hidden"><span class="font-bold text-gray-700">Txn ID:</span> <span id="receipt-txnid" class="font-mono bg-gray-200 px-1 rounded"></span></p>
-            </div>
-        </div>
-
-        <!-- Totals Calculation -->
-        <div class="w-1/2 ml-auto">
-            <div class="flex justify-between text-sm text-gray-600 py-2 px-3 font-semibold">
-                <span>Subtotal</span>
-                <span id="receipt-subtotal" class="text-gray-800"></span>
-            </div>
-                        <div class="flex justify-between text-sm text-green-600 py-2 px-3 font-semibold">
-                <span>Discount</span>
-                <span id="receipt-discount">- ₹0</span> <!-- ID लगाई गई है -->
-            </div>
-            <div class="flex justify-between text-sm text-gray-600 py-2 px-3 border-b border-gray-300 mb-3 font-semibold">
-                <span>Delivery Charges</span>
-                <span id="receipt-delivery">₹0</span> <!-- ID लगाई गई है -->
-            </div>
-
-            <div class="flex justify-between items-center bg-green-50 p-4 rounded-lg border-2 border-green-200 shadow-inner">
-                <span class="font-black text-green-900 text-lg uppercase tracking-wider">Grand Total</span>
-                <span class="font-black text-3xl text-green-700" id="receipt-total"></span>
-            </div>
-        </div>
-    </div>
-
-    <!-- FOOTER -->
-    <div class="text-center pt-6 border-t-2 border-dashed border-gray-300">
-        <p class="font-bold text-gray-900 text-base mb-1">Thank you for choosing Netaji Jhadu Store!</p>
-        <p class="text-xs text-gray-600 font-medium mb-5">Quality You Trust, Cleanliness You Deserve.</p>
-        <p class="text-[10px] text-gray-400 italic font-semibold">This is a computer-generated invoice and does not require a physical signature.</p>
+    
+    <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-400">
+        <p class="font-semibold text-gray-800 text-sm">“Thank you for choosing Netaji Jhadu Store”</p>
+        <p class="text-xs text-gray-500 mt-1">We value your trust!</p>
     </div>
 </div>
-
-
     <!-- AOS Animation Init -->
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
@@ -6805,713 +6704,9 @@ function downloadExcelCSV() {
                 easing: 'ease-out-cubic'
             });
         });
-   // --- ADMIN SIDE DOWNLOAD ---
-function downloadBillImage(id) {
-    if (window.event) window.event.stopPropagation(); 
-    const bill = adminBills.find(b => b.id === id);
-    if(!bill) return;
-    generateAndDownloadInvoice(bill);
-}
-
-// --- USER SIDE DOWNLOAD ---
-async function downloadUserInvoice(orderId) {
-    try {
-        const doc = await db.collection('bills').doc(orderId).get();
-        if(!doc.exists) return alert("Order not found!");
-        const bill = {id: doc.id, ...doc.data()};
-        generateAndDownloadInvoice(bill);
-    } catch (error) {
-        alert("❌ Error generating invoice: " + error.message);
-    }
-}
-// --- MAIN INVOICE GENERATOR FUNCTION ---
-function generateAndDownloadInvoice(bill) {
-    // 1. Basic Details
-    document.getElementById('receipt-invoice-no').innerText = `NJS-${new Date().getFullYear()}-${bill.id.substring(0,5).toUpperCase()}`;
-    document.getElementById('receipt-date').innerText = bill.date;
-    document.getElementById('receipt-name').innerText = bill.customerName;
-    
-    // Address & Phone Fixes
-    let phoneStr = (bill.customerPhone === 'N/A' || !bill.customerPhone) ? 'No Number Provided' : '+91 ' + bill.customerPhone;
-    document.getElementById('receipt-phone').innerText = phoneStr;
-    
-    let cleanAddress = bill.address ? bill.address.replace(/(https?:\/\/[^\s]+)/g, '').replace(/🔗/g, '').trim() : 'Walk-in Customer / No Address Provided';
-    document.getElementById('receipt-address').innerText = cleanAddress;
-
-    // 2. Totals & Payment
-    document.getElementById('receipt-subtotal').innerText = `₹${bill.grandTotal}`;
-    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
-    document.getElementById('receipt-paymode').innerText = bill.payMode || 'Cash / Offline';
-    
-    // 🔥 FIX: Txn ID Logic - Sirf tabhi dikhega jab user online pay karega
-    let txnContainer = document.getElementById('receipt-txn-container');
-    if (bill.txnId && bill.txnId !== "N/A") {
-        document.getElementById('receipt-txnid').innerText = bill.txnId;
-        txnContainer.classList.remove('hidden'); // Show if valid Txn ID
-    } else {
-        txnContainer.classList.add('hidden'); // Hide completely for manual/cash bills
-    }
-
-    // 3. Payment Status Badge Logic
-    let isPaid = bill.payStatus && bill.payStatus.includes('Paid');
-    let badgeHtml = isPaid 
-        ? `<span class="inline-flex items-center justify-center gap-1.5 bg-green-100 text-green-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-green-400 uppercase tracking-widest"><i class="fas fa-check-circle text-xs"></i> PAID</span>`
-        : `<span class="inline-flex items-center justify-center gap-1.5 bg-red-100 text-red-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-red-400 uppercase tracking-widest"><i class="fas fa-times-circle text-xs"></i> UNPAID</span>`;
-    
-    document.getElementById('receipt-paystatus-badge').innerHTML = badgeHtml;
-
-    // 4. SMART QR CODE LOGIC (UPI Payment or Website)
-    const myUpiId = "your_upi_id@bank"; // <-- यहाँ अपना असली UPI ID डालें
-    const storeUrl = "https://netajijhadustore.github.io/netajijhadustore/"; 
-
-    let qrImage = document.getElementById('receipt-qr');
-    let qrLabel = document.getElementById('receipt-qr-label');
-    
-    if (!isPaid) {
-        // Unpaid: Payment QR & Red Label
-        let upiLink = `upi://pay?pa=${myUpiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
-        qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
-        qrLabel.innerText = "SCAN TO PAY";
-        qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-red-500";
-    } else {
-        // Paid: Website QR & Green Label
-        qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(storeUrl)}`;
-        qrLabel.innerText = "VISIT WEBSITE";
-        qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-green-700";
-    }
-
-
-    // 4. Products Table Rows
-    let itemsHtml = '';
-    bill.items.forEach((item, index) => {
-        let itemTotal = item.total ? item.total : (item.price * item.qty);
-        itemsHtml += `
-            <tr class="border-b border-gray-200">
-                <td class="py-3 px-3 text-center text-gray-500 font-bold">${index + 1}</td>
-                <td class="py-3 px-2 font-bold text-gray-900">${item.name}</td>
-                <td class="py-3 px-2 text-center text-gray-700 font-semibold">${item.qty}</td>
-                <td class="py-3 px-2 text-right text-gray-700 font-semibold">₹${item.price}</td>
-                <td class="py-3 px-3 text-right font-black text-gray-900">₹${itemTotal}</td>
-            </tr>
-        `;
-    });
-    document.getElementById('receipt-items').innerHTML = itemsHtml;
-
-    // 5. Convert to Image and Download
-    const container = document.getElementById('receipt-container');
-    
-    // Add small delay to let UI render properly before taking screenshot
-    setTimeout(() => {
-        if(typeof html2canvas !== 'undefined') {
-            html2canvas(container, {
-                scale: 2, // High-res image
-                useCORS: true, // Needed for QR code loading
-                backgroundColor: "#ffffff"
-            }).then(canvas => {
-                let link = document.createElement('a');
-                link.download = `NJS_Invoice_${bill.id.substring(0,8)}.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-            });
-        } else {
-            alert("⚠️ html2canvas library is missing!");
-        }
-    }, 250);
-}
-
-// 1. Total Calculate Karne Ke Liye
-function calculateDraftTotal() {
-    let subtotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
-    let discount = parseInt(document.getElementById('bill-discount').value) || 0;
-    let delivery = parseInt(document.getElementById('bill-delivery').value) || 0;
-
-    let grandTotal = subtotal - discount + delivery;
-    if (grandTotal < 0) grandTotal = 0; 
-
-    let subEl = document.getElementById('draft-bill-subtotal');
-    if(subEl) subEl.innerText = `₹${subtotal}`;
-    
-    document.getElementById('draft-bill-total').innerText = `₹${grandTotal}`;
-    
-    return { subtotal, discount, delivery, grandTotal };
-}
-
-// 2. Draft Bill List Render
-function renderDraftBill() {
-    const tbody = document.getElementById('draft-bill-items-list');
-    const emptyMsg = document.getElementById('draft-bill-empty');
-    
-    if(draftBillItems.length === 0) {
-        tbody.innerHTML = ''; emptyMsg.style.display = 'block'; 
-        calculateDraftTotal(); 
-        return;
-    }
-    
-    emptyMsg.style.display = 'none';
-    let html = '';
-    draftBillItems.forEach(item => {
-        html += `
-        <tr class="text-white hover:bg-gray-800/30 transition border-b border-gray-800/50 last:border-0">
-            <td class="py-3 pl-3 truncate max-w-[120px] sm:max-w-[180px]">${item.name}</td>
-            <td class="py-3 text-center">${item.qty}</td>
-            <td class="py-3 text-right">₹${item.price}</td>
-            <td class="py-3 text-right pr-3 text-brand-green font-semibold">₹${item.total}</td>
-            <td class="py-3 text-center text-gray-600 hover:text-red-500 cursor-pointer pr-1" onclick="removeDraftItem('${item.id}')"><i class="fas fa-times text-xs"></i></td>
-        </tr>`;
-    });
-    tbody.innerHTML = html; 
-    calculateDraftTotal(); 
-}
-
-// 3. Open Modal (Resetting fields to 0)
-function openCreateBillModal() {
-    draftBillItems = [];
-    document.getElementById('bill-cust-name').value = '';
-    document.getElementById('bill-cust-phone').value = '';
-    document.getElementById('bill-qty-input').value = '1';
-    document.getElementById('bill-pay-status').value = 'Paid';
-    document.getElementById('bill-discount').value = '0';
-    document.getElementById('bill-delivery').value = '0';
-    
-    const modeSelect = document.getElementById('bill-pay-mode');
-    modeSelect.value = 'UPI (Online)';
-    modeSelect.disabled = false; 
-    
-    populateBillProductSelect();
-    renderDraftBill();
-    
-    const createBillModal = document.getElementById('create-bill-modal');
-    createBillModal.classList.remove('hidden');
-    setTimeout(() => createBillModal.classList.add('opacity-100'), 10);
-}
-
-// 4. Save Bill Only
-async function saveBillOnly() {
-    const name = document.getElementById('bill-cust-name').value.trim();
-    const phone = document.getElementById('bill-cust-phone').value.trim();
-    const payStatus = document.getElementById('bill-pay-status').value;
-    const payMode = document.getElementById('bill-pay-mode').value;
-    
-    if(!name) return alert("Please enter Customer Name.");
-    if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
-    let finalPhone = phone ? phone : "N/A";
-    
-    const saveBtn = event.currentTarget;
-    const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1.5"></i> Saving...`;
-    saveBtn.disabled = true;
-    
-    let totals = calculateDraftTotal();
-    const dateObj = new Date();
-    const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-
-    const newBill = {
-        date: dateStr,
-        customerName: name, 
-        customerPhone: finalPhone, 
-        items: [...draftBillItems],
-        subtotal: totals.subtotal,       
-        discount: totals.discount,       
-        delivery: totals.delivery,       
-        grandTotal: totals.grandTotal, 
-        payStatus: payStatus, 
-        payMode: payMode,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    
-    try {
-        const docRef = await db.collection('bills').add(newBill);
-        newBill.id = docRef.id;
-        adminBills.unshift(newBill);
-        closeCreateBillModal();
-        renderAdminBills();
-        alert("✅ Bill Saved Successfully!");
-    } catch (error) {
-        alert("❌ Error saving bill: " + error.message);
-    } finally {
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-    }
-}
-
-// 5. Save & Send Bill (WhatsApp)
-async function saveAndSendBill() {
-    const name = document.getElementById('bill-cust-name').value.trim();
-    const phone = document.getElementById('bill-cust-phone').value.trim();
-    const payStatus = document.getElementById('bill-pay-status').value;
-    const payMode = document.getElementById('bill-pay-mode').value;
-
-    if(!name) return alert("Please enter Customer Name.");
-    if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
-    
-    let finalPhone = phone ? phone : "N/A";
-    if(finalPhone === "N/A" || finalPhone.length < 10) {
-        return alert("⚠️ WhatsApp pe bhejne ke liye valid phone number daalna zaroori hai!");
-    }
-
-    const saveBtn = event.currentTarget;
-    const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1.5"></i> Sending...`;
-    saveBtn.disabled = true;
-
-    let totals = calculateDraftTotal();
-    const dateObj = new Date();
-    const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-
-    const newBill = {
-        date: dateStr,
-        customerName: name, 
-        customerPhone: finalPhone, 
-        items: [...draftBillItems],
-        subtotal: totals.subtotal,
-        discount: totals.discount,
-        delivery: totals.delivery,
-        grandTotal: totals.grandTotal, 
-        payStatus: payStatus, 
-        payMode: payMode,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    try {
-        const docRef = await db.collection('bills').add(newBill);
-        newBill.id = docRef.id;
-        adminBills.unshift(newBill);
-        closeCreateBillModal();
-        renderAdminBills();
-        
-        let waMessage = `*NETAJI JHADU STORE - ORDER INVOICE* 🌿\n\n`;
-        waMessage += `Hello *${name}*,\n`;
-        waMessage += `Here is your order summary:\n\n`;
-        waMessage += `*Invoice No:* NJS-${new Date().getFullYear()}-${newBill.id.substring(0,5).toUpperCase()}\n`;
-        waMessage += `*Date:* ${dateStr}\n\n`;
-        
-        waMessage += `*ITEMS:*\n`;
-        newBill.items.forEach((item, index) => {
-            waMessage += `${index+1}. ${item.name} (x${item.qty}) = ₹${item.total || (item.qty * item.price)}\n`;
-        });
-        
-        waMessage += `\n`;
-        if(totals.subtotal !== totals.grandTotal) {
-            waMessage += `Subtotal: ₹${totals.subtotal}\n`;
-            if(totals.discount > 0) waMessage += `Discount: -₹${totals.discount}\n`;
-            if(totals.delivery > 0) waMessage += `Delivery: +₹${totals.delivery}\n`;
-        }
-        waMessage += `*Grand Total: ₹${totals.grandTotal}*\n`;
-        waMessage += `*Payment Status:* ${payStatus} ${payStatus.includes('Paid') ? '✅' : '❌'}\n\n`;
-        
-        waMessage += `*Thank you for choosing Netaji Jhadu Store!*\n`;
-        waMessage += `Quality You Trust, Cleanliness You Deserve.`;
-
-        let encodedMessage = encodeURIComponent(waMessage);
-        let waUrl = `https://wa.me/91${finalPhone}?text=${encodedMessage}`;
-        window.open(waUrl, '_blank');
-
-    } catch (error) {
-        alert("❌ Error saving bill: " + error.message);
-    } finally {
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-    }
-}
-
-// 6. MAIN INVOICE GENERATOR FUNCTION
-function generateAndDownloadInvoice(bill) {
-    document.getElementById('receipt-invoice-no').innerText = `NJS-${new Date().getFullYear()}-${bill.id.substring(0,5).toUpperCase()}`;
-    document.getElementById('receipt-date').innerText = bill.date;
-    document.getElementById('receipt-name').innerText = bill.customerName;
-    
-    let phoneStr = (bill.customerPhone === 'N/A' || !bill.customerPhone) ? 'No Number Provided' : '+91 ' + bill.customerPhone;
-    document.getElementById('receipt-phone').innerText = phoneStr;
-    
-    let cleanAddress = bill.address ? bill.address.replace(/(https?:\/\/[^\s]+)/g, '').replace(/🔗/g, '').trim() : 'Walk-in Customer / No Address Provided';
-    document.getElementById('receipt-address').innerText = cleanAddress;
-
-    let subtotal = bill.subtotal || bill.items.reduce((sum, i) => sum + (i.total || i.price*i.qty), 0);
-    let discount = bill.discount || 0;
-    let delivery = bill.delivery || 0;
-
-    document.getElementById('receipt-subtotal').innerText = `₹${subtotal}`;
-    document.getElementById('receipt-discount').innerText = `- ₹${discount}`;
-    document.getElementById('receipt-delivery').innerText = `₹${delivery}`;
-    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
-    document.getElementById('receipt-paymode').innerText = bill.payMode || 'Cash / Offline';
-    
-    let txnContainer = document.getElementById('receipt-txn-container');
-    if (txnContainer) {
-        if (bill.txnId && bill.txnId !== "N/A") {
-            document.getElementById('receipt-txnid').innerText = bill.txnId;
-            txnContainer.classList.remove('hidden'); 
-        } else {
-            txnContainer.classList.add('hidden'); 
-        }
-    }
-
-    let isPaid = bill.payStatus && bill.payStatus.includes('Paid');
-    let badgeHtml = isPaid 
-        ? `<span class="inline-flex items-center justify-center gap-1.5 bg-green-100 text-green-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-green-400 uppercase tracking-widest"><i class="fas fa-check-circle text-xs"></i> PAID</span>`
-        : `<span class="inline-flex items-center justify-center gap-1.5 bg-red-100 text-red-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-red-400 uppercase tracking-widest"><i class="fas fa-times-circle text-xs"></i> UNPAID</span>`;
-    document.getElementById('receipt-paystatus-badge').innerHTML = badgeHtml;
-
-    // SMART QR CODE LOGIC
-    const myUpiId = "8750900635@paytm"; // <-- Apni asli UPI ID yahan daal sakte ho
-    const storeUrl = "https://netajijhadustore.github.io"; 
-
-    let qrImage = document.getElementById('receipt-qr');
-    let qrLabel = document.getElementById('receipt-qr-label');
-    
-    if (qrImage && qrLabel) {
-        if (!isPaid) {
-            let upiLink = `upi://pay?pa=${myUpiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
-            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
-            qrLabel.innerText = "SCAN TO PAY";
-            qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-red-500";
-        } else {
-            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(storeUrl)}`;
-            qrLabel.innerText = "VISIT WEBSITE";
-            qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-green-700";
-        }
-    }
-
-    let itemsHtml = '';
-    bill.items.forEach((item, index) => {
-        let itemTotal = item.total ? item.total : (item.price * item.qty);
-        itemsHtml += `
-            <tr class="border-b border-gray-200">
-                <td class="py-3 px-3 text-center text-gray-500 font-bold">${index + 1}</td>
-                <td class="py-3 px-2 font-bold text-gray-900">${item.name}</td>
-                <td class="py-3 px-2 text-center text-gray-700 font-semibold">${item.qty}</td>
-                <td class="py-3 px-2 text-right text-gray-700 font-semibold">₹${item.price}</td>
-                <td class="py-3 px-3 text-right font-black text-gray-900">₹${itemTotal}</td>
-            </tr>
-        `;
-    });
-    document.getElementById('receipt-items').innerHTML = itemsHtml;
-
-    const container = document.getElementById('receipt-container');
-    setTimeout(() => {
-        if(typeof html2canvas !== 'undefined') {
-            html2canvas(container, {
-                scale: 2, 
-                useCORS: true, 
-                backgroundColor: "#ffffff"
-            }).then(canvas => {
-                let link = document.createElement('a');
-                link.download = `NJS_Invoice_${bill.id.substring(0,8)}.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-            });
-        } else {
-            alert("⚠️ html2canvas library is missing!");
-        }
-    }, 250);
-}
-// ==========================================
-// 🔥 MOBILE "DOWNLOAD FAILED" FIX (BLOB METHOD) 🔥
-// ==========================================
-
-// --- ADMIN SIDE DOWNLOAD ---
-function downloadBillImage(id) {
-    if (window.event) window.event.stopPropagation(); 
-    const bill = adminBills.find(b => b.id === id);
-    if(!bill) return;
-    generateAndDownloadInvoice(bill);
-}
-
-// --- USER SIDE DOWNLOAD ---
-async function downloadUserInvoice(orderId) {
-    try {
-        const doc = await db.collection('bills').doc(orderId).get();
-        if(!doc.exists) return alert("Order not found!");
-        const bill = {id: doc.id, ...doc.data()};
-        generateAndDownloadInvoice(bill);
-    } catch (error) {
-        alert("❌ Error generating invoice: " + error.message);
-    }
-}
-
-// --- MAIN INVOICE GENERATOR FUNCTION (ANDROID DOWNLOAD MANAGER FIX) ---
-function generateAndDownloadInvoice(bill) {
-    document.getElementById('receipt-invoice-no').innerText = `NJS-${new Date().getFullYear()}-${bill.id.substring(0,5).toUpperCase()}`;
-    document.getElementById('receipt-date').innerText = bill.date;
-    document.getElementById('receipt-name').innerText = bill.customerName;
-    
-    let phoneStr = (bill.customerPhone === 'N/A' || !bill.customerPhone) ? 'No Number Provided' : '+91 ' + bill.customerPhone;
-    document.getElementById('receipt-phone').innerText = phoneStr;
-    
-    let cleanAddress = bill.address ? bill.address.replace(/(https?:\/\/[^\s]+)/g, '').replace(/🔗/g, '').trim() : 'Walk-in Customer / No Address Provided';
-    document.getElementById('receipt-address').innerText = cleanAddress;
-
-    let subtotal = bill.subtotal || bill.items.reduce((sum, i) => sum + (i.total || i.price*i.qty), 0);
-    let discount = bill.discount || 0;
-    let delivery = bill.delivery || 0;
-
-    document.getElementById('receipt-subtotal').innerText = `₹${subtotal}`;
-    document.getElementById('receipt-discount').innerText = `- ₹${discount}`;
-    document.getElementById('receipt-delivery').innerText = `₹${delivery}`;
-    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
-    document.getElementById('receipt-paymode').innerText = bill.payMode || 'Cash / Offline';
-    
-    let txnContainer = document.getElementById('receipt-txn-container');
-    if (txnContainer) {
-        if (bill.txnId && bill.txnId !== "N/A") {
-            document.getElementById('receipt-txnid').innerText = bill.txnId;
-            txnContainer.classList.remove('hidden'); 
-        } else {
-            txnContainer.classList.add('hidden'); 
-        }
-    }
-
-    let isPaid = bill.payStatus && bill.payStatus.includes('Paid');
-    let displayStatus = isPaid ? 'Paid ✅' : 'Pending';
-    
-    let badgeHtml = isPaid 
-        ? `<span class="inline-flex items-center justify-center gap-1.5 bg-green-100 text-green-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-green-400 uppercase tracking-widest"><i class="fas fa-check-circle text-xs"></i> PAID</span>`
-        : `<span class="inline-flex items-center justify-center gap-1.5 bg-red-100 text-red-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-red-400 uppercase tracking-widest"><i class="fas fa-times-circle text-xs"></i> UNPAID</span>`;
-    
-    let badgeEl = document.getElementById('receipt-paystatus-badge');
-    if(badgeEl) badgeEl.innerHTML = badgeHtml;
-    else if(document.getElementById('receipt-paystatus')) document.getElementById('receipt-paystatus').innerText = displayStatus;
-
-    const myUpiId = "8750900635@paytm"; 
-    const storeUrl = "https://netajijhadustore.github.io"; 
-
-    let qrImage = document.getElementById('receipt-qr');
-    let qrLabel = document.getElementById('receipt-qr-label');
-    
-    if (qrImage && qrLabel) {
-        if (!isPaid) {
-            let upiLink = `upi://pay?pa=${myUpiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
-            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
-            qrLabel.innerText = "SCAN TO PAY";
-            qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-red-500";
-        } else {
-            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(storeUrl)}`;
-            qrLabel.innerText = "VISIT WEBSITE";
-            qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-green-700";
-        }
-    }
-
-    let itemsHtml = '';
-    bill.items.forEach((item, index) => {
-        let itemTotal = item.total ? item.total : (item.price * item.qty);
-        itemsHtml += `
-            <tr class="border-b border-gray-200">
-                <td class="py-3 px-3 text-center text-gray-500 font-bold">${index + 1}</td>
-                <td class="py-3 px-2 font-bold text-gray-900">${item.name}</td>
-                <td class="py-3 px-2 text-center text-gray-700 font-semibold">${item.qty}</td>
-                <td class="py-3 px-2 text-right text-gray-700 font-semibold">₹${item.price}</td>
-                <td class="py-3 px-3 text-right font-black text-gray-900">₹${itemTotal}</td>
-            </tr>
-        `;
-    });
-    document.getElementById('receipt-items').innerHTML = itemsHtml;
-
-    const container = document.getElementById('receipt-container');
-    
-    setTimeout(() => {
-        if(typeof html2canvas !== 'undefined') {
-            html2canvas(container, {
-                scale: 2, 
-                useCORS: true, 
-                backgroundColor: "#ffffff"
-            }).then(canvas => {
-                try {
-                    let base64Image = canvas.toDataURL("image/png");
-                    
-                    let byteString = atob(base64Image.split(',')[1]);
-                    let mimeString = base64Image.split(',')[0].split(':')[1].split(';')[0];
-                    let ab = new ArrayBuffer(byteString.length);
-                    let ia = new Uint8Array(ab);
-                    for (let i = 0; i < byteString.length; i++) {
-                        ia[i] = byteString.charCodeAt(i);
-                    }
-                    let blob = new Blob([ab], {type: mimeString});
-                    
-                    let url = window.URL.createObjectURL(blob);
-                    let link = document.createElement('a');
-                    link.download = `NJS_Invoice_${bill.id.substring(0,8).toUpperCase()}.png`;
-                    link.href = url;
-                    
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    // 🔥 FIX: yahan se humne 'revokeObjectURL' wala timer hata diya hai. 
-                    // Ab Android Download Manager aaram se file save kar lega.
-
-                } catch (e) {
-                    console.error("Blob Fix Error: ", e);
-                    let link = document.createElement('a');
-                    link.download = `NJS_Invoice_${bill.id.substring(0,8).toUpperCase()}.png`;
-                    link.href = canvas.toDataURL("image/png");
-                    link.click();
-                }
-            }).catch(err => {
-                console.error("Canvas Error:", err);
-                alert("⚠️ Rendering Error: " + err.message);
-            });
-        } else {
-            alert("⚠️ html2canvas library is missing!");
-        }
-    }, 800); 
-}
-
     </script>
 </body>
 </html>
-<script>
-// ==========================================
-// 🚀 ULTIMATE MOBILE DOWNLOAD FIX (CORS + BLOB) 🚀
-// ==========================================
-
-// --- ADMIN SIDE DOWNLOAD ---
-function downloadBillImage(id) {
-    if (window.event) window.event.stopPropagation(); 
-    const bill = adminBills.find(b => b.id === id);
-    if(!bill) return;
-    generateAndDownloadInvoice(bill);
-}
-
-// --- USER SIDE DOWNLOAD ---
-async function downloadUserInvoice(orderId) {
-    try {
-        const doc = await db.collection('bills').doc(orderId).get();
-        if(!doc.exists) return alert("Order not found!");
-        const bill = {id: doc.id, ...doc.data()};
-        generateAndDownloadInvoice(bill);
-    } catch (error) {
-        alert("❌ Error generating invoice: " + error.message);
-    }
-}
-
-// --- MAIN INVOICE GENERATOR FUNCTION ---
-async function generateAndDownloadInvoice(bill) {
-    // 1. Basic Details Fill
-    document.getElementById('receipt-invoice-no').innerText = `NJS-${new Date().getFullYear()}-${bill.id.substring(0,5).toUpperCase()}`;
-    document.getElementById('receipt-date').innerText = bill.date;
-    document.getElementById('receipt-name').innerText = bill.customerName;
-    
-    let phoneStr = (bill.customerPhone === 'N/A' || !bill.customerPhone) ? 'No Number Provided' : '+91 ' + bill.customerPhone;
-    document.getElementById('receipt-phone').innerText = phoneStr;
-    
-    let cleanAddress = bill.address ? bill.address.replace(/(https?:\/\/[^\s]+)/g, '').replace(/🔗/g, '').trim() : 'Walk-in Customer / No Address Provided';
-    document.getElementById('receipt-address').innerText = cleanAddress;
-
-    // 2. Totals Fill
-    let subtotal = bill.subtotal || bill.items.reduce((sum, i) => sum + (i.total || i.price*i.qty), 0);
-    let discount = bill.discount || 0;
-    let delivery = bill.delivery || 0;
-
-    document.getElementById('receipt-subtotal').innerText = `₹${subtotal}`;
-    document.getElementById('receipt-discount').innerText = `- ₹${discount}`;
-    document.getElementById('receipt-delivery').innerText = `₹${delivery}`;
-    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
-    document.getElementById('receipt-paymode').innerText = bill.payMode || 'Cash / Offline';
-    
-    let txnContainer = document.getElementById('receipt-txn-container');
-    if (txnContainer) {
-        if (bill.txnId && bill.txnId !== "N/A") {
-            document.getElementById('receipt-txnid').innerText = bill.txnId;
-            txnContainer.classList.remove('hidden'); 
-        } else {
-            txnContainer.classList.add('hidden'); 
-        }
-    }
-
-    let isPaid = bill.payStatus && bill.payStatus.includes('Paid');
-    let displayStatus = isPaid ? 'Paid ✅' : 'Pending';
-    
-    let badgeHtml = isPaid 
-        ? `<span class="inline-flex items-center justify-center gap-1.5 bg-green-100 text-green-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-green-400 uppercase tracking-widest"><i class="fas fa-check-circle text-xs"></i> PAID</span>`
-        : `<span class="inline-flex items-center justify-center gap-1.5 bg-red-100 text-red-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-red-400 uppercase tracking-widest"><i class="fas fa-times-circle text-xs"></i> UNPAID</span>`;
-    
-    let badgeEl = document.getElementById('receipt-paystatus-badge');
-    if(badgeEl) badgeEl.innerHTML = badgeHtml;
-    else if(document.getElementById('receipt-paystatus')) document.getElementById('receipt-paystatus').innerText = displayStatus;
-
-    // 3. Products Table Rows
-    let itemsHtml = '';
-    bill.items.forEach((item, index) => {
-        let itemTotal = item.total ? item.total : (item.price * item.qty);
-        itemsHtml += `
-            <tr class="border-b border-gray-200">
-                <td class="py-3 px-3 text-center text-gray-500 font-bold">${index + 1}</td>
-                <td class="py-3 px-2 font-bold text-gray-900">${item.name}</td>
-                <td class="py-3 px-2 text-center text-gray-700 font-semibold">${item.qty}</td>
-                <td class="py-3 px-2 text-right text-gray-700 font-semibold">₹${item.price}</td>
-                <td class="py-3 px-3 text-right font-black text-gray-900">₹${itemTotal}</td>
-            </tr>
-        `;
-    });
-    document.getElementById('receipt-items').innerHTML = itemsHtml;
-
-    // 4. SMART QR CODE (Fetch as Base64 to bypass CORS Block)
-    const myUpiId = "8750900635@paytm"; 
-    const storeUrl = "https://netajijhadustore.github.io"; 
-
-    let qrImage = document.getElementById('receipt-qr');
-    let qrLabel = document.getElementById('receipt-qr-label');
-    
-    let qrUrl = "";
-    if (qrImage && qrLabel) {
-        if (!isPaid) {
-            let upiLink = `upi://pay?pa=${myUpiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
-            qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
-            qrLabel.innerText = "SCAN TO PAY";
-            qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-red-500";
-        } else {
-            qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(storeUrl)}`;
-            qrLabel.innerText = "VISIT WEBSITE";
-            qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-green-700";
-        }
-    }
-
-    try {
-        // 🔥 MAGIC: Fetching QR Code locally to bypass security block
-        let res = await fetch(qrUrl);
-        let blob = await res.blob();
-        let reader = new FileReader();
-        reader.onloadend = function() {
-            qrImage.src = reader.result; 
-            setTimeout(() => exportBillImageSafe(bill), 200);
-        }
-        reader.readAsDataURL(blob);
-    } catch(e) {
-        qrImage.src = qrUrl; 
-        setTimeout(() => exportBillImageSafe(bill), 800);
-    }
-}
-
-// 5. Final Export Function
-function exportBillImageSafe(bill) {
-    const container = document.getElementById('receipt-container');
-    html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
-        try {
-            let base64Image = canvas.toDataURL("image/png");
-            let byteString = atob(base64Image.split(',')[1]);
-            let mimeString = base64Image.split(',')[0].split(':')[1].split(';')[0];
-            let ab = new ArrayBuffer(byteString.length);
-            let ia = new Uint8Array(ab);
-            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-            let blob = new Blob([ab], {type: mimeString});
-            
-            let url = window.URL.createObjectURL(blob);
-            let link = document.createElement('a');
-            link.download = `NJS_Invoice_${bill.id.substring(0,8).toUpperCase()}.png`;
-            link.href = url;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-        } catch (e) {
-            let link = document.createElement('a');
-            link.download = `NJS_Invoice_${bill.id.substring(0,8).toUpperCase()}.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-        }
-    }).catch(err => alert("⚠️ Rendering Error: " + err.message));
-}
-</script>
 
 </body>
 </html>
