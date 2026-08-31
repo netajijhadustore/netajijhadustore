@@ -5580,8 +5580,8 @@ async function downloadUserInvoice(orderId) {
     }
 }
 
+// --- BILL IMAGE GENERATOR (UPDATED WITH DISCOUNT & DELIVERY) ---
 function downloadBillImage(id) {
-    // Ye line galti se card ka popup khulne se rokegi
     if (window.event) window.event.stopPropagation(); 
 
     const bill = adminBills.find(b => b.id === id);
@@ -5597,10 +5597,14 @@ function downloadBillImage(id) {
     let isPaid = bill.payStatus.includes('Paid');
     document.getElementById('receipt-paystatus').innerText = isPaid ? 'Paid ✅' : 'Pending';
 
-    // Items list banayein
+    // Items list banayein aur Subtotal calculate karein
     let itemsHtml = '';
+    let itemTotalAmountAll = 0;
+    
     bill.items.forEach(item => {
         let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemTotalAmountAll += itemTotal;
+        
         itemsHtml += `
             <tr class="border-b border-dashed border-gray-200">
                 <td class="py-1.5 pr-2 truncate max-w-[150px]">${item.name}</td>
@@ -5611,39 +5615,45 @@ function downloadBillImage(id) {
         `;
     });
     document.getElementById('receipt-items').innerHTML = itemsHtml;
-        // NAYA LOGIC: Discount & Delivery Breakdown
-        let itemTotalAmountAll = 0;
-        bill.items.forEach(i => itemTotalAmountAll += (i.total || (i.price * i.qty)));
+
+    // 🟢 NAYA LOGIC: Discount & Delivery Breakdown 🟢
+    let discountAmt = bill.discount || 0;
+    let deliveryAmt = bill.delivery || 0;
+    
+    let breakdownDiv = document.getElementById('receipt-breakdown');
+    let discountRow = document.getElementById('receipt-discount-row');
+    let deliveryRow = document.getElementById('receipt-delivery-row');
+
+    // Agar discount ya delivery mein se kuch bhi hai, tabhi breakdown dikhega
+    if (discountAmt > 0 || deliveryAmt > 0) {
+        document.getElementById('receipt-subtotal').innerText = `₹${itemTotalAmountAll}`;
         
-        let discountAmt = bill.discount || 0;
-        let deliveryAmt = bill.delivery || 0;
-        
-        let breakdownDiv = document.getElementById('receipt-breakdown');
-        let discountRow = document.getElementById('receipt-discount-row');
-        let deliveryRow = document.getElementById('receipt-delivery-row');
-
-        if (discountAmt > 0 || deliveryAmt > 0) {
-            document.getElementById('receipt-subtotal').innerText = `₹${itemTotalAmountAll}`;
-            
-            if (discountAmt > 0) {
-                document.getElementById('receipt-discount').innerText = discountAmt;
-                discountRow.classList.remove('hidden'); discountRow.classList.add('flex');
-            } else {
-                discountRow.classList.add('hidden'); discountRow.classList.remove('flex');
-            }
-
-            if (deliveryAmt > 0) {
-                document.getElementById('receipt-delivery').innerText = deliveryAmt;
-                deliveryRow.classList.remove('hidden'); deliveryRow.classList.add('flex');
-            } else {
-                deliveryRow.classList.add('hidden'); deliveryRow.classList.remove('flex');
-            }
-
-            breakdownDiv.classList.remove('hidden'); breakdownDiv.classList.add('flex');
+        if (discountAmt > 0) {
+            document.getElementById('receipt-discount').innerText = discountAmt;
+            discountRow.classList.remove('hidden'); 
+            discountRow.classList.add('flex');
         } else {
-            breakdownDiv.classList.add('hidden'); breakdownDiv.classList.remove('flex');
+            discountRow.classList.add('hidden'); 
+            discountRow.classList.remove('flex');
         }
-        
+
+        if (deliveryAmt > 0) {
+            document.getElementById('receipt-delivery').innerText = deliveryAmt;
+            deliveryRow.classList.remove('hidden'); 
+            deliveryRow.classList.add('flex');
+        } else {
+            deliveryRow.classList.add('hidden'); 
+            deliveryRow.classList.remove('flex');
+        }
+
+        breakdownDiv.classList.remove('hidden'); 
+        breakdownDiv.classList.add('flex');
+    } else {
+        // Kuch nahi hai toh pura breakdown dabba hide kar do
+        breakdownDiv.classList.add('hidden'); 
+        breakdownDiv.classList.remove('flex');
+    }
+
     // ==========================================
     // 🚀 DYNAMIC QR CODE LOGIC 🚀
     // ==========================================
@@ -5651,14 +5661,12 @@ function downloadBillImage(id) {
     let qrText = document.getElementById('receipt-qr-text');
 
     if (isPaid) {
-        // 🟢 PAID: Website Redirect
-        let websiteUrl = "https://netajijhadustore.github.io/netajijhadustore/"; // <-- Apna Link Yahan Daalo
+        let websiteUrl = "https://netajijhadustore.github.io/netajijhadustore/"; 
         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(websiteUrl)}`;
         qrText.innerText = "Scan it to visit our website";
         qrText.className = "text-[10px] font-bold uppercase tracking-widest text-center text-green-700";
     } else {
-        // 🔴 UNPAID: UPI Auto-fill Payment
-        let upiId = "8750900635@kotakbank"; // <-- Apna asli UPI ID yahan daalo
+        let upiId = "8750900635@kotakbank"; 
         let upiLink = `upi://pay?pa=${upiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
         qrText.innerText = "Scan it for complete payment";
@@ -5667,12 +5675,11 @@ function downloadBillImage(id) {
 
     const container = document.getElementById('receipt-container');
     
-    // Timeout 600 kiya taki QR Code API se download hone ka time mil jaye
     setTimeout(() => {
         html2canvas(container, {
             scale: 2, 
             backgroundColor: "#ffffff",
-            useCORS: true // <-- Ye lagana bohot zaroori hai QR ke liye
+            useCORS: true 
         }).then(canvas => {
             let link = document.createElement('a');
             link.download = `NetajiJhadu_Bill_${bill.customerName}.png`;
