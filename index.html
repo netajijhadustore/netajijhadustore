@@ -976,6 +976,11 @@
                                 <button onclick="resetMonthlyInvestment()" class="text-[9px] text-gray-600 hover:text-red-400 transition underline tracking-wider">Reset to Zero</button>
                             </div>
                         </div>
+<!-- 4. Final Net Profit -->
+<div class="flex justify-between items-center pt-1">
+    <span class="text-sm text-white uppercase font-black tracking-widest"><i class="fas fa-chart-line text-brand-green mr-1"></i> Net Profit</span>
+    <span id="insight-net-profit" class="font-black text-xl text-brand-green drop-shadow-md">₹0</span>
+</div>
 
                            <!-- 5. NEW: SPECIFIC MATERIAL BATCH TRACKER -->
         <div class="mt-5 pt-4 border-t border-gray-800/80">
@@ -1476,23 +1481,42 @@ function resendBill(id) {
             }
         }
 
-        function openCreateBillModal() {
-            draftBillItems = [];
-            document.getElementById('bill-cust-name').value = '';
-            document.getElementById('bill-cust-phone').value = '';
-            document.getElementById('bill-qty-input').value = '1';
-            document.getElementById('bill-pay-status').value = 'Paid';
-            
-            const modeSelect = document.getElementById('bill-pay-mode');
-            modeSelect.value = 'UPI (Online)';
-            modeSelect.disabled = false; 
-            
-            populateBillProductSelect();
-            renderDraftBill();
-            
-            createBillModal.classList.remove('hidden');
-            setTimeout(() => createBillModal.classList.add('opacity-100'), 10);
-        }
+        // Dropdown mein latest trackers sabse upar dikhane ke liye
+function populateTrackerDropdown() {
+    const select = document.getElementById('bill-tracker-select');
+    if(!select) return;
+    let html = '<option value="none">Don\'t link to any tracker</option>';
+    
+    // Latest wale upar (reverse)
+    [...materialBatches].reverse().forEach(b => {
+        html += `<option value="${b.id}">${b.name} (Cost: ₹${b.cost})</option>`;
+    });
+    select.innerHTML = html;
+}
+
+// Naya Bill Modal Khulne Par Reset Karna
+function openCreateBillModal() {
+    draftBillItems = [];
+    document.getElementById('bill-cust-name').value = '';
+    document.getElementById('bill-cust-phone').value = '';
+    document.getElementById('bill-qty-input').value = '1';
+    document.getElementById('bill-pay-status').value = 'Paid';
+    
+    document.getElementById('bill-discount').value = '';
+    document.getElementById('bill-delivery').value = '';
+    
+    const modeSelect = document.getElementById('bill-pay-mode');
+    modeSelect.value = 'UPI (Online)';
+    modeSelect.disabled = false; 
+    
+    populateBillProductSelect();
+    populateTrackerDropdown(); // Yahan Tracker Load hoga
+    renderDraftBill();
+    
+    createBillModal.classList.remove('hidden');
+    setTimeout(() => createBillModal.classList.add('opacity-100'), 10);
+}
+
 
         function closeCreateBillModal() {
             createBillModal.classList.remove('opacity-100');
@@ -1535,64 +1559,134 @@ function resendBill(id) {
             renderDraftBill();
         }
 
-        function renderDraftBill() {
-            const tbody = document.getElementById('draft-bill-items-list');
-            const emptyMsg = document.getElementById('draft-bill-empty');
-            const totalDisplay = document.getElementById('draft-bill-total');
-            
-            if(draftBillItems.length === 0) {
-                tbody.innerHTML = ''; emptyMsg.style.display = 'block'; totalDisplay.innerText = '₹0';
-                return;
-            }
-            
-            emptyMsg.style.display = 'none';
-            let html = ''; let grandTotal = 0;
-            draftBillItems.forEach(item => {
-                grandTotal += item.total;
-                html += `
-                <tr class="text-white hover:bg-gray-800/30 transition border-b border-gray-800/50 last:border-0">
-                    <td class="py-3 pl-3 truncate max-w-[120px] sm:max-w-[180px]">${item.name}</td>
-                    <td class="py-3 text-center">${item.qty}</td>
-                    <td class="py-3 text-right">₹${item.price}</td>
-                    <td class="py-3 text-right pr-3 text-brand-green font-semibold">₹${item.total}</td>
-                    <td class="py-3 text-center text-gray-600 hover:text-red-500 cursor-pointer pr-1" onclick="removeDraftItem('${item.id}')"><i class="fas fa-times text-xs"></i></td>
-                </tr>`;
-            });
-            tbody.innerHTML = html; totalDisplay.innerText = `₹${grandTotal}`;
-        }
+    // 1. Math Calculation (Grand Total update hoga)
+function renderDraftBill() {
+    const tbody = document.getElementById('draft-bill-items-list');
+    const emptyMsg = document.getElementById('draft-bill-empty');
+    const totalDisplay = document.getElementById('draft-bill-total');
+    
+    let itemTotal = 0;
+    
+    if(draftBillItems.length === 0) {
+        tbody.innerHTML = ''; emptyMsg.style.display = 'block'; 
+        totalDisplay.innerText = '₹0';
+        return;
+    }
+    
+    emptyMsg.style.display = 'none';
+    let html = '';
+    
+    draftBillItems.forEach(item => {
+        itemTotal += item.total;
+        html += `
+        <tr class="text-white hover:bg-gray-800/30 transition border-b border-gray-800/50 last:border-0">
+            <td class="py-3 pl-3 truncate max-w-[120px] sm:max-w-[180px]">${item.name}</td>
+            <td class="py-3 text-center">${item.qty}</td>
+            <td class="py-3 text-right">₹${item.price}</td>
+            <td class="py-3 text-right pr-3 text-brand-green font-semibold">₹${item.total}</td>
+            <td class="py-3 text-center text-gray-600 hover:text-red-500 cursor-pointer pr-1" onclick="removeDraftItem('${item.id}')"><i class="fas fa-times text-xs"></i></td>
+        </tr>`;
+    });
+    tbody.innerHTML = html; 
+    
+    // Naya Discount & Delivery Logic
+    let discount = parseInt(document.getElementById('bill-discount').value) || 0;
+    let delivery = parseInt(document.getElementById('bill-delivery').value) || 0;
+    let grandTotal = itemTotal - discount + delivery;
+    if(grandTotal < 0) grandTotal = 0;
+    
+    totalDisplay.innerText = `₹${grandTotal}`;
+}
 
-   async function saveAndSendBill() {
+// 2. Save Bill Only (Tracker auto-update ke sath)
+async function saveBillOnly() {
     const name = document.getElementById('bill-cust-name').value.trim();
     const phone = document.getElementById('bill-cust-phone').value.trim();
     const payStatus = document.getElementById('bill-pay-status').value;
     const payMode = document.getElementById('bill-pay-mode').value;
-
+    
+    let discount = parseInt(document.getElementById('bill-discount').value) || 0;
+    let delivery = parseInt(document.getElementById('bill-delivery').value) || 0;
+    let trackerId = document.getElementById('bill-tracker-select').value;
+    
     if(!name) return alert("Please enter Customer Name.");
     if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
-
-    // SMART TARIKA: Agar number nahi hai aur WhatsApp button dabaya hai
-    if(!phone) {
-        let confirmSave = confirm("आपने WhatsApp नंबर नहीं डाला है, इसलिए मैसेज सेंड नहीं हो सकता। \n\nक्या आप सिर्फ बिल सेव करना चाहते हैं?");
-        if(confirmSave) {
-            return saveBillOnly(); // Direct save wale function ko bhej do
-        } else {
-            return; // Yahin ruk jao
-        }
-    }
-
-    let grandTotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
-
+    
+    let finalPhone = phone ? phone : "N/A";
+    const saveBtn = event.currentTarget;
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = `<i class="fas fa-spinner fa-spin mr-1.5"></i> Saving...`;
+    saveBtn.disabled = true;
+    
+    let itemTotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
+    let grandTotal = itemTotal - discount + delivery;
+    
+    // Tracker ko bhejte waqt delivery charge count nahi karenge (kyunki wo delivery wale ka hai)
+    let amountForTracker = itemTotal - discount; 
+    
     const dateObj = new Date();
     const dateStr = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
     const newBill = {
-        date: dateStr,
-        customerName: name, 
-        customerPhone: phone, 
-        items: [...draftBillItems],
-        grandTotal: grandTotal, 
-        payStatus: payStatus, 
-        payMode: payMode,
+        date: dateStr, customerName: name, customerPhone: finalPhone, 
+        items: [...draftBillItems], discount: discount, delivery: delivery,
+        grandTotal: grandTotal, payStatus: payStatus, payMode: payMode,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    
+    try {
+        const docRef = await db.collection('bills').add(newBill);
+        newBill.id = docRef.id;
+        adminBills.unshift(newBill);
+        
+        // Agar Tracker select kiya hai toh Firebase update karo
+        if(trackerId !== "none" && amountForTracker > 0) {
+            let batch = materialBatches.find(b => b.id === trackerId);
+            if(batch) {
+                batch.recovered += amountForTracker;
+                await db.collection('materialTracker').doc(trackerId).update({ recovered: batch.recovered });
+                if(typeof renderMaterialBatches === 'function') renderMaterialBatches(); // UI update
+            }
+        }
+        
+        closeCreateBillModal();
+        renderAdminBills();
+        alert("✅ Bill Saved Successfully!");
+    } catch (error) {
+        alert("❌ Error saving bill: " + error.message);
+    } finally {
+        saveBtn.innerHTML = originalText; saveBtn.disabled = false;
+    }
+}
+
+// 3. Save And Send WhatsApp (WhatsApp Text Update ke sath)
+async function saveAndSendBill() {
+    const name = document.getElementById('bill-cust-name').value.trim();
+    const phone = document.getElementById('bill-cust-phone').value.trim();
+    const payStatus = document.getElementById('bill-pay-status').value;
+    const payMode = document.getElementById('bill-pay-mode').value;
+    
+    let discount = parseInt(document.getElementById('bill-discount').value) || 0;
+    let delivery = parseInt(document.getElementById('bill-delivery').value) || 0;
+    let trackerId = document.getElementById('bill-tracker-select').value;
+
+    if(!name) return alert("Please enter Customer Name.");
+    if(draftBillItems.length === 0) return alert("Please add at least one item to the bill.");
+    if(!phone) {
+        let confirmSave = confirm("आपने WhatsApp नंबर नहीं डाला है, इसलिए मैसेज सेंड नहीं हो सकता। \n\nक्या आप सिर्फ बिल सेव करना चाहते हैं?");
+        if(confirmSave) return saveBillOnly(); else return;
+    }
+
+    let itemTotal = draftBillItems.reduce((sum, item) => sum + item.total, 0);
+    let grandTotal = itemTotal - discount + delivery;
+    let amountForTracker = itemTotal - discount; 
+
+    const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    const newBill = {
+        date: dateStr, customerName: name, customerPhone: phone, 
+        items: [...draftBillItems], discount: discount, delivery: delivery,
+        grandTotal: grandTotal, payStatus: payStatus, payMode: payMode,
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
     
@@ -1600,39 +1694,52 @@ function resendBill(id) {
     newBill.id = docRef.id;
     adminBills.unshift(newBill);
     
+    // Tracker Logic
+    if(trackerId !== "none" && amountForTracker > 0) {
+        let batch = materialBatches.find(b => b.id === trackerId);
+        if(batch) {
+            batch.recovered += amountForTracker;
+            db.collection('materialTracker').doc(trackerId).update({ recovered: batch.recovered });
+            if(typeof renderMaterialBatches === 'function') renderMaterialBatches();
+        }
+    }
+    
     let displayStatus = payStatus === 'Paid' ? 'Paid ✅' : 'Pending';
 
     let msg = `*NETAJI JHADU STORE*%0A%0A`;
     msg += `_Quality You Trust, Cleanliness You Deserve_%0A%0A`;
     msg += `*ORDER INVOICE*%0A%0A`;
-    
-    msg += `*Customer Details*%0A`;
-    msg += `━━━━━━━━━━━━━━━━━━━━%0A`;
     msg += `Name: ${name}%0A`;
-    msg += `Phone: ${phone}%0A%0A`;
+    msg += `Phone: ${phone}%0A`;
+    msg += `Date: ${dateStr}%0A%0A`;
     
-    msg += `Order Date: ${dateStr}%0A%0A`;
-    
-    msg += `*ORDER SUMMARY*%0A%0A`;
+    msg += `*ORDER SUMMARY*%0A`;
     msg += `Product | Qty. | Rate | Amount%0A`;
-    
     draftBillItems.forEach(item => { 
         msg += `${item.name} | ${item.qty} | ₹${item.price} | ₹${item.total}%0A`; 
     });
     
-    msg += `%0A━━━━━━━━━━━━━━━━━━━━%0A%0A`;
-    msg += `*TOTAL AMOUNT: ₹${grandTotal}*%0A%0A`;
+    msg += `%0A━━━━━━━━━━━━━━━━━━━━%0A`;
+    
+    // WhatsApp pe bhi discount/delivery clearly dikhega
+    if(discount > 0 || delivery > 0) {
+        msg += `Item Total: ₹${itemTotal}%0A`;
+        if(discount > 0) msg += `Discount: -₹${discount}%0A`;
+        if(delivery > 0) msg += `Delivery Charge: +₹${delivery}%0A`;
+    }
+    
+    msg += `*GRAND TOTAL: ₹${grandTotal}*%0A`;
+    msg += `━━━━━━━━━━━━━━━━━━━━%0A%0A`;
     
     msg += `Payment Mode: ${payMode}%0A`;
     msg += `Payment Status: ${displayStatus}%0A%0A`;
-    
-    msg += `━━━━━━━━━━━━━━━━━━━━%0A%0A`;
-    msg += `“Thank you for choosing Netaji Jhadu Store — We value your trust!”`;
+    msg += `“Thank you for choosing Netaji Jhadu Store!”`;
 
     window.open(`https://wa.me/91${phone}?text=${msg}`, '_blank');
     closeCreateBillModal();
     renderAdminBills();
 }
+
 
 async function deleteBill(id) {
     if(confirm("Are you sure you want to delete this bill?")) {
@@ -7096,6 +7203,26 @@ async function addSaleToBatch(id) {
         renderMaterialBatches();
     } catch(e) { alert("Error updating sale: " + e.message); }
 }
+// Galti se add hui sale ko wapas kam karna (Undo/Minus)
+async function minusSaleFromBatch(id) {
+    let batch = materialBatches.find(b => b.id === id);
+    if (!batch) return;
+
+    let amountStr = prompt(`अभी तक ₹${batch.recovered} की रिकवरी हुई है।\nइसमें से कितने रुपये कम (Minus) करने हैं?`);
+    if (!amountStr) return;
+    let amount = parseInt(amountStr);
+    
+    if (isNaN(amount) || amount <= 0) return alert("⚠️ Invalid amount!");
+    if (amount > batch.recovered) return alert("⚠️ आप टोटल रिकवरी से ज़्यादा अमाउंट कम नहीं कर सकते!");
+
+    let newRecovered = batch.recovered - amount;
+
+    try {
+        await db.collection('materialTracker').doc(id).update({ recovered: newRecovered });
+        batch.recovered = newRecovered;
+        renderMaterialBatches();
+    } catch(e) { alert("Error removing sale: " + e.message); }
+}
 
 // Delete Batch
 async function deleteBatch(id) {
@@ -7106,8 +7233,7 @@ async function deleteBatch(id) {
         renderMaterialBatches();
     } catch(e) { alert("Error deleting tracker: " + e.message); }
 }
-
-// Render UI
+// Render UI (Updated with Undo Button)
 function renderMaterialBatches() {
     let container = document.getElementById('batch-list');
     if (!container) return;
@@ -7150,15 +7276,20 @@ function renderMaterialBatches() {
                 <span class="text-xs font-black ${profitColor}">₹${displayAmt}</span>
             </div>
 
-            <button onclick="addSaleToBatch('${b.id}')" class="w-full bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-400 border border-blue-500/30 py-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1.5">
-                <i class="fas fa-plus-circle"></i> Add Sale Amount
-            </button>
+            <!-- Naye 2 Buttons (Add Sale & Minus Mistake) -->
+            <div class="flex gap-2 mt-1">
+                <button onclick="addSaleToBatch('${b.id}')" class="flex-1 bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-400 border border-blue-500/30 py-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+                <button onclick="minusSaleFromBatch('${b.id}')" class="flex-1 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/30 py-1.5 rounded text-[10px] font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <i class="fas fa-undo"></i> Undo
+                </button>
+            </div>
         </div>
         `;
     });
     container.innerHTML = html;
 }
-
 
     </script>
 <!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION -->
