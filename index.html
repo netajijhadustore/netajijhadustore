@@ -7359,6 +7359,159 @@ function generateAndDownloadInvoice(bill) {
     </script>
 </body>
 </html>
+<script>
+// ==========================================
+// 🚀 ULTIMATE MOBILE DOWNLOAD FIX (CORS + BLOB) 🚀
+// ==========================================
+
+// --- ADMIN SIDE DOWNLOAD ---
+function downloadBillImage(id) {
+    if (window.event) window.event.stopPropagation(); 
+    const bill = adminBills.find(b => b.id === id);
+    if(!bill) return;
+    generateAndDownloadInvoice(bill);
+}
+
+// --- USER SIDE DOWNLOAD ---
+async function downloadUserInvoice(orderId) {
+    try {
+        const doc = await db.collection('bills').doc(orderId).get();
+        if(!doc.exists) return alert("Order not found!");
+        const bill = {id: doc.id, ...doc.data()};
+        generateAndDownloadInvoice(bill);
+    } catch (error) {
+        alert("❌ Error generating invoice: " + error.message);
+    }
+}
+
+// --- MAIN INVOICE GENERATOR FUNCTION ---
+async function generateAndDownloadInvoice(bill) {
+    // 1. Basic Details Fill
+    document.getElementById('receipt-invoice-no').innerText = `NJS-${new Date().getFullYear()}-${bill.id.substring(0,5).toUpperCase()}`;
+    document.getElementById('receipt-date').innerText = bill.date;
+    document.getElementById('receipt-name').innerText = bill.customerName;
+    
+    let phoneStr = (bill.customerPhone === 'N/A' || !bill.customerPhone) ? 'No Number Provided' : '+91 ' + bill.customerPhone;
+    document.getElementById('receipt-phone').innerText = phoneStr;
+    
+    let cleanAddress = bill.address ? bill.address.replace(/(https?:\/\/[^\s]+)/g, '').replace(/🔗/g, '').trim() : 'Walk-in Customer / No Address Provided';
+    document.getElementById('receipt-address').innerText = cleanAddress;
+
+    // 2. Totals Fill
+    let subtotal = bill.subtotal || bill.items.reduce((sum, i) => sum + (i.total || i.price*i.qty), 0);
+    let discount = bill.discount || 0;
+    let delivery = bill.delivery || 0;
+
+    document.getElementById('receipt-subtotal').innerText = `₹${subtotal}`;
+    document.getElementById('receipt-discount').innerText = `- ₹${discount}`;
+    document.getElementById('receipt-delivery').innerText = `₹${delivery}`;
+    document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
+    document.getElementById('receipt-paymode').innerText = bill.payMode || 'Cash / Offline';
+    
+    let txnContainer = document.getElementById('receipt-txn-container');
+    if (txnContainer) {
+        if (bill.txnId && bill.txnId !== "N/A") {
+            document.getElementById('receipt-txnid').innerText = bill.txnId;
+            txnContainer.classList.remove('hidden'); 
+        } else {
+            txnContainer.classList.add('hidden'); 
+        }
+    }
+
+    let isPaid = bill.payStatus && bill.payStatus.includes('Paid');
+    let displayStatus = isPaid ? 'Paid ✅' : 'Pending';
+    
+    let badgeHtml = isPaid 
+        ? `<span class="inline-flex items-center justify-center gap-1.5 bg-green-100 text-green-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-green-400 uppercase tracking-widest"><i class="fas fa-check-circle text-xs"></i> PAID</span>`
+        : `<span class="inline-flex items-center justify-center gap-1.5 bg-red-100 text-red-800 text-[11px] leading-none font-bold px-3 py-1.5 rounded border border-red-400 uppercase tracking-widest"><i class="fas fa-times-circle text-xs"></i> UNPAID</span>`;
+    
+    let badgeEl = document.getElementById('receipt-paystatus-badge');
+    if(badgeEl) badgeEl.innerHTML = badgeHtml;
+    else if(document.getElementById('receipt-paystatus')) document.getElementById('receipt-paystatus').innerText = displayStatus;
+
+    // 3. Products Table Rows
+    let itemsHtml = '';
+    bill.items.forEach((item, index) => {
+        let itemTotal = item.total ? item.total : (item.price * item.qty);
+        itemsHtml += `
+            <tr class="border-b border-gray-200">
+                <td class="py-3 px-3 text-center text-gray-500 font-bold">${index + 1}</td>
+                <td class="py-3 px-2 font-bold text-gray-900">${item.name}</td>
+                <td class="py-3 px-2 text-center text-gray-700 font-semibold">${item.qty}</td>
+                <td class="py-3 px-2 text-right text-gray-700 font-semibold">₹${item.price}</td>
+                <td class="py-3 px-3 text-right font-black text-gray-900">₹${itemTotal}</td>
+            </tr>
+        `;
+    });
+    document.getElementById('receipt-items').innerHTML = itemsHtml;
+
+    // 4. SMART QR CODE (Fetch as Base64 to bypass CORS Block)
+    const myUpiId = "8750900635@paytm"; 
+    const storeUrl = "https://netajijhadustore.github.io"; 
+
+    let qrImage = document.getElementById('receipt-qr');
+    let qrLabel = document.getElementById('receipt-qr-label');
+    
+    let qrUrl = "";
+    if (qrImage && qrLabel) {
+        if (!isPaid) {
+            let upiLink = `upi://pay?pa=${myUpiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
+            qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
+            qrLabel.innerText = "SCAN TO PAY";
+            qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-red-500";
+        } else {
+            qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(storeUrl)}`;
+            qrLabel.innerText = "VISIT WEBSITE";
+            qrLabel.className = "text-[8px] font-black uppercase tracking-wider text-center mt-1.5 leading-tight text-green-700";
+        }
+    }
+
+    try {
+        // 🔥 MAGIC: Fetching QR Code locally to bypass security block
+        let res = await fetch(qrUrl);
+        let blob = await res.blob();
+        let reader = new FileReader();
+        reader.onloadend = function() {
+            qrImage.src = reader.result; 
+            setTimeout(() => exportBillImageSafe(bill), 200);
+        }
+        reader.readAsDataURL(blob);
+    } catch(e) {
+        qrImage.src = qrUrl; 
+        setTimeout(() => exportBillImageSafe(bill), 800);
+    }
+}
+
+// 5. Final Export Function
+function exportBillImageSafe(bill) {
+    const container = document.getElementById('receipt-container');
+    html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
+        try {
+            let base64Image = canvas.toDataURL("image/png");
+            let byteString = atob(base64Image.split(',')[1]);
+            let mimeString = base64Image.split(',')[0].split(':')[1].split(';')[0];
+            let ab = new ArrayBuffer(byteString.length);
+            let ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+            let blob = new Blob([ab], {type: mimeString});
+            
+            let url = window.URL.createObjectURL(blob);
+            let link = document.createElement('a');
+            link.download = `NJS_Invoice_${bill.id.substring(0,8).toUpperCase()}.png`;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+        } catch (e) {
+            let link = document.createElement('a');
+            link.download = `NJS_Invoice_${bill.id.substring(0,8).toUpperCase()}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        }
+    }).catch(err => alert("⚠️ Rendering Error: " + err.message));
+}
+</script>
 
 </body>
 </html>
