@@ -5339,20 +5339,18 @@ async function openMyOrders() {
 // ==========================================
 async function downloadUserInvoice(orderId) {
     try {
-        // Database se bill ki detail laana
         const doc = await db.collection('bills').doc(orderId).get();
         if(!doc.exists) return alert("Order not found!");
         const bill = {id: doc.id, ...doc.data()};
 
-        // Hidden HTML template mein data bharna (Jaise admin side mein hota hai)
         document.getElementById('receipt-name').innerText = bill.customerName;
         document.getElementById('receipt-phone').innerText = bill.customerPhone;
         document.getElementById('receipt-date').innerText = bill.date;
         document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
         document.getElementById('receipt-paymode').innerText = bill.payMode || 'N/A';
         
-        let displayStatus = (bill.payStatus && bill.payStatus.includes('Paid')) ? 'Paid ✅' : 'Pending';
-        document.getElementById('receipt-paystatus').innerText = displayStatus;
+        let isPaid = (bill.payStatus && bill.payStatus.includes('Paid'));
+        document.getElementById('receipt-paystatus').innerText = isPaid ? 'Paid ✅' : 'Pending';
 
         let itemsHtml = '';
         bill.items.forEach(item => {
@@ -5368,28 +5366,46 @@ async function downloadUserInvoice(orderId) {
         });
         document.getElementById('receipt-items').innerHTML = itemsHtml;
 
+        // ==========================================
+        // 🚀 DYNAMIC QR CODE LOGIC 🚀
+        // ==========================================
+        let qrImg = document.getElementById('receipt-qr-img');
+        let qrText = document.getElementById('receipt-qr-text');
+
+        if (isPaid) {
+            let websiteUrl = "https://netajijhadustore.github.io/netajijhadustore/"; // <-- Apna Link Yahan Daalo
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(websiteUrl)}`;
+            qrText.innerText = "Scan it to visit our website";
+            qrText.className = "text-[10px] font-bold uppercase tracking-widest text-center text-green-700";
+        } else {
+            let upiId = "8750900635@kotakbank"; // <-- Apna asli UPI ID yahan daalo
+            let upiLink = `upi://pay?pa=${upiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
+            qrText.innerText = "Scan it for complete payment";
+            qrText.className = "text-[10px] font-bold uppercase tracking-widest text-center text-red-600 animate-pulse";
+        }
+
         const container = document.getElementById('receipt-container');
         
-        // Image Create aur Download
+        // Timeout 600ms here too
         setTimeout(() => {
             html2canvas(container, {
                 scale: 2, 
-                backgroundColor: "#ffffff"
+                backgroundColor: "#ffffff",
+                useCORS: true
             }).then(canvas => {
                 let link = document.createElement('a');
                 link.download = `NetajiJhadu_Invoice_${bill.id.substring(0,8)}.png`;
                 link.href = canvas.toDataURL("image/png");
                 link.click();
             });
-        }, 100);
+        }, 600);
 
     } catch (error) {
         alert("❌ Error generating invoice: " + error.message);
     }
 }
-// ==========================================
-// ADMIN SIDE: BILL IMAGE GENERATOR FIX (Undefined Bug Resolved)
-// ==========================================
+
 function downloadBillImage(id) {
     // Ye line galti se card ka popup khulne se rokegi
     if (window.event) window.event.stopPropagation(); 
@@ -5404,15 +5420,13 @@ function downloadBillImage(id) {
     document.getElementById('receipt-total').innerText = `₹${bill.grandTotal}`;
     document.getElementById('receipt-paymode').innerText = bill.payMode || 'N/A';
     
-    let displayStatus = bill.payStatus.includes('Paid') ? 'Paid ✅' : 'Pending';
-    document.getElementById('receipt-paystatus').innerText = displayStatus;
+    let isPaid = bill.payStatus.includes('Paid');
+    document.getElementById('receipt-paystatus').innerText = isPaid ? 'Paid ✅' : 'Pending';
 
     // Items list banayein
     let itemsHtml = '';
     bill.items.forEach(item => {
-        // YAHAN FIX KIYA HAI: Agar total nahi milega toh (price * qty) khud nikal lega
         let itemTotal = item.total ? item.total : (item.price * item.qty);
-        
         itemsHtml += `
             <tr class="border-b border-dashed border-gray-200">
                 <td class="py-1.5 pr-2 truncate max-w-[150px]">${item.name}</td>
@@ -5424,24 +5438,44 @@ function downloadBillImage(id) {
     });
     document.getElementById('receipt-items').innerHTML = itemsHtml;
 
+    // ==========================================
+    // 🚀 DYNAMIC QR CODE LOGIC 🚀
+    // ==========================================
+    let qrImg = document.getElementById('receipt-qr-img');
+    let qrText = document.getElementById('receipt-qr-text');
+
+    if (isPaid) {
+        // 🟢 PAID: Website Redirect
+        let websiteUrl = "https://netajijhadustore.github.io/netajijhadustore/"; // <-- Apna Link Yahan Daalo
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(websiteUrl)}`;
+        qrText.innerText = "Scan it to visit our website";
+        qrText.className = "text-[10px] font-bold uppercase tracking-widest text-center text-green-700";
+    } else {
+        // 🔴 UNPAID: UPI Auto-fill Payment
+        let upiId = "8750900635@kotakbank"; // <-- Apna asli UPI ID yahan daalo
+        let upiLink = `upi://pay?pa=${upiId}&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(upiLink)}`;
+        qrText.innerText = "Scan it for complete payment";
+        qrText.className = "text-[10px] font-bold uppercase tracking-widest text-center text-red-600 animate-pulse";
+    }
+
     const container = document.getElementById('receipt-container');
     
-    // Thoda delay taki DOM update ho jaye
+    // Timeout 600 kiya taki QR Code API se download hone ka time mil jaye
     setTimeout(() => {
         html2canvas(container, {
             scale: 2, 
-            backgroundColor: "#ffffff"
+            backgroundColor: "#ffffff",
+            useCORS: true // <-- Ye lagana bohot zaroori hai QR ke liye
         }).then(canvas => {
-            // 1. Image Download Karega
             let link = document.createElement('a');
             link.download = `NetajiJhadu_Bill_${bill.customerName}.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
-            
-         
         });
-    }, 100);
+    }, 600);
 }
+
 // ==========================================
 // ADMIN SIDE: INSIGHTS & MONTHLY SALE FIX
 // ==========================================
@@ -6687,26 +6721,10 @@ function downloadExcelCSV() {
         <p class="mb-1"><strong>Payment Mode:</strong> <span id="receipt-paymode"></span></p>
         <p class="mb-1"><strong>Status:</strong> <span id="receipt-paystatus"></span></p>
     </div>
-        <div class="mb-6 text-sm bg-gray-50 p-3 rounded">
-        <p class="mb-1"><strong>Payment Mode:</strong> <span id="receipt-paymode"></span></p>
-        <p class="mb-1"><strong>Status:</strong> <span id="receipt-paystatus"></span></p>
-    </div>
-        <div class="mb-6 text-sm bg-gray-50 p-3 rounded">
-        <p class="mb-1"><strong>Payment Mode:</strong> <span id="receipt-paymode"></span></p>
-        <p class="mb-1"><strong>Status:</strong> <span id="receipt-paystatus"></span></p>
-    </div>
-    
-    <div class="flex flex-col items-center justify-center pt-2 mb-4">
+        <div class="flex flex-col items-center justify-center pt-2 mb-4">
         <img id="receipt-qr-img" src="" crossorigin="anonymous" alt="QR Code" class="w-24 h-24 mb-1.5 p-1 border border-gray-300 rounded bg-white">
         <p id="receipt-qr-text" class="text-[10px] font-bold uppercase tracking-widest text-center"></p>
     </div>
-    <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-400">
-
-    <div class="flex flex-col items-center justify-center pt-2 mb-4">
-        <img id="receipt-qr-img" src="" crossorigin="anonymous" alt="QR Code" class="w-24 h-24 mb-1.5 p-1 border border-gray-300 rounded bg-white">
-        <p id="receipt-qr-text" class="text-[10px] font-bold uppercase tracking-widest text-center"></p>
-    </div>
-    <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-400">
     <div class="text-center mt-6 pt-4 border-t border-dashed border-gray-400">
         <p class="font-semibold text-gray-800 text-sm">“Thank you for choosing Netaji Jhadu Store”</p>
         <p class="text-xs text-gray-500 mt-1">We value your trust!</p>
