@@ -3152,48 +3152,41 @@ function downloadBillImage(id) {
     });
     document.getElementById('receipt-items').innerHTML = itemsHtml;
 
-    // 3. Smart QR Code Logic
+    // 3. Smart QR Code Logic (FIXED FOR HTML2CANVAS)
     const qrContainer = document.getElementById('receipt-qr');
-    qrContainer.innerHTML = ""; // Clear old QR
     
     let qrPayload = "";
     if (isPaid) {
         // If paid, redirect to website
-        qrPayload = "https://netajijhadustore.github.io/netajijhadustore/"; // CHANGE THIS TO YOUR WEBSITE URL
+        qrPayload = "https://netajijhadustore.com"; // CHANGE THIS TO YOUR WEBSITE
         document.getElementById('receipt-qr-title').innerText = "Visit Website";
         document.getElementById('receipt-qr-desc').innerText = "Scan to shop more premium brooms";
     } else {
-        // If unpaid, generate UPI Payment Link
-        // CHANGE "8750900635@kotakbank" TO YOUR ACTUAL UPI ID
-        qrPayload = `upi://pay?pa=YOUR_UPI_ID@upi&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
+        // If unpaid, generate UPI Payment Link (APNI UPI ID DAALEN)
+        qrPayload = `upi://pay?pa=8750900635@paytm&pn=Netaji%20Jhadu%20Store&am=${bill.grandTotal}&cu=INR`;
         document.getElementById('receipt-qr-title').innerText = "Scan to Pay";
         document.getElementById('receipt-qr-desc').innerText = "Pay instantly using any UPI app";
     }
 
-    // Generate QR using the library
-    new QRCode(qrContainer, {
-        text: qrPayload,
-        width: 72,
-        height: 72,
-        colorDark : "#0b1115",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.L
-    });
+    // Direct Image URL use kar rahe hain taaki photo mein perfectly capture ho
+    const qrImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(qrPayload)}`;
+    qrContainer.innerHTML = `<img src="${qrImgSrc}" crossorigin="anonymous" class="w-full h-full object-contain">`;
 
-    // 4. Download Image (Wait 300ms for QR to render)
+    // 4. Download Image (Wait 800ms to ensure the QR image is fully loaded before capture)
     const container = document.getElementById('receipt-container');
     setTimeout(() => {
         html2canvas(container, {
             scale: 2, 
             backgroundColor: "#ffffff",
-            useCORS: true
+            useCORS: true,
+            allowTaint: true
         }).then(canvas => {
             let link = document.createElement('a');
             link.download = `NetajiJhadu_Invoice_${bill.id.substring(0,8)}.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
         });
-    }, 300);
+    }, 800); // 800ms ka time diya hai taaki QR properly load ho jaye
 }
 
 // ✅ MISSING LOGIN SUCCESS FUNCTION
