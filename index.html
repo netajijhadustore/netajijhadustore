@@ -7575,7 +7575,7 @@ function renderMaterialBatches() {
         <div class="flex items-center gap-6">
             <!-- Round Logo -->
             <div class="w-32 h-32 bg-white rounded-full border-[3px] border-[#0B3B24] flex items-center justify-center overflow-hidden shadow-md p-0.5">
-                <img src="1000073429.png" crossorigin="anonymous" alt="Logo" class="w-full h-full object-contain rounded-full">
+                <img src="logo.png" crossorigin="anonymous" alt="Logo" class="w-full h-full object-contain rounded-full">
             </div>
             
             <!-- Brand Details -->
@@ -7591,12 +7591,10 @@ function renderMaterialBatches() {
                 </div>
             </div>
         </div>
-
         <!-- Right: Invoice Info -->
         <div class="text-right pt-2 border-l-2 border-[#Eae3d3] pl-8">
             <div class="flex flex-col items-end mb-6">
                 <h2 class="text-4xl font-sans font-light tracking-[0.2em] text-[#0B3B24] mb-3">INVOICE</h2>
-                <!-- NAYA: Perfect spacing and centering for ID pill -->
                 <div class="bg-[#0B3B24] text-white text-[13px] font-bold py-1.5 px-5 rounded-full flex items-center justify-center tracking-widest shadow-sm" id="receipt-id">#NJS-0000</div>
             </div>
 
@@ -7608,6 +7606,7 @@ function renderMaterialBatches() {
                     </div>
                     <div class="w-8 h-8 rounded-full bg-[#F4EFDF] flex items-center justify-center border border-[#B88A44]"><i class="far fa-calendar-alt text-[#0B3B24] text-sm"></i></div>
                 </div>
+                
                 <div class="flex items-start justify-end gap-3">
                     <div>
                         <p class="font-bold text-[10px] text-[#8b7355] uppercase tracking-wider mb-0.5">Bill To</p>
@@ -7616,8 +7615,18 @@ function renderMaterialBatches() {
                     </div>
                     <div class="w-8 h-8 rounded-full bg-[#F4EFDF] flex items-center justify-center border border-[#B88A44] mt-1"><i class="fas fa-user text-[#0B3B24] text-sm"></i></div>
                 </div>
+
+                <!-- NAYA: Phone number yahan wapas add kar diya hai jisse JS crash na ho -->
+                <div class="flex items-center justify-end gap-3">
+                    <div>
+                        <p class="font-bold text-[10px] text-[#8b7355] uppercase tracking-wider mb-0.5">Phone</p>
+                        <p class="font-semibold">+91 <span id="receipt-phone">-</span></p>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-[#F4EFDF] flex items-center justify-center border border-[#B88A44]"><i class="fas fa-phone-alt text-[#0B3B24] text-[11px]"></i></div>
+                </div>
             </div>
         </div>
+
     </div>
 
     <!-- ITEMS TABLE (Premium Rounded Border) -->
