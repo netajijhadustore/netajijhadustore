@@ -99,9 +99,50 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16 sm:h-20">
                 <div class="flex items-center gap-3 cursor-pointer">
-    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-brand-green flex items-center justify-center overflow-hidden bg-white shadow-lg shrink-0">
-        <img src="logo.png" alt="Netaji Logo" class="w-full h-full object-contain">
-    </div>
+    <!-- Custom Premium Animations -->
+<style>
+    /* 1. Leaf floating gently up and down */
+    @keyframes sway {
+        0%, 100% { transform: translateY(0px) rotate(-15deg); }
+        50% { transform: translateY(-3px) rotate(5deg); }
+    }
+    .animate-sway { animation: sway 3s ease-in-out infinite; }
+
+    /* 2. Glass shine passing over the logo every few seconds */
+    @keyframes sweepShine {
+        0% { transform: translateX(-150%) skewX(-25deg); }
+        25%, 100% { transform: translateX(200%) skewX(-25deg); }
+    }
+    .animate-shine { animation: sweepShine 4s infinite; }
+    
+    /* 3. Very slow elegant spin for the inner ring */
+    @keyframes spinSlow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow { animation: spinSlow 10s linear infinite; }
+</style>
+
+<!-- Animated Dark Emerald Badge -->
+<div class="relative w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br from-[#111820] to-[#06090c] border border-gray-700 shadow-lg cursor-pointer overflow-hidden group active:scale-95 active:shadow-[0_0_30px_rgba(22,163,74,0.7)] transition-all">
+    
+    <!-- Spinning Dashed Ring -->
+    <div class="absolute inset-[3px] rounded-full border-[1px] border-dashed border-brand-green/40 animate-spin-slow pointer-events-none"></div>
+
+    <!-- Sweeping Glass Shine -->
+    <div class="absolute top-0 left-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shine pointer-events-none z-20"></div>
+
+    <!-- Inner Ambient Glow (Brightens on Hover) -->
+    <div class="absolute inset-0 bg-brand-green/5 rounded-full blur-[6px] group-hover:bg-brand-green/20 transition-colors duration-500 pointer-events-none z-0"></div>
+    
+    <!-- Crisp 'N' -->
+    <span class="font-serif font-black text-2xl sm:text-3xl text-white z-10 mt-1 drop-shadow-md relative">N</span>
+
+    <!-- Magic Swaying Leaf -->
+    <i class="fas fa-leaf absolute top-1.5 right-1.5 sm:top-2 sm:right-2 text-brand-green text-[10px] sm:text-[11px] z-20 drop-shadow-[0_0_5px_rgba(22,163,74,0.8)] animate-sway"></i>
+
+</div>
+
 
                     <div>
                         <h1 class="text-lg sm:text-xl font-bold text-white tracking-tight leading-none">Netaji Jhadu</h1>
@@ -7571,11 +7612,23 @@ function renderMaterialBatches() {
     <!-- HEADER -->
     <div class="px-10 pt-12 pb-6 flex justify-between items-start relative z-10 border-b border-[#e6dfd3]">
         <div class="flex flex-col items-center text-center">
-            <div class="w-32 h-32 mb-2 bg-white rounded-full border-2 border-[#4A3B32] flex items-center justify-center overflow-hidden shadow-sm relative bg-gradient-to-br from-white to-[#f5ebd9]/50">
-    <!-- Clean SVG/FontAwesome Logo -->
-    <i class="fas fa-leaf text-2xl text-[#4A3B32] absolute top-6 right-7 -rotate-12 opacity-90"></i>
-    <i class="fas fa-broom text-[4rem] text-[#c29b62] -rotate-12 mt-3 drop-shadow-sm"></i>
+       <!-- High-Resolution CSS/SVG Logo for Invoice (Static for Perfect Printing) -->
+<div class="relative w-32 h-32 mb-2 rounded-full border-[3px] border-[#c29b62] bg-gradient-to-br from-[#ffffff] to-[#f5ebd9] flex items-center justify-center shadow-md overflow-hidden">
+    
+    <!-- Vintage Inner Dashed Ring -->
+    <div class="absolute inset-2 rounded-full border border-dashed border-[#4A3B32]/40"></div>
+    
+    <!-- Faint Golden Broom Watermark -->
+    <i class="fas fa-broom absolute text-[#c29b62] text-[4.5rem] -rotate-45 opacity-20"></i>
+    
+    <!-- Bold Royal 'N' -->
+    <span class="font-serif font-black text-[4.5rem] text-[#4A3B32] z-10 mt-3 tracking-tighter drop-shadow-sm">N</span>
+    
+    <!-- Brand Signature Leaf -->
+    <i class="fas fa-leaf absolute top-5 right-5 text-[#16a34a] text-xl z-20 -rotate-12 drop-shadow-sm"></i>
+    
 </div>
+
 
             <h1 class="font-serif-logo text-5xl text-[#4A3B32] tracking-[0.15em] leading-none mb-1">NETAJI</h1>
             <div class="flex items-center gap-2 mt-2 w-full justify-center">
