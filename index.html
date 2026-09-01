@@ -7593,6 +7593,23 @@ function renderMaterialBatches() {
     });
     container.innerHTML = html;
 }
+function previewInvoiceLogo(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imgEl = document.getElementById('custom-invoice-logo');
+            const watermarkEl = document.getElementById('default-invoice-watermark');
+            
+            if (imgEl && watermarkEl) {
+                imgEl.src = e.target.result;
+                imgEl.classList.remove('hidden'); // Image dikhane ke liye
+                watermarkEl.classList.add('hidden'); // Default 'N' aur jhadu chhupane ke liye
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+}
 
     </script>
 <!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION (VINTAGE PREMIUM UI - FINAL FIXED) -->
@@ -7612,21 +7629,32 @@ function renderMaterialBatches() {
     <!-- HEADER -->
     <div class="px-10 pt-12 pb-6 flex justify-between items-start relative z-10 border-b border-[#e6dfd3]">
         <div class="flex flex-col items-center text-center">
-  <!-- High-Resolution CSS/SVG Logo for Invoice (Perfectly Centered) -->
-<div class="relative w-32 h-32 mb-2 rounded-full border-[3px] border-[#c29b62] bg-gradient-to-br from-[#ffffff] to-[#f5ebd9] flex items-center justify-center shadow-md overflow-hidden">
+<!-- High-Resolution Logo Container with Dynamic Upload Support -->
+<div class="relative w-32 h-32 mb-2 rounded-full border-[3px] border-[#c29b62] bg-gradient-to-br from-[#ffffff] to-[#f5ebd9] flex items-center justify-center shadow-md overflow-hidden group">
     
     <!-- Vintage Inner Dashed Ring -->
-    <div class="absolute inset-2 rounded-full border border-dashed border-[#4A3B32]/40"></div>
+    <div class="absolute inset-2 rounded-full border border-dashed border-[#4A3B32]/40 pointer-events-none"></div>
     
-    <!-- Faint Golden Broom Watermark -->
-    <i class="fas fa-broom absolute text-[#c29b62] text-[4.5rem] -rotate-45 opacity-20"></i>
-    
-    <!-- Bold Royal 'N' Forced to Exact Visual Center -->
-    <span class="absolute top-[46%] left-[50%] -translate-x-1/2 -translate-y-1/2 font-serif font-black text-[5.5rem] text-[#4A3B32] z-10 leading-none drop-shadow-sm">N</span>
+    <!-- Uploaded Logo Preview (Default hidden if no image) -->
+    <img id="custom-invoice-logo" src="" alt="Logo" class="absolute inset-0 w-full h-full object-cover hidden z-20">
+
+    <!-- Default Fallback Watermark & 'N' (Jab tak image upload nahi hoti) -->
+    <div id="default-invoice-watermark" class="absolute inset-0 flex items-center justify-center">
+        <i class="fas fa-broom absolute text-[#c29b62] text-[4.5rem] -rotate-45 opacity-20"></i>
+        <span class="absolute top-[46%] left-[50%] -translate-x-1/2 -translate-y-1/2 font-serif font-black text-[5.5rem] text-[#4A3B32] z-10 leading-none drop-shadow-sm">N</span>
+    </div>
     
     <!-- Brand Signature Leaf -->
-    <i class="fas fa-leaf absolute top-5 right-5 text-[#16a34a] text-xl z-20 -rotate-12 drop-shadow-sm"></i>
+    <i class="fas fa-leaf absolute top-5 right-5 text-[#16a34a] text-xl z-25 -rotate-12 drop-shadow-sm pointer-events-none"></i>
     
+</div>
+
+<!-- Upload Control Button (Admin Panel ya Create Bill modal ke paas lagane ke liye) -->
+<div class="mt-2 text-center">
+    <label class="text-[11px] text-gray-400 bg-brand-dark border border-gray-700 hover:border-brand-green px-3 py-1.5 rounded cursor-pointer inline-flex items-center gap-1.5 transition">
+        <i class="fas fa-upload text-brand-green"></i> Change Invoice Logo
+        <input type="file" accept="image/*" onchange="previewInvoiceLogo(event)" class="hidden">
+    </label>
 </div>
 
             <h1 class="font-serif-logo text-5xl text-[#4A3B32] tracking-[0.15em] leading-none mb-1">NETAJI</h1>
