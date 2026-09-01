@@ -7555,7 +7555,8 @@ function renderMaterialBatches() {
 
     </script>
 <!-- HIDDEN BILL TEMPLATE FOR IMAGE GENERATION (VINTAGE PREMIUM UI - FINAL FIXED) -->
-<div id="receipt-container" class="fixed -left-[9999px] top-0 bg-[#Fdfbf7] text-[#3e2723] w-[800px] font-sans relative overflow-hidden shadow-2xl pb-0">
+<div id="receipt-container" class="absolute -left-[9999px] top-0 bg-[#Fdfbf7] text-[#3e2723] w-[800px] font-sans overflow-hidden shadow-2xl pb-0 -z-50">
+
     
     <!-- Load custom fonts inside the container -->
     <style>
@@ -7570,9 +7571,12 @@ function renderMaterialBatches() {
     <!-- HEADER -->
     <div class="px-10 pt-12 pb-6 flex justify-between items-start relative z-10 border-b border-[#e6dfd3]">
         <div class="flex flex-col items-center text-center">
-            <div class="w-32 h-32 mb-2 bg-white rounded-full border-2 border-[#4A3B32] flex items-center justify-center overflow-hidden shadow-sm">
-                <img src="logo.png" crossorigin="anonymous" alt="Logo" class="w-full h-full object-contain">
-            </div>
+            <div class="w-32 h-32 mb-2 bg-white rounded-full border-2 border-[#4A3B32] flex items-center justify-center overflow-hidden shadow-sm relative bg-gradient-to-br from-white to-[#f5ebd9]/50">
+    <!-- Clean SVG/FontAwesome Logo -->
+    <i class="fas fa-leaf text-2xl text-[#4A3B32] absolute top-6 right-7 -rotate-12 opacity-90"></i>
+    <i class="fas fa-broom text-[4rem] text-[#c29b62] -rotate-12 mt-3 drop-shadow-sm"></i>
+</div>
+
             <h1 class="font-serif-logo text-5xl text-[#4A3B32] tracking-[0.15em] leading-none mb-1">NETAJI</h1>
             <div class="flex items-center gap-2 mt-2 w-full justify-center">
                 <div class="h-px bg-[#4A3B32] w-12"></div>
@@ -7755,8 +7759,7 @@ function renderMaterialBatches() {
             });
         });
     </script>
-</body>
-</html>
+
 
 </body>
 </html>
