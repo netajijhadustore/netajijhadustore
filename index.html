@@ -4570,63 +4570,93 @@ async function openMyOrders() {
 // ==========================================
 async function processCheckout() {
     let itemsToCheckout = (typeof isDirectBuy !== 'undefined' && isDirectBuy) ? [directBuyItem] : cart;
-    if(!itemsToCheckout.length) return alert(" Your cart is empty!");
+    if(!itemsToCheckout.length) return alert("Your cart is empty!");
 
     const name = document.getElementById('checkout-name').value.trim();
     const phone = document.getElementById('checkout-phone').value.trim();
-    
-    // Naye address boxes
     const house = document.getElementById('checkout-house').value.trim();
     const landmark = document.getElementById('checkout-landmark').value.trim();
     const area = document.getElementById('checkout-address').value.trim();
     const maplink = document.getElementById('checkout-maplink').value.trim();
 
-    // COMPULSORY CHECK
     if(!name || !phone || !house || !landmark || !area) {
-        return alert(" Kripya apni saari details (Name, Phone, House No, Landmark, Area) zarur bharein!");
-    }
-
-    // Teeno address parts aur maplink ko ek sath jodna
-    let finalAddress = ` ${house}, \n Near: ${landmark}, \n Area: ${area}`;
-    if(maplink) {
-        finalAddress += `\n ${maplink}`; // Ye hidden link database mein jayegi
+        return alert("Kripya apni saari details (Name, Phone, House No, Landmark, Area) zarur bharein!");
     }
 
     const placeBtn = document.getElementById('place-order-btn');
-    if(placeBtn) { placeBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Processing...`; placeBtn.disabled = true; }
+    if(placeBtn) { 
+        placeBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Verifying Prices...`; 
+        placeBtn.disabled = true; 
+    }
 
-    let totalAmt = itemsToCheckout.reduce((sum, item) => sum + (item.price * item.qty), 0);
-    const paymentMethodEl = document.querySelector('input[name="payment-method"]:checked');
-    const paymentMethod = paymentMethodEl ? paymentMethodEl.value : "Pay Later (Cash)";
+    try {
+        let verifiedItems = [];
+        let calculatedTotal = 0;
 
-    if (paymentMethod.includes('Pay Now')) {
-        if (typeof Razorpay === 'undefined') {
-            alert(" Razorpay load nahi hua. Kripya page refresh karein.");
-            if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
-            return; 
+        // Fetch true prices from Firestore for each item in the cart
+        for (let cartItem of itemsToCheckout) {
+            let prodRef = await db.collection('products').where('name', '==', cartItem.name).get();
+            if (prodRef.empty) {
+                throw new Error(`Product "${cartItem.name}" is no longer available.`);
+            }
+            
+            let prodData = prodRef.docs[0].data();
+            let truePrice = prodData.price; // Database ka asli price
+            let qty = parseInt(cartItem.qty) || 1;
+            let itemTotal = truePrice * qty;
+
+            verifiedItems.push({
+                name: prodData.name,
+                price: truePrice,
+                qty: qty,
+                total: itemTotal
+            });
+
+            calculatedTotal += itemTotal;
         }
-        var options = {
-            "key": "rzp_live_TLl4cQ2FJnrsx6", 
-            "amount": totalAmt * 100, 
-            "currency": "INR",
-            "name": "Netaji Jhadu Store",
-            "description": "Order Payment",
-            "handler": function (response){
-                saveOrderToDatabase(name, phone, finalAddress, itemsToCheckout, totalAmt, paymentMethod, response.razorpay_payment_id);
-            },
-            "prefill": { "name": name, "contact": phone },
-            "theme": { "color": "#16a34a" }
-        };
-        var rzp = new Razorpay(options);
-        rzp.on('payment.failed', function (response){
-            alert(" Payment Failed!");
-            if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
-        });
-        rzp.open(); 
-    } else {
-        saveOrderToDatabase(name, phone, finalAddress, itemsToCheckout, totalAmt, paymentMethod, "N/A");
+
+        let finalAddress = `${house}, \nNear: ${landmark}, \nArea: ${area}`;
+        if(maplink) { finalAddress += `\n${maplink}`; }
+
+        const paymentMethodEl = document.querySelector('input[name="payment-method"]:checked');
+        const paymentMethod = paymentMethodEl ? paymentMethodEl.value : "Pay Later (Cash)";
+
+        if (paymentMethod.includes('Pay Now')) {
+            if (typeof Razorpay === 'undefined') {
+                alert("Razorpay failed to load. Please refresh.");
+                if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
+                return; 
+            }
+
+            var options = {
+                "key": "rzp_live_TLl4cQ2FJnrsx6", 
+                "amount": calculatedTotal * 100, // Securely calculated total
+                "currency": "INR",
+                "name": "Netaji Jhadu Store",
+                "description": "Secure Order Checkout",
+                "handler": function (response){
+                    saveOrderToDatabase(name, phone, finalAddress, verifiedItems, calculatedTotal, paymentMethod, response.razorpay_payment_id);
+                },
+                "prefill": { "name": name, "contact": phone },
+                "theme": { "color": "#16a34a" }
+            };
+
+            var rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (response){
+                alert("Payment Failed: " + response.error.description);
+                if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
+            });
+            rzp.open(); 
+        } else {
+            saveOrderToDatabase(name, phone, finalAddress, verifiedItems, calculatedTotal, paymentMethod, "N/A");
+        }
+
+    } catch (error) {
+        alert("Checkout Error: " + error.message);
+        if(placeBtn) { placeBtn.innerHTML = "Place Order"; placeBtn.disabled = false; }
     }
 }
+
 // ==========================================
 // 1. SAVED ADDRESS: GPS DETECT
 // ==========================================
