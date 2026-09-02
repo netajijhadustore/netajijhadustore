@@ -4644,18 +4644,19 @@ async function processCheckout() {
                 return; 
             }
 
-            var options = {
-                "key": "rzp_live_TLl4cQ2FJnrsx6", 
-                "amount": calculatedTotal * 100, // Securely calculated total
-                "currency": "INR",
-                "name": "Netaji Jhadu Store",
-                "description": "Secure Order Checkout",
-                "handler": function (response){
-                    saveOrderToDatabase(name, phone, finalAddress, verifiedItems, calculatedTotal, paymentMethod, response.razorpay_payment_id);
-                },
-                "prefill": { "name": name, "contact": phone },
-                "theme": { "color": "#16a34a" }
-            };
+               var options = {
+            "key": "rzp_test_TX2Gf2Gq6r8aNL", // Purani key hata kar Test Key daal di hai
+            "amount": calculatedTotal * 100, 
+            "currency": "INR",
+            "name": "Netaji Jhadu Store",
+            "description": "Secure Order Checkout",
+            "handler": function (response){
+                saveOrderToDatabase(name, phone, finalAddress, verifiedItems, calculatedTotal, paymentMethod, response.razorpay_payment_id);
+            },
+            "prefill": { "name": name, "contact": phone },
+            "theme": { "color": "#16a34a" }
+        };
+
 
             var rzp = new Razorpay(options);
             rzp.on('payment.failed', function (response){
