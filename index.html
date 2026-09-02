@@ -2448,56 +2448,7 @@ function toggleDescription(id) {
             setTimeout(() => { if (adminDashboard) adminDashboard.classList.add('hidden'); document.body.style.overflow = 'auto'; }, 300);
         }
 
-async function handleEmailAuth(event) {
-    event.preventDefault(); 
-    
-    const emailInput = document.getElementById('email').value.trim();
-    const passwordInput = document.getElementById('password').value.trim();
-    const submitBtn = document.getElementById('login-submit-btn'); 
-    
-    // Admin Check
-    if (emailInput === 'netajijhadustore@gmail.com' && passwordInput === '9650335512') {
-        closeLogin();
-        localStorage.setItem('isLoggedIn', 'true'); 
-        localStorage.setItem('isAdmin', 'true');
-        updateHeaderToAdmin(); 
-        openAdmin(); 
-        return;
-    }
 
-    submitBtn.innerText = "Processing...";
-    submitBtn.disabled = true;
-
-    try {
-        // Pehle Sign In try karein
-        const userCredential = await firebase.auth().signInWithEmailAndPassword(emailInput, passwordInput);
-        loginSuccess(userCredential.user);
-        
-    } catch (error) {
-        // Naya Firebase 'invalid-credential' deta hai agar user nahi hai ya password galat hai
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-            try {
-                // Agar account nahi mila toh naya bana do (Sign Up)
-                const newCredential = await firebase.auth().createUserWithEmailAndPassword(emailInput, passwordInput);
-                loginSuccess(newCredential.user);
-            } catch (signUpError) {
-                // Agar Signup fail hua kyuki Email pehle se maujud hai = iska matlab Password galat tha!
-                if(signUpError.code === 'auth/email-already-in-use') {
-                    alert("❌ Galat Password! Kripya dobara check karein.");
-                } else {
-                    alert("❌ Signup Error: " + signUpError.message);
-                }
-            }
-        } else if (error.code === 'auth/wrong-password') {
-            alert("❌ Galat Password! Kripya dobara check karein.");
-        } else {
-            alert("❌ Error: " + error.message);
-        }
-    } finally {
-        submitBtn.innerHTML = `Sign In / Sign Up <i class="fas fa-arrow-right"></i>`;
-        submitBtn.disabled = false;
-    }
-}
 
 
 
@@ -3357,21 +3308,7 @@ function downloadBillImage(id) {
         });
     }, 100);
 }
-// ✅ MISSING LOGIN SUCCESS FUNCTION
-function loginSuccess(user) {
-    closeLogin();
-    localStorage.setItem('isLoggedIn', 'true');
-    
-    // User ka naam nikalna (Google se ya email ke prefix se)
-    let displayName = user.displayName || user.email.split('@')[0] || 'User';
-    localStorage.setItem('userName', displayName);
-    
-    // UI Update karna
-    updateHeaderToProfile(displayName);
-    
-    // Notification
-    alert("✅ Login Successful! Welcome " + displayName);
-}
+
 // ✅ MISSING SAVE BILL FUNCTION
 // 2. Save Bill Only (Tracker auto-update ke sath)
 async function saveBillOnly() {
