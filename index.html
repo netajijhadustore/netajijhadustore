@@ -2192,17 +2192,26 @@ async function processCheckout() {
                 return; 
             }
             var options = {
-                "key": "rzp_live_TLl4cQ2FJnrsx6", 
-                "amount": totalAmt * 100, 
-                "currency": "INR",
-                "name": "Netaji Jhadu Store",
-                "description": "Premium Grass Brooms",
-                "handler": function (response){
-                    saveOrderToDatabase(name, phone, address, orderItems, totalAmt, paymentMethod, response.razorpay_payment_id);
-                },
-                "prefill": { "name": name, "contact": phone },
-                "theme": { "color": "#16a34a" }
-            };
+    // 1. Yahan apni nayi Test Key daal
+    "key": "rzp_test_TX2Gf2Gq6r8aNL", 
+    "amount": calculatedTotal * 100, 
+    "currency": "INR",
+    "name": "Netaji Jhadu Store",
+    "description": "Secure Order Checkout",
+    
+    // 2. NAYA ADD KIYA HAI: Ye webhook ko batayega ki kiska order hai
+    "notes": {
+        "customerPhone": phone 
+    },
+    
+    "handler": function (response){
+        // Abhi ke liye ye rehne de, baad me ise hatayenge
+        saveOrderToDatabase(name, phone, finalAddress, verifiedItems, calculatedTotal, paymentMethod, response.razorpay_payment_id);
+    },
+    "prefill": { "name": name, "contact": phone },
+    "theme": { "color": "#16a34a" }
+};
+
             var rzp = new Razorpay(options);
             rzp.on('payment.failed', function (response){
                 alert("❌ Payment Failed! Reason: " + response.error.description);
@@ -4055,41 +4064,48 @@ function payFromMyOrders(orderId, amount, name, phone) {
         return alert("⚠️ Razorpay load nahi hua. Kripya page refresh karein.");
     }
     
-    var options = {
-        "key": "rzp_live_TLl4cQ2FJnrsx6", // Tumhari Razorpay Key
-        "amount": amount * 100, 
-        "currency": "INR",
-        "name": "Netaji Jhadu Store",
-        "description": "Pending Order Payment",
-        "handler": async function (response) {
-            try {
-                // Payment success hone par Database aur Bill Auto-Update
-                await db.collection('bills').doc(orderId).update({
-                    payStatus: "Paid",
-                    payMode: "Pay Now (UPI)",
-                    txnId: response.razorpay_payment_id
-                });
-                
-                alert("✅ Payment Successful! Bill Auto-Updated.");
-                
-                // Admin array mein bhi update kar do taki 'Save Image' karte waqt 'Paid' likha aaye
-                if (typeof adminBills !== 'undefined') {
-                    let bill = adminBills.find(b => b.id === orderId);
-                    if (bill) {
-                        bill.payStatus = "Paid";
-                        bill.payMode = "Pay Now (UPI)";
-                        if(typeof renderAdminBills === 'function') renderAdminBills();
+        var options = {
+            "key": "rzp_test_TX2Gf2Gq6r8aNL", // Nayi Test Key
+            "amount": amount * 100, 
+            "currency": "INR",
+            "name": "Netaji Jhadu Store",
+            "description": "Pending Order Payment",
+            
+            // Ye NAYA hissa hai Webhook ke liye
+            "notes": {
+                "customerPhone": phone 
+            },
+            
+            "handler": async function (response) {
+                try {
+                    // Payment success hone par Database aur Bill Auto-Update
+                    await db.collection('bills').doc(orderId).update({
+                        payStatus: "Paid",
+                        payMode: "Pay Now (UPI)",
+                        txnId: response.razorpay_payment_id
+                    });
+                    
+                    alert("✅ Payment Successful! Bill Auto-Updated.");
+                    
+                    // Admin array mein bhi update kar do
+                    if (typeof adminBills !== 'undefined') {
+                        let bill = adminBills.find(b => b.id === orderId);
+                        if (bill) {
+                            bill.payStatus = "Paid";
+                            bill.payMode = "Pay Now (UPI)";
+                            if(typeof renderAdminBills === 'function') renderAdminBills();
+                        }
                     }
+                    
+                    openMyOrders(); 
+                } catch(e) {
+                    alert("Database update failed: " + e.message);
                 }
-                
-                openMyOrders(); // Page refresh kiye bina My Orders update karega
-            } catch(e) {
-                alert("Database update failed: " + e.message);
-            }
-        },
-        "prefill": { "name": name, "contact": phone },
-        "theme": { "color": "#16a34a" }
-    };
+            },
+            "prefill": { "name": name, "contact": phone },
+            "theme": { "color": "#16a34a" }
+        };
+
     var rzp = new Razorpay(options);
     rzp.on('payment.failed', function (response){
         alert("❌ Payment Failed: " + response.error.description);
