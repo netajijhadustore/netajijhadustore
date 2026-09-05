@@ -1003,15 +1003,17 @@
                                 <span class="text-xs text-gray-400 uppercase font-bold tracking-wider"><i class="fas fa-boxes text-blue-400 mr-1"></i> Total Investment</span>
                                 <span id="insight-display-investment" class="font-bold text-white text-sm">₹0</span>
                             </div>
-                            <!-- Kharcha Jodne wala chota dabba -->
-                            <div class="flex justify-between items-center bg-[#151f28] p-1.5 rounded border border-gray-800 mb-1">
-                                <span class="text-[10px] text-gray-500 font-semibold pl-1">+ New Expense:</span>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-gray-500 text-xs font-bold">₹</span>
-                                    <input type="number" id="insight-add-expense-input" placeholder="0" class="w-16 bg-brand-dark border border-gray-700 rounded px-2 py-1 text-white text-[11px] text-right outline-none focus:border-blue-500 transition shadow-inner">
-                                    <button onclick="addMonthlyExpense(event)" class="bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded text-[10px] font-bold transition flex items-center shadow-sm">+ Add</button>
-                                </div>
-                            </div>
+                        <!-- Kharcha Jodne wala chota dabba -->
+<div class="flex justify-between items-center bg-[#151f28] p-1.5 rounded border border-gray-800 mb-1">
+    <span class="text-[10px] text-gray-500 font-semibold pl-1">New Expense:</span>
+    <div class="flex items-center gap-1.5">
+        <span class="text-gray-500 text-xs font-bold">₹</span>
+        <input type="number" id="insight-add-expense-input" placeholder="0" class="w-12 bg-brand-dark border border-gray-700 rounded px-1.5 py-1 text-white text-[11px] text-right outline-none focus:border-blue-500 transition shadow-inner">
+        <button onclick="addMonthlyExpense(event)" class="bg-blue-500/10 hover:bg-blue-500 hover:text-white text-blue-400 border border-blue-500/30 px-2 py-1 rounded text-[10px] font-bold transition flex items-center shadow-sm">+ Add</button>
+        <button onclick="subtractMonthlyExpense(event)" class="bg-red-500/10 hover:bg-red-500 hover:text-white text-red-400 border border-red-500/30 px-2 py-1 rounded text-[10px] font-bold transition flex items-center shadow-sm">- Undo</button>
+    </div>
+</div>
+
                             <div class="text-right">
                                 <button onclick="resetMonthlyInvestment()" class="text-[9px] text-gray-600 hover:text-red-400 transition underline tracking-wider">Reset to Zero</button>
                             </div>
@@ -6171,6 +6173,52 @@ async function addMonthlyExpense(event) {
         alert("❌ Error adding expense: " + e.message);
         addBtn.innerText = originalText;
         addBtn.disabled = false;
+    }
+}
+async function subtractMonthlyExpense(event) {
+    const monthPicker = document.getElementById('insight-month-picker');
+    let selectedYear = new Date().getFullYear();
+    let selectedMonth = new Date().getMonth(); 
+    
+    if (monthPicker && monthPicker.value) {
+        const parts = monthPicker.value.split('-'); 
+        selectedYear = parseInt(parts[0]);
+        selectedMonth = parseInt(parts[1]) - 1; 
+    }
+    
+    let monthKey = `${selectedYear}-${(selectedMonth + 1).toString().padStart(2, '0')}`;
+    let inputEl = document.getElementById('insight-add-expense-input');
+    let expenseVal = parseInt(inputEl.value);
+    
+    if (isNaN(expenseVal) || expenseVal <= 0) {
+        return alert("⚠️ Please enter a valid expense amount to undo!");
+    }
+    
+    let minusBtn = event.currentTarget;
+    let originalText = minusBtn.innerText;
+    minusBtn.innerText = "⏳";
+    minusBtn.disabled = true;
+
+    // Purane investment me se galat kharcha minus karna
+    let currentTotal = allInvestments[monthKey] || 0;
+    let newTotal = currentTotal - expenseVal;
+    
+    // Total investment ko 0 se niche (negative) jaane se rokna
+    if (newTotal < 0) newTotal = 0;
+
+    try {
+        await db.collection('investments').doc(monthKey).set({ amount: newTotal }, { merge: true });
+        
+        allInvestments[monthKey] = newTotal;
+        inputEl.value = ''; // Box wapas khali kar do
+        renderInsights(); // Graphs aur Net Profit turant update karo
+        
+        minusBtn.innerText = "✅";
+        setTimeout(() => { minusBtn.innerText = originalText; minusBtn.disabled = false; }, 1500);
+    } catch(e) {
+        alert("❌ Error removing expense: " + e.message);
+        minusBtn.innerText = originalText;
+        minusBtn.disabled = false;
     }
 }
 
