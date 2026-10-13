@@ -90,6 +90,31 @@
     </style>
     <!-- Chart.js for Pie Chart -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style id="admin-workspace-tabs-style">
+/* Focused admin workspaces: compact, mobile-first, and without removing existing features */
+.admin-workspace-tabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;padding:7px;background:rgba(14,20,26,.97);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid #26313d;border-radius:18px;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));width:min(920px,calc(100% - 24px));z-index:120;box-shadow:0 12px 35px rgba(0,0,0,.48)}
+.admin-workspace-tab{min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:12px 5px;border:1px solid transparent;border-radius:11px;background:transparent;color:#9ca3af;font-size:11px;font-weight:750;line-height:1.25;text-align:center;transition:background .22s ease,color .22s ease,border-color .22s ease,transform .22s ease}
+.admin-workspace-tab i{font-size:16px}
+.admin-workspace-tab:hover{color:#fff;background:#151f28}
+.admin-workspace-tab:active{transform:scale(.97)}
+.admin-workspace-tab.is-active{background:linear-gradient(135deg,rgba(22,163,74,.18),rgba(22,163,74,.06));color:#22c55e;border-color:rgba(22,163,74,.35);box-shadow:inset 0 1px rgba(255,255,255,.04)}
+#admin-dashboard .admin-tab-hidden{display:none!important}
+#admin-dashboard .max-w-4xl{min-width:0}
+#admin-dashboard .bg-brand-card.rounded-2xl{min-width:0}
+@media(max-width:560px){
+ .admin-workspace-tabs{grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;padding:5px;width:calc(100% - 16px);bottom:calc(10px + env(safe-area-inset-bottom))}
+ .admin-workspace-tab{padding:9px 2px;font-size:9px;gap:4px}
+ .admin-workspace-tab i{font-size:14px}
+ #admin-dashboard .max-w-4xl{padding-left:14px!important;padding-right:14px!important;padding-top:18px!important}
+ #admin-dashboard #admin-tab-billing,#admin-dashboard #admin-tab-products,#admin-dashboard #admin-tab-customers,#admin-dashboard #admin-tab-reviews{padding:16px!important;border-radius:16px}
+ #admin-dashboard #admin-tab-billing>div:first-child{align-items:flex-start;gap:12px;flex-wrap:wrap}
+ #admin-dashboard #admin-tab-billing>div:first-child button{font-size:11px;padding:9px 10px}
+ #admin-dashboard #admin-tab-overview-chart .relative.w-40.h-40{width:132px;height:132px}
+}
+@media(prefers-reduced-motion:reduce){.admin-workspace-tab{transition:none}}
+</style>
+
 </head>
 
 <body class="antialiased overflow-x-hidden selection:bg-brand-green selection:text-black">
@@ -913,7 +938,7 @@
             </button>
         </div>
 
-        <div class="max-w-4xl mx-auto px-4 py-6 sm:p-8">
+        <div class="max-w-4xl mx-auto px-4 py-6 sm:p-8 pb-32">
             <div class="grid grid-cols-2 gap-4 mb-8">
                 <div class="bg-brand-card border border-gray-800 rounded-xl p-4 text-center shadow-md">
                     <h4 class="text-gray-400 text-[11px] uppercase tracking-wider mb-1 font-semibold">Total Orders</h4>
@@ -924,8 +949,18 @@
                     <p id="admin-total-products" class="text-2xl font-bold text-white">0</p>
                 </div>
             </div>
+
+            <!-- ADMIN SECTION TABS: keep each workspace focused and easy to scan -->
+            <div id="admin-workspace-tabs" class="admin-workspace-tabs mb-7">
+                <button type="button" class="admin-workspace-tab is-active" data-admin-tab="overview" onclick="switchAdminTab('overview')"><i class="fas fa-chart-pie"></i><span>Overview</span></button>
+                <button type="button" class="admin-workspace-tab" data-admin-tab="billing" onclick="switchAdminTab('billing')"><i class="fas fa-file-invoice-dollar"></i><span>Orders & Billing</span></button>
+                <button type="button" class="admin-workspace-tab" data-admin-tab="products" onclick="switchAdminTab('products')"><i class="fas fa-box-open"></i><span>Products</span></button>
+                <button type="button" class="admin-workspace-tab" data-admin-tab="inventory" onclick="switchAdminTab('inventory')"><i class="fas fa-layer-group"></i><span>Inventory</span></button>
+                <button type="button" class="admin-workspace-tab" data-admin-tab="customers" onclick="switchAdminTab('customers')"><i class="fas fa-users"></i><span>Customers</span></button>
+                <button type="button" class="admin-workspace-tab" data-admin-tab="reviews" onclick="switchAdminTab('reviews')"><i class="fas fa-star"></i><span>Reviews</span></button>
+            </div>
                                   <!-- NAYA INSIGHTS HEADER (Perfectly Aligned for Mobile) -->
-            <div class="flex flex-col gap-3 mb-5 border-b border-gray-800 pb-4">
+            <div id="admin-tab-overview-head" class="flex flex-col gap-3 mb-5 border-b border-gray-800 pb-4">
                 
                 <!-- 1st Row: Title & Month Picker -->
                 <div class="flex justify-between items-center w-full">
@@ -954,7 +989,7 @@
 
 
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div id="admin-tab-overview-stats" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                     <div class="bg-[#0e141a] rounded-lg p-3 border border-gray-800">
                         <p class="text-[10px] text-gray-500 uppercase font-bold">All-Time Sale</p>
                         <p id="insight-all-time" class="text-lg font-bold text-white">₹0</p>
@@ -974,7 +1009,7 @@
                 </div>
 
                             <!-- CHART & NET PROFIT SECTION -->
-                <div class="flex flex-col md:flex-row gap-6 items-center">
+                <div id="admin-tab-overview-chart" class="flex flex-col md:flex-row gap-6 items-center">
                     <!-- Left: Doughnut Chart -->
                     <div class="w-full md:w-1/2 flex justify-center">
                         <div class="relative w-40 h-40">
@@ -1024,7 +1059,20 @@
     <span id="insight-net-profit" class="font-black text-xl text-brand-green drop-shadow-md">₹0</span>
 </div>
 
-                           <!-- 5. NEW: SPECIFIC MATERIAL BATCH TRACKER -->
+
+
+                    </div>
+
+                </div>
+
+<!-- MATERIAL / INVENTORY WORKSPACE -->
+<div id="admin-tab-inventory" class="bg-brand-card border border-gray-800 rounded-2xl p-5 sm:p-6 mb-8 admin-tab-hidden">
+  <div class="mb-5">
+    <h3 class="text-lg font-bold text-white"><i class="fas fa-layer-group text-blue-400 mr-2"></i> Material & Investment Tracker</h3>
+    <p class="text-xs text-gray-400 mt-1">Track each material batch, cost, recovered amount and profit.</p>
+  </div>
+  <div class="bg-[#0e141a] border border-gray-800 rounded-xl p-4">
+<!-- Specific material batch tracker -->
         <div class="mt-5 pt-4 border-t border-gray-800/80">
             <div class="flex justify-between items-center mb-3">
                 <span class="text-[11px] text-blue-400 uppercase font-bold tracking-wider"><i class="fas fa-layer-group mr-1"></i> Specific Material Tracker</span>
@@ -1044,13 +1092,11 @@
                 <p class="text-[10px] text-gray-500 italic text-center py-2">No material tracked yet.</p>
             </div>
         </div>
-
-                    </div>
-
-                </div>
+  </div>
+</div>
 
          <!-- BILLING SYSTEM SECTION -->
-<div class="mt-8 bg-brand-card border border-brand-green/30 rounded-2xl p-6 mb-8 relative overflow-hidden shadow-[0_0_15px_rgba(22,163,74,0.05)]">
+<div id="admin-tab-billing" class="mt-8 bg-brand-card border border-brand-green/30 rounded-2xl p-6 mb-8 relative overflow-hidden shadow-[0_0_15px_rgba(22,163,74,0.05)]">
 
                 <div class="flex justify-between items-center mb-6">
                     <div>
@@ -1087,7 +1133,7 @@
             </div>
 
             <!-- Manage Products Section -->
-            <div class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8">
+            <div id="admin-tab-products" class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-bold text-white"><i class="fas fa-box-open text-brand-green mr-2"></i> Manage Products</h3>
                     <button onclick="openAddProductModal()" class="bg-brand-card border border-gray-700 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1 transition">
@@ -1100,7 +1146,7 @@
             
             </div>
                         <!-- MANAGE CUSTOMERS SECTION -->
-            <div class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8">
+            <div id="admin-tab-customers" class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-lg font-bold text-white"><i class="fas fa-users text-brand-green mr-2"></i> Manage Customers</h3>
                     <button onclick="openAddCustomerModal()" class="bg-brand-card border border-gray-700 hover:bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-1 transition">
@@ -1121,7 +1167,7 @@
             </div>
             
             <!-- Manage Reviews Section (New) -->
-            <div class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8">
+            <div id="admin-tab-reviews" class="bg-brand-card border border-gray-800 rounded-2xl p-6 mb-8">
                 <h3 class="text-lg font-bold text-white mb-6"><i class="fas fa-star text-brand-green mr-2"></i> Manage Reviews</h3>
                 <div id="admin-reviews-list" class="flex flex-col gap-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
                     <!-- Reviews JS se aayenge -->
@@ -7374,7 +7420,43 @@ function downloadSmartReportHTML() {
                 }
             }
         ${'<'}/script>
-    </body>
+    
+<script id="admin-workspace-tabs-script">
+(function(){
+  const adminTabMap = {
+    overview: ['admin-tab-overview-head','admin-tab-overview-stats','admin-tab-overview-chart'],
+    billing: ['admin-tab-billing'],
+    products: ['admin-tab-products'],
+    inventory: ['admin-tab-inventory'],
+    customers: ['admin-tab-customers'],
+    reviews: ['admin-tab-reviews']
+  };
+  window.switchAdminTab = function(tabName){
+    const dashboard = document.getElementById('admin-dashboard');
+    if(!dashboard || !adminTabMap[tabName]) return;
+    Object.keys(adminTabMap).forEach(function(key){
+      adminTabMap[key].forEach(function(id){
+        const section = document.getElementById(id);
+        if(section) section.classList.toggle('admin-tab-hidden', key !== tabName);
+      });
+    });
+    document.querySelectorAll('.admin-workspace-tab').forEach(function(button){
+      const active = button.getAttribute('data-admin-tab') === tabName;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    dashboard.setAttribute('data-active-admin-tab', tabName);
+    // Start the chosen workspace at its heading on smaller screens.
+    const tabs = document.getElementById('admin-workspace-tabs');
+    if(window.innerWidth < 700){ const activeSection = document.getElementById(adminTabMap[tabName][0]); if(activeSection) activeSection.scrollIntoView({behavior:'smooth',block:'start'}); }
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    window.switchAdminTab('overview');
+  });
+})();
+</script>
+
+</body>
     </html>`;
 
     const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
